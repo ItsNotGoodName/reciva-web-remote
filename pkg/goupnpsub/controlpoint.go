@@ -28,7 +28,7 @@ func NewControlPointWithPort(listenPort string) *ControlPoint {
 	return cp
 }
 
-// Start creates a http server that listens for notify requests.
+// Start a HTTP server that listens for notify requests.
 func (cp *ControlPoint) Start() {
 	log.Fatal(http.ListenAndServe(":"+cp.listenPort, nil))
 }
@@ -128,7 +128,7 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 	client := http.Client{}
 	res, err := client.Do(req)
 
-	// Lock map as soon as possible to prevent a race condition with upnp publisher
+	// Lock map as soon as possible to prevent a race condition with UPnP publisher
 	cp.sidMapRWMutex.Lock()
 
 	// Check request and get SID from request

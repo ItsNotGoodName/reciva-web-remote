@@ -16,7 +16,7 @@ type RadioPost struct {
 	Volume *int  `json:"volume,omitempty"`
 }
 
-func AddRadioRoutes(r *gin.RouterGroup, a *api.API) {
+func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader) {
 	r.GET("/radios", func(c *gin.Context) {
 		c.JSON(http.StatusOK, a.GetRadioStates())
 	})
@@ -102,7 +102,6 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API) {
 		c.JSON(http.StatusOK, radioPost)
 	})
 
-	upgrader := websocket.Upgrader{}
 	r.GET("/radio/:UUID/ws", func(c *gin.Context) {
 		// Get UUID
 		uuid, _ := c.Params.Get("UUID")

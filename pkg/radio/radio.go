@@ -54,10 +54,15 @@ func (rd Radio) radioLoop(dctx context.Context) {
 					if v.Value == "" {
 						continue
 					}
+
+					oldMetadata := rd.state.Metadata
+					rd.state.Metadata = ""
 					if err := xml.Unmarshal([]byte(v.Value), rd.state); err != nil {
 						log.Println(err)
+						rd.state.Metadata = oldMetadata
 						continue
 					}
+
 					changed = true
 				} else if v.Name == "IsMuted" {
 					rd.state.IsMuted = v.Value == "TRUE"

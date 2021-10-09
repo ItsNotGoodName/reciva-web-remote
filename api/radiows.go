@@ -69,6 +69,7 @@ func (rs *radioWS) handleWrite() {
 		// Check if UUID matches
 		rs.uuidMutex.Lock()
 		if state.UUID != rs.uuid {
+			rs.uuidMutex.Unlock()
 			continue
 		}
 		rs.uuidMutex.Unlock()

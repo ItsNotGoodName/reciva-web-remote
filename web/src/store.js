@@ -24,7 +24,7 @@ export default {
       .then((data) => {
         let radios = {};
         for (let d in data) {
-          radios[data[d].uuid] = data[d].uuid;
+          radios[data[d].uuid] = data[d].name;
         }
         this.state.radios = radios;
         return radios;

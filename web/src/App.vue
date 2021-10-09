@@ -25,10 +25,10 @@ export default {
 </script>
 
 <template>
-  The radios on the network are {{ Object.keys(this.state.radios) }}.
+  The radios on the network are {{ Object.values(this.state.radios) }}.
   <br />
   <div v-if="this.state.radio">
-    The current radio is {{ this.state.radio.uuid }}.
+    The current radio is {{ this.state.radio.name }}.
     <br />
     Power: {{ this.state.radio.power ? "ON" : "OFF" }}.
     <br />

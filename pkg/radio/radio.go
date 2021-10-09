@@ -13,6 +13,8 @@ func (rd Radio) radioLoop(dctx context.Context) {
 		rd.stateChan <- *rd.state
 	}
 
+	// Set name of radio
+	rd.state.Name = rd.Client.ServiceClient.RootDevice.Device.FriendlyName
 	// Get number of presets
 	if presets, err := rd.Client.GetNumberOfPresets(dctx); err != nil {
 		log.Println(err)

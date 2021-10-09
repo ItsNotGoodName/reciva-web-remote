@@ -36,6 +36,7 @@ type Radio struct {
 type State struct {
 	IsMuted  bool   `json:"isMuted"`                                         // IsMuted represents if the Radio's volume is muted.
 	Metadata string `json:"metadata" xml:"playback-details>stream>metadata"` // Metadata that is received from the stream url.
+	Name     string `json:"name"`                                            // Name of the radio
 	Power    bool   `json:"power"`                                           // Power represents if the radio is not in standby.
 	Presets  int    `json:"presets"`                                         // Presets represents the max amount of presets and starts at 1.
 	State    string `json:"state" xml:"playback-details>state"`              // State is either playing, connecting, or stopped.

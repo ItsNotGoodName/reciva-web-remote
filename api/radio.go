@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
+	"github.com/gorilla/websocket"
 )
 
 type API struct {
@@ -107,6 +108,10 @@ func (a *API) discoverRadiosLoop() {
 	for d := range a.discoverChan {
 		d <- a.discoverRadios()
 	}
+}
+
+func (a *API) HandleWS(conn *websocket.Conn, uuid string) {
+	newRadioWS(conn, a, a.h, uuid).start()
 }
 
 func NewService(h *radio.Hub) *API {

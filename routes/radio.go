@@ -29,6 +29,18 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		}
 	})
 
+	r.GET("/radio/ws", func(c *gin.Context) {
+		// Upgrade connection to websocket
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			log.Print("Error during connection upgradation:", err)
+			return
+		}
+
+		// Handle websocket
+		a.HandleWS(conn, "")
+	})
+
 	r.Use(ensureUUID(a))
 
 	r.GET("/radio/:UUID", func(c *gin.Context) {
@@ -120,6 +132,6 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		}
 
 		// Handle websocket
-		a.HandleRadioWS(conn, uuid)
+		a.HandleWS(conn, uuid)
 	})
 }

@@ -7,17 +7,20 @@ const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : "";
 
 export default {
   state: reactive({
+    connecting: false,
+    connectionStatus: false,
+    uuid: "",
     radio: {},
     radios: {},
   }),
   getState() {
     return readonly(this.state);
   },
-  refreshRadio() {
+  updateRadios() {
     return fetch(API_URL + "/v1/radios")
       .then((res) => {
         if (!res.ok) {
-          return;
+          throw Error(res.statusText);
         }
         return res.json();
       })
@@ -27,25 +30,96 @@ export default {
           radios[data[d].uuid] = data[d].name;
         }
         this.state.radios = radios;
-        return radios;
+      })
+      .catch((error) => {
+        console.log(error);
       });
   },
-  selectRadio(uuid) {
-    if (this.ws != undefined) {
-      this.ws.close();
+  discover() {
+    fetch(API_URL + "/v1/radios", {
+      method: "POST",
+    }).then(() => {
+      this.updateRadios();
+    });
+  },
+  togglePower() {
+    if (!this.state.uuid) return;
+    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
+      method: "PATCH",
+      body: JSON.stringify({ power: !this.state.radio.power }),
+    });
+  },
+  setPreset(preset) {
+    if (!this.state.uuid) return;
+    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
+      method: "PATCH",
+      body: JSON.stringify({ preset: preset }),
+    });
+  },
+  setVolume(volume) {
+    if (!this.state.uuid) return;
+    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
+      method: "PATCH",
+      body: JSON.stringify({ volume: volume }),
+    });
+  },
+  selectRadio(uuid = "") {
+    this.state.uuid = uuid;
+    if (!this.initWS()) return;
+    this.ws.send(uuid);
+  },
+  initWS() {
+    if (this.loading) {
+      return false;
     }
-    this.ws = new WebSocket(WS_URL + "/v1/radio/" + uuid + "/ws");
+    if (this.status) {
+      return true;
+    }
+    this.loading = true;
+
+    // Create websocket
+    if (this.state.uuid == undefined || this.state.uuid == "") {
+      this.ws = new WebSocket(WS_URL + "/v1/radio/ws");
+    } else {
+      this.ws = new WebSocket(WS_URL + "/v1/radio/" + this.state.uuid + "/ws");
+    }
+
+    // Handle radio state recv
     this.ws.addEventListener(
       "message",
       function (event) {
-        console.log(event.data);
-        this.state.radio = JSON.parse(event.data);
+        let radio = JSON.parse(event.data);
+        if (radio.uuid != this.state.uuid) return;
+        this.state.radio = radio;
       }.bind(this)
     );
+
+    // Handle open
+    this.ws.addEventListener(
+      "open",
+      function () {
+        this.status = true;
+        this.loading = false;
+      }.bind(this)
+    );
+
+    // Handle close
     this.ws.addEventListener(
       "close",
       function (event) {
-        console.log(event);
+        this.status = false;
+        this.loading = false;
+        console.error(event);
+      }.bind(this)
+    );
+
+    // Handle close
+    this.ws.addEventListener(
+      "error",
+      function (event) {
+        this.status = false;
+        this.loading = false;
+        console.error(event);
       }.bind(this)
     );
   },

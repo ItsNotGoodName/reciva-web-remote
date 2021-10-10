@@ -7,7 +7,6 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -32,7 +31,7 @@ func main() {
 	// Ignore CORS when not in production
 	if gin.Mode() != gin.ReleaseMode {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-		r.Use(cors.Default())
+		r.Use(routes.CORS())
 	}
 
 	// Create v1 route

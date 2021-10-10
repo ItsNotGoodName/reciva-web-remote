@@ -3,7 +3,6 @@ module github.com/ItsNotGoodName/reciva-web-remote
 go 1.17
 
 require (
-	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/huin/goupnp v1.0.2

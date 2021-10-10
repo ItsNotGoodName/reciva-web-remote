@@ -8,7 +8,7 @@ const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : "";
 export default {
   state: reactive({
     connecting: false,
-    connectionStatus: false,
+    connection: false,
     uuid: "",
     radio: {},
     radios: {},
@@ -35,32 +35,42 @@ export default {
         console.log(error);
       });
   },
-  discover() {
+  discoverRadios() {
     fetch(API_URL + "/v1/radios", {
       method: "POST",
-    }).then(() => {
-      this.updateRadios();
-    });
+    })
+      .then(() => {
+        this.updateRadios();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   },
-  togglePower() {
+  toggleRadioPower() {
     if (!this.state.uuid) return;
     fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
       method: "PATCH",
       body: JSON.stringify({ power: !this.state.radio.power }),
+    }).catch((error) => {
+      console.log(error);
     });
   },
-  setPreset(preset) {
+  setRadioPreset(preset) {
     if (!this.state.uuid) return;
     fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
       method: "PATCH",
       body: JSON.stringify({ preset: preset }),
+    }).catch((error) => {
+      console.log(error);
     });
   },
-  setVolume(volume) {
+  setRadioVolume(volume) {
     if (!this.state.uuid) return;
     fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
       method: "PATCH",
       body: JSON.stringify({ volume: volume }),
+    }).catch((error) => {
+      console.log(error);
     });
   },
   selectRadio(uuid = "") {
@@ -69,13 +79,13 @@ export default {
     this.ws.send(uuid);
   },
   initWS() {
-    if (this.loading) {
+    if (this.connecting) {
       return false;
     }
-    if (this.status) {
+    if (this.connection) {
       return true;
     }
-    this.loading = true;
+    this.connecting = true;
 
     // Create websocket
     if (this.state.uuid == undefined || this.state.uuid == "") {
@@ -84,7 +94,7 @@ export default {
       this.ws = new WebSocket(WS_URL + "/v1/radio/" + this.state.uuid + "/ws");
     }
 
-    // Handle radio state recv
+    // Handle radio state message
     this.ws.addEventListener(
       "message",
       function (event) {
@@ -98,8 +108,8 @@ export default {
     this.ws.addEventListener(
       "open",
       function () {
-        this.status = true;
-        this.loading = false;
+        this.connection = true;
+        this.connecting = false;
       }.bind(this)
     );
 
@@ -107,18 +117,18 @@ export default {
     this.ws.addEventListener(
       "close",
       function (event) {
-        this.status = false;
-        this.loading = false;
+        this.connection = false;
+        this.connecting = false;
         console.error(event);
       }.bind(this)
     );
 
-    // Handle close
+    // Handle error
     this.ws.addEventListener(
       "error",
       function (event) {
-        this.status = false;
-        this.loading = false;
+        this.connection = false;
+        this.connecting = false;
         console.error(event);
       }.bind(this)
     );

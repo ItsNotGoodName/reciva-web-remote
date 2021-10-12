@@ -111,7 +111,7 @@ func (a *API) discoverRadiosLoop() {
 }
 
 func (a *API) HandleWS(conn *websocket.Conn, uuid string) {
-	newRadioWS(conn, a, a.h, uuid).start()
+	newRadioWS(conn, a, uuid).start()
 }
 
 func NewService(h *radio.Hub) *API {

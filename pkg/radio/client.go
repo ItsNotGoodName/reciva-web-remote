@@ -36,8 +36,20 @@ func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
 
 	request.NewPresetNumberValue = fmt.Sprint(preset)
 
-	// Send request
-	return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "PlayPreset", request, response)
+   	select {
+   	case state := <-rd.GetStateChan:
+   		// Turn on radio if it is not already on
+   		if !state.Power {
+   			if err := rd.SetPowerState(ctx, true); err != nil {
+   				return err
+   			}
+   		}
+  
+   		// Play preset
+		return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "PlayPreset", request, response)
+   	case <-ctx.Done():
+   		return ctx.Err()
+   	}
 }
 
 func (rd *Radio) GetNumberOfPresets(ctx context.Context) (int, error) {
@@ -67,7 +79,17 @@ func (rd *Radio) SetVolume(ctx context.Context, volume int) error {
 	request.NewVolumeValue = fmt.Sprint(volume)
 
 	// Send request
-	return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "SetVolume", request, response)
+	if err := rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "SetVolume", request, response); err != nil {
+		return err
+	}
+
+	// Update state volume
+	select {
+	case rd.UpdateVolumeChan <- volume:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (rd *Radio) GetVolume(ctx context.Context) (int, error) {

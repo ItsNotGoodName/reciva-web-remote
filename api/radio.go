@@ -27,17 +27,6 @@ func (a *API) GetRadio(uuid string) (*radio.Radio, bool) {
 	return &radio, ok
 }
 
-//  func (a *API) GetRadioClient(uuid string) (*radio.Client, bool) {
-//  	a.radioMapRWMutex.RLock()
-//  	radio, ok := a.radioMap[uuid]
-//  	a.radioMapRWMutex.RUnlock()
-//  	if !ok {
-//  		return nil, ok
-//  	}
-//
-//  	return radio.Client, ok
-//  }
-
 func (a *API) GetRadioState(uuid string) (*radio.State, bool) {
 	a.radioMapRWMutex.RLock()
 	radio, ok := a.radioMap[uuid]

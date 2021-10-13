@@ -2,9 +2,11 @@ package radio
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
+	"github.com/huin/goupnp"
 )
 
 func NewHub(cp *goupnpsub.ControlPoint) *Hub {
@@ -13,7 +15,7 @@ func NewHub(cp *goupnpsub.ControlPoint) *Hub {
 		Unregister: make(chan *HubClient),
 		clients:    make(map[*HubClient]bool),
 		cp:         cp,
-		stateChan:  make(chan State),
+		allStateChan:  make(chan State),
 	}
 	go h.hubLoop()
 	return &h
@@ -32,7 +34,7 @@ func (h *Hub) hubLoop() {
 				close(client.Send)
 				log.Println("hubLoop: unregistered")
 			}
-		case state := <-h.stateChan:
+		case state := <-h.allStateChan:
 			for client := range h.clients {
 				select {
 				case client.Send <- state:
@@ -46,11 +48,16 @@ func (h *Hub) hubLoop() {
 	}
 }
 
-func (h *Hub) NewRadioFromClient(client *Client) (Radio, error) {
-	dctx := context.Background()
-	dctx, cancel := context.WithCancel(dctx)
+func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
+	// Get UUID from client
+	uuid, ok := getServiceClientUUID(&client)
+	if !ok {
+		return Radio{}, errors.New("could not find uuid from client")
+	}
 
 	// Create sub
+	dctx := context.Background()
+	dctx, cancel := context.WithCancel(dctx)
 	sub, err := h.cp.NewSubscription(dctx, &client.Service.EventSubURL.URL)
 	if err != nil {
 		cancel()
@@ -62,10 +69,11 @@ func (h *Hub) NewRadioFromClient(client *Client) (Radio, error) {
 		Cancel:           cancel,
 		Client:           client,
 		GetStateChan:     make(chan State),
+		UUID:             uuid,
 		UpdateVolumeChan: make(chan int),
-		stateChan:        h.stateChan,
+		allStateChan:        h.allStateChan,
 		subscription:     sub,
-		state:            &State{UUID: client.UUID},
+		state:            &State{UUID: uuid},
 	}
 	go rd.radioLoop(dctx)
 
@@ -74,18 +82,20 @@ func (h *Hub) NewRadioFromClient(client *Client) (Radio, error) {
 
 func (h *Hub) NewRadios() ([]Radio, error) {
 	// Discover clients
-	clients, err := NewClients()
+	clients, _, err := goupnp.NewServiceClients(radioServiceType)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create radios from clients
+	// Create radios array
 	radios := make([]Radio, len(clients))
-	for i := range radios {
-		radio, err := h.NewRadioFromClient(&clients[i])
+	for i := range clients {
+		radio, err := h.NewRadioFromClient(clients[i])
 		if err != nil {
+			log.Println(err)
 			continue
 		}
+
 		radios[i] = radio
 	}
 

@@ -10,13 +10,13 @@ func (rd Radio) radioLoop(dctx context.Context) {
 	// TODO: Refactor this function
 	log.Println("radioLoop: started")
 	emit := func() {
-		rd.stateChan <- *rd.state
+		rd.allStateChan <- *rd.state
 	}
 
 	// Set name of radio
-	rd.state.Name = rd.Client.ServiceClient.RootDevice.Device.FriendlyName
+	rd.state.Name = rd.Client.RootDevice.Device.FriendlyName
 	// Get number of presets
-	if presets, err := rd.Client.GetNumberOfPresets(dctx); err != nil {
+	if presets, err := rd.GetNumberOfPresets(dctx); err != nil {
 		log.Println(err)
 	} else {
 		presets = presets - 2
@@ -27,7 +27,7 @@ func (rd Radio) radioLoop(dctx context.Context) {
 		}
 	}
 	// Get volume
-	if volume, err := rd.Client.GetVolume(dctx); err != nil {
+	if volume, err := rd.GetVolume(dctx); err != nil {
 		log.Println(err)
 	} else {
 		if !IsValidVolume(volume) {

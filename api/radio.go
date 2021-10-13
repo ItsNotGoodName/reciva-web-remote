@@ -90,7 +90,7 @@ func (a *API) discoverRadios() error {
 	// Create newRadioMap using radios and radios' uuid
 	newRadioMap := make(map[string]radio.Radio)
 	for _, v := range radios {
-		newRadioMap[v.Client.UUID] = v
+		newRadioMap[v.UUID] = v
 	}
 
 	// Close old radioMap and set new radioMap

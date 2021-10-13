@@ -7,7 +7,7 @@ import (
 )
 
 func (a *API) SetRadioPower(ctx context.Context, rd *radio.Radio, power bool) error {
-	return rd.Client.SetPowerState(ctx, power)
+	return rd.SetPowerState(ctx, power)
 }
 
 func (a *API) PlayRadioPreset(ctx context.Context, rd *radio.Radio, preset int) error {
@@ -15,13 +15,13 @@ func (a *API) PlayRadioPreset(ctx context.Context, rd *radio.Radio, preset int) 
 	case state := <-rd.GetStateChan:
 		// Turn on radio if it is not already on
 		if !state.Power {
-			if err := rd.Client.SetPowerState(ctx, true); err != nil {
+			if err := rd.SetPowerState(ctx, true); err != nil {
 				return err
 			}
 		}
 
 		// Play preset
-		return rd.Client.PlayPreset(ctx, preset)
+		return rd.PlayPreset(ctx, preset)
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -29,12 +29,12 @@ func (a *API) PlayRadioPreset(ctx context.Context, rd *radio.Radio, preset int) 
 
 func (a *API) SetRadioVolume(ctx context.Context, rd *radio.Radio, volume int) error {
 	// Set volume
-	if err := rd.Client.SetVolume(ctx, volume); err != nil {
+	if err := rd.SetVolume(ctx, volume); err != nil {
 		return nil
 	}
 
 	// Get volume
-	vol, err := rd.Client.GetVolume(ctx)
+	vol, err := rd.GetVolume(ctx)
 	if err != nil {
 		return err
 	}

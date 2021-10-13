@@ -4,39 +4,14 @@ import (
 	"context"
 	"encoding/xml"
 	"log"
+
+	"github.com/avast/retry-go"
 )
 
 func (rd *Radio) radioLoop(dctx context.Context) {
-	// TODO: Refactor this function
 	log.Println("radioLoop: started")
-	emit := func() {
-		rd.allStateChan <- *rd.state
-	}
 
-	// Set name of radio
-	rd.state.Name = rd.Client.RootDevice.Device.FriendlyName
-	// Get number of presets
-	if presets, err := rd.GetNumberOfPresets(dctx); err != nil {
-		log.Println(err)
-	} else {
-		presets = presets - 2
-		if presets < 1 {
-			log.Println("radioLoop(ERROR): invalid number of presets were given from radio, ", rd.state.Presets)
-		} else {
-			rd.state.Presets = presets
-		}
-	}
-	// Get volume
-	if volume, err := rd.GetVolume(dctx); err != nil {
-		log.Println(err)
-	} else {
-		if !IsValidVolume(volume) {
-			log.Println("radioLoop(ERROR): invalid volume was given from radio, ", rd.state.Volume)
-		} else {
-			rd.state.Volume = volume
-			emit()
-		}
-	}
+	rd.initState(dctx)
 
 	for {
 		select {
@@ -45,7 +20,7 @@ func (rd *Radio) radioLoop(dctx context.Context) {
 			return
 		case rd.GetStateChan <- *rd.state:
 		case rd.state.Volume = <-rd.UpdateVolumeChan:
-			emit()
+			rd.stateChanged()
 		case newEvent := <-rd.subscription.EventChan:
 			changed := false
 			for _, v := range newEvent.Properties {
@@ -72,10 +47,58 @@ func (rd *Radio) radioLoop(dctx context.Context) {
 				}
 			}
 			if changed {
-				emit()
+				rd.stateChanged()
 			}
 		}
 	}
+}
+
+func (rd *Radio) initState(dctx context.Context) {
+	// Set name of radio
+	rd.state.Name = rd.Client.RootDevice.Device.FriendlyName
+
+	// Get number of presets
+	var presets int
+	if err := retry.Do(func() error {
+		if p, e := rd.GetNumberOfPresets(dctx); e != nil {
+			return e
+		} else {
+			presets = p
+			return nil
+		}
+	}, retry.Context(dctx)); err != nil {
+		log.Println(err)
+	} else {
+		presets = presets - 2
+		if presets < 1 {
+			log.Println("radioLoop(ERROR): invalid number of presets were given from radio, ", rd.state.Presets)
+		} else {
+			rd.state.Presets = presets
+		}
+	}
+
+	var volume int
+	// Get volume
+	if err := retry.Do(func() error {
+		if v, e := rd.GetVolume(dctx); e != nil {
+			return e
+		} else {
+			volume = v
+			return nil
+		}
+	}, retry.Context(dctx)); err != nil {
+		log.Println(err)
+	} else {
+		if !IsValidVolume(volume) {
+			log.Println("radioLoop(ERROR): invalid volume was given from radio, ", rd.state.Volume)
+		} else {
+			rd.state.Volume = volume
+		}
+	}
+}
+
+func (rd *Radio) stateChanged() {
+	rd.allStateChan <- *rd.state
 }
 
 func (rd *Radio) IsPresetValid(preset int) bool {

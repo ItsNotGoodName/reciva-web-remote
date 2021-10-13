@@ -48,14 +48,14 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		uuid, _ := c.Params.Get("UUID")
 
 		// Get Radio or return 404
-		radio, ok := a.GetRadioState(uuid)
+		state, ok := a.GetRadioState(uuid)
 		if !ok {
 			c.Status(http.StatusNotFound)
 			return
 		}
 
 		// Return Radio
-		c.JSON(http.StatusOK, radio)
+		c.JSON(http.StatusOK, state)
 	})
 
 	r.PATCH("/radio/:UUID", func(c *gin.Context) {

@@ -25,13 +25,17 @@ func main() {
 	// Get router
 	r := gin.Default()
 
-	// Get websocket upgrader
-	upgrader := websocket.Upgrader{}
+	// Define websocket upgrader
+	var upgrader websocket.Upgrader
 
-	// Ignore CORS when not in production
+	// Configure mode based on environment
 	if gin.Mode() != gin.ReleaseMode {
-		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		r.Use(routes.CORS())
+		upgrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool { return true },
+		}
+	} else {
+		upgrader = websocket.Upgrader{}
 	}
 
 	// Create v1 route
@@ -40,6 +44,6 @@ func main() {
 	// Add routes to v1 group
 	routes.AddRadioRoutes(v1, a, &upgrader)
 
-	// listen and serve on 0.0.0.0:8080
+	// Listen and serve on 0.0.0.0:8080
 	r.Run()
 }

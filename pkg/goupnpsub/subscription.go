@@ -54,7 +54,7 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 
 	// Add headers to request
 	req.Header.Add("SID", sub.sid)
-	req.Header.Add("TIMEOUT", DefaultTimeout)
+	req.Header.Add("TIMEOUT", defaultTimeout)
 
 	// Execute request
 	client := http.Client{}

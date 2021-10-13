@@ -122,7 +122,7 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 	// Add headers to request
 	req.Header.Add("CALLBACK", sub.callbackUrl)
 	req.Header.Add("NT", "upnp:event")
-	req.Header.Add("TIMEOUT", DefaultTimeout)
+	req.Header.Add("TIMEOUT", defaultTimeout)
 
 	// Execute request
 	client := http.Client{}

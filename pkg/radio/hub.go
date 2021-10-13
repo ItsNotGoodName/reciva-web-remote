@@ -37,8 +37,8 @@ func (h *Hub) hubLoop() {
 				select {
 				case client.Send <- state:
 				default:
-					close(client.Send)
 					delete(h.clients, client)
+					close(client.Send)
 					log.Println("hubLoop: client deleted")
 				}
 			}
@@ -46,12 +46,12 @@ func (h *Hub) hubLoop() {
 	}
 }
 
-func (h *Hub) NewRadioFromClient(cp *goupnpsub.ControlPoint, client *Client) (Radio, error) {
+func (h *Hub) NewRadioFromClient(client *Client) (Radio, error) {
 	dctx := context.Background()
 	dctx, cancel := context.WithCancel(dctx)
 
 	// Create sub
-	sub, err := cp.NewSubscription(dctx, &client.Service.EventSubURL.URL)
+	sub, err := h.cp.NewSubscription(dctx, &client.Service.EventSubURL.URL)
 	if err != nil {
 		cancel()
 		return Radio{}, err
@@ -82,7 +82,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 	// Create radios from clients
 	radios := make([]Radio, len(clients))
 	for i := range radios {
-		radio, err := h.NewRadioFromClient(h.cp, &clients[i])
+		radio, err := h.NewRadioFromClient(&clients[i])
 		if err != nil {
 			continue
 		}

@@ -101,11 +101,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 
 		// Set volume if not nil
 		if radioPost.Volume != nil {
-			if !radio.IsValidVolume(*radioPost.Volume) {
-				c.JSON(http.StatusBadRequest, gin.H{"err": "volume is not valid"})
-				return
-			}
-			if err := a.SetRadioVolume(c, rd, *radioPost.Volume); err != nil {
+			if err := a.SetRadioVolume(c, rd, radio.NormalizeVolume(*radioPost.Volume)); err != nil {
 				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err})
 				return
 			}

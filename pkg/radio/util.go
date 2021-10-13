@@ -19,3 +19,13 @@ func getServiceClientUUID(c *goupnp.ServiceClient) (string, bool) {
 func IsValidVolume(volume int) bool {
 	return volume >= 0 && volume <= 100
 }
+
+func NormalizeVolume(volume int) int {
+	if volume < 0 {
+		return 0
+	}
+	if volume > 100 {
+		return 100
+	}
+	return volume
+}

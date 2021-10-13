@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func (rd Radio) radioLoop(dctx context.Context) {
+func (rd *Radio) radioLoop(dctx context.Context) {
 	// TODO: Refactor this function
 	log.Println("radioLoop: started")
 	emit := func() {
@@ -78,6 +78,6 @@ func (rd Radio) radioLoop(dctx context.Context) {
 	}
 }
 
-func (rd Radio) IsPresetValid(preset int) bool {
+func (rd *Radio) IsPresetValid(preset int) bool {
 	return !(preset < 1 || preset > rd.state.Presets)
 }

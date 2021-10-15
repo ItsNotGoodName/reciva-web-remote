@@ -19,7 +19,6 @@ func newRouter() *gin.Engine {
 	return r
 }
 
-
 func newUpgrader() *websocket.Upgrader {
 	// Ignore origin on websocket
 	return &websocket.Upgrader{

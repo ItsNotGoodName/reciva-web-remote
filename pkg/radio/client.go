@@ -36,20 +36,20 @@ func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
 
 	request.NewPresetNumberValue = fmt.Sprint(preset)
 
-   	select {
-   	case state := <-rd.GetStateChan:
-   		// Turn on radio if it is not already on
-   		if !state.Power {
-   			if err := rd.SetPowerState(ctx, true); err != nil {
-   				return err
-   			}
-   		}
-  
-   		// Play preset
+	select {
+	case state := <-rd.GetStateChan:
+		// Turn on radio if it is not already on
+		if !state.Power {
+			if err := rd.SetPowerState(ctx, true); err != nil {
+				return err
+			}
+		}
+
+		// Play preset
 		return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "PlayPreset", request, response)
-   	case <-ctx.Done():
-   		return ctx.Err()
-   	}
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (rd *Radio) GetNumberOfPresets(ctx context.Context) (int, error) {

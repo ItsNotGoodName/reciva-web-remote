@@ -11,11 +11,11 @@ import (
 
 func NewHub(cp *goupnpsub.ControlPoint) *Hub {
 	h := Hub{
-		Register:   make(chan *HubClient),
-		Unregister: make(chan *HubClient),
-		clients:    make(map[*HubClient]bool),
-		cp:         cp,
-		allStateChan:  make(chan State),
+		Register:     make(chan *HubClient),
+		Unregister:   make(chan *HubClient),
+		clients:      make(map[*HubClient]bool),
+		cp:           cp,
+		allStateChan: make(chan State),
 	}
 	go h.hubLoop()
 	return &h
@@ -71,7 +71,7 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 		GetStateChan:     make(chan State),
 		UUID:             uuid,
 		UpdateVolumeChan: make(chan int),
-		allStateChan:        h.allStateChan,
+		allStateChan:     h.allStateChan,
 		subscription:     sub,
 		state:            &State{UUID: uuid},
 	}

@@ -1,14 +1,10 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 )
 
 func main() {
@@ -22,28 +18,16 @@ func main() {
 	// Create api
 	a := api.NewService(h)
 
-	// Get router
-	r := gin.Default()
+	// Create router
+	r := newRouter()
 
-	// Define websocket upgrader
-	var upgrader websocket.Upgrader
+	// Create websocket upgrader
+	u := newUpgrader()
 
-	// Configure mode based on environment
-	if gin.Mode() != gin.ReleaseMode {
-		r.Use(routes.CORS())
-		upgrader = websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
-		}
-	} else {
-		upgrader = websocket.Upgrader{}
-	}
-
-	// Create v1 route
+	// Add radio routes to v1 group
 	v1 := r.Group("/v1")
+	routes.AddRadioRoutes(v1, a, u)
 
-	// Add routes to v1 group
-	routes.AddRadioRoutes(v1, a, &upgrader)
-
-	// Listen and serve on 0.0.0.0:8080
+	// Listen and serve PORT env variable or 8080
 	r.Run()
 }

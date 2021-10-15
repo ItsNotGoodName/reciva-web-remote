@@ -7,7 +7,7 @@ backend:
 	go build -tags="prod"
 
 dev-frontend:
-	npm run serve --prefix web
+	npm run dev --prefix web
 
 dev-backend:
 	go run .

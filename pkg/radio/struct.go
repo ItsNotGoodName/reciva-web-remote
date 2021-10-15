@@ -23,11 +23,11 @@ type HubClient struct {
 
 // Radio represents the radio on the network.
 type Radio struct {
-	Client           goupnp.ServiceClient    //
+	Client           goupnp.ServiceClient    // Client is the goupnp SOAP client.
 	Cancel           context.CancelFunc      // Cancel should be called when the radio is being removed.
 	UUID             string                  // UUID is unique and should not change after it has been set.
 	allStateChan     chan<- State            // allStateChan is written to when State changes.
-	dctx             context.Context         //
+	dctx             context.Context         // dctx is the context for radioLoop.
 	getStateChan     chan State              // GetStateChan returns a copy of the current State.
 	state            *State                  // state represents the current State of the Radio.
 	subscription     *goupnpsub.Subscription // Subscription that belongs to this Radio.
@@ -38,7 +38,7 @@ type Radio struct {
 type State struct {
 	IsMuted  bool   `json:"isMuted"`                                         // IsMuted represents if the Radio's volume is muted.
 	Metadata string `json:"metadata" xml:"playback-details>stream>metadata"` // Metadata that is received from the stream url.
-	Name     string `json:"name"`                                            // Name of the radio
+	Name     string `json:"name"`                                            // Name of the radio.
 	Power    bool   `json:"power"`                                           // Power represents if the radio is not in standby.
 	Presets  int    `json:"presets"`                                         // Presets represents the max amount of presets and starts at 1.
 	State    string `json:"state" xml:"playback-details>state"`              // State is either playing, connecting, or stopped.

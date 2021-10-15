@@ -25,12 +25,13 @@ type HubClient struct {
 type Radio struct {
 	Client           goupnp.ServiceClient    //
 	Cancel           context.CancelFunc      // Cancel should be called when the radio is being removed.
-	GetStateChan     chan State              // GetStateChan returns a copy of the current State.
 	UUID             string                  // UUID is unique and should not change after it has been set.
-	UpdateVolumeChan chan int                // UpdateVolumeChan is used to update State's volume.
-	state            *State                  // state represents the current State of the Radio.
 	allStateChan     chan<- State            // allStateChan is written to when State changes.
+	dctx             context.Context         //
+	getStateChan     chan State              // GetStateChan returns a copy of the current State.
+	state            *State                  // state represents the current State of the Radio.
 	subscription     *goupnpsub.Subscription // Subscription that belongs to this Radio.
+	updateVolumeChan chan int                // UpdateVolumeChan is used to update State's volume.
 }
 
 // State of the radio.

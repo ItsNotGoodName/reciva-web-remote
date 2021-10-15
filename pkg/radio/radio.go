@@ -8,18 +8,18 @@ import (
 	"github.com/avast/retry-go"
 )
 
-func (rd *Radio) radioLoop(dctx context.Context) {
+func (rd *Radio) radioLoop() {
 	log.Println("radioLoop: started")
 
-	rd.initState(dctx)
+	rd.initState()
 
 	for {
 		select {
-		case <-dctx.Done():
+		case <-rd.dctx.Done():
 			log.Println("radioLoop: dctx is done, exiting")
 			return
-		case rd.GetStateChan <- *rd.state:
-		case rd.state.Volume = <-rd.UpdateVolumeChan:
+		case rd.getStateChan <- *rd.state:
+		case rd.state.Volume = <-rd.updateVolumeChan:
 			rd.stateChanged()
 		case newEvent := <-rd.subscription.EventChan:
 			changed := false
@@ -53,20 +53,20 @@ func (rd *Radio) radioLoop(dctx context.Context) {
 	}
 }
 
-func (rd *Radio) initState(dctx context.Context) {
+func (rd *Radio) initState() {
 	// Set name of radio
 	rd.state.Name = rd.Client.RootDevice.Device.FriendlyName
 
 	// Get number of presets
 	var presets int
 	if err := retry.Do(func() error {
-		if p, e := rd.GetNumberOfPresets(dctx); e != nil {
+		if p, e := rd.GetNumberOfPresets(rd.dctx); e != nil {
 			return e
 		} else {
 			presets = p
 			return nil
 		}
-	}, retry.Context(dctx)); err != nil {
+	}, retry.Context(rd.dctx)); err != nil {
 		log.Println(err)
 	} else {
 		presets = presets - 2
@@ -80,13 +80,13 @@ func (rd *Radio) initState(dctx context.Context) {
 	var volume int
 	// Get volume
 	if err := retry.Do(func() error {
-		if v, e := rd.GetVolume(dctx); e != nil {
+		if v, e := rd.GetVolume(rd.dctx); e != nil {
 			return e
 		} else {
 			volume = v
 			return nil
 		}
-	}, retry.Context(dctx)); err != nil {
+	}, retry.Context(rd.dctx)); err != nil {
 		log.Println(err)
 	} else {
 		if !IsValidVolume(volume) {
@@ -94,6 +94,26 @@ func (rd *Radio) initState(dctx context.Context) {
 		} else {
 			rd.state.Volume = volume
 		}
+	}
+}
+
+func (rd *Radio) UpdateVolume(volume int) error {
+	select {
+	case <-rd.dctx.Done():
+		return rd.dctx.Err()
+	case rd.updateVolumeChan <- volume:
+		return nil
+	}
+}
+
+func (rd *Radio) GetState(ctx context.Context) (*State, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-rd.dctx.Done():
+		return nil, rd.dctx.Err()
+	case state := <-rd.getStateChan:
+		return &state, nil
 	}
 }
 

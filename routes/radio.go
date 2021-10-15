@@ -18,7 +18,7 @@ type RadioPost struct {
 
 func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader) {
 	r.GET("/radios", func(c *gin.Context) {
-		c.JSON(http.StatusOK, a.GetRadioStates())
+		c.JSON(http.StatusOK, a.GetRadioStates(c))
 	})
 
 	r.POST("/radios", func(c *gin.Context) {
@@ -48,7 +48,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		uuid, _ := c.Params.Get("UUID")
 
 		// Get Radio or return 404
-		state, ok := a.GetRadioState(uuid)
+		state, ok := a.GetRadioState(c, uuid)
 		if !ok {
 			c.Status(http.StatusNotFound)
 			return
@@ -101,7 +101,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 
 		// Set volume if not nil
 		if radioPost.Volume != nil {
-			if err := rd.SetVolume(c, radio.NormalizeVolume(*radioPost.Volume)); err != nil {
+			if err := rd.SetVolume(radio.NormalizeVolume(*radioPost.Volume)); err != nil {
 				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err})
 				return
 			}

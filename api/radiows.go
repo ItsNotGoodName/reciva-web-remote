@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
@@ -47,10 +48,14 @@ func (rs *radioWS) start() {
 
 	// Send state if uuid not empty
 	if rs.uuid != "" {
-		state, ok := rs.a.GetRadioState(rs.uuid)
+		// Get radio state
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		state, ok := rs.a.GetRadioState(ctx, rs.uuid)
+		cancel()
 
 		if !ok {
-			log.Printf("radioWS.start(ERROR): state not found with uuid %s", rs.uuid)
+			log.Printf("radioWS.start(ERROR): GetRadioState return not ok with uuid %s", rs.uuid)
 			close(rs.c.Send)
 			return
 		}
@@ -107,9 +112,13 @@ func (rs *radioWS) handleWrite() {
 }
 
 func (rs *radioWS) handleRead() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+
 	defer func() {
 		rs.a.h.Unregister <- rs.c
 		rs.conn.Close()
+		cancel()
 	}()
 
 	rs.conn.SetReadLimit(maxMessageSize)
@@ -127,7 +136,7 @@ func (rs *radioWS) handleRead() {
 
 		// Parse uuid and get state from uuid
 		uuid := string(msg)
-		state, ok := rs.a.GetRadioState(uuid)
+		state, ok := rs.a.GetRadioState(ctx, uuid)
 
 		// End connection if unable to get state
 		if !ok {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"log"
 	"sync"
@@ -27,25 +28,32 @@ func (a *API) GetRadio(uuid string) (*radio.Radio, bool) {
 	return &radio, ok
 }
 
-func (a *API) GetRadioState(uuid string) (*radio.State, bool) {
+func (a *API) GetRadioState(ctx context.Context, uuid string) (*radio.State, bool) {
 	a.radioMapRWMutex.RLock()
 	radio, ok := a.radioMap[uuid]
 	a.radioMapRWMutex.RUnlock()
 	if !ok {
-		return nil, ok
+		return nil, false
 	}
 
-	state := <-radio.GetStateChan
-	return &state, ok
+	state, err := radio.GetState(ctx)
+	if err != nil {
+		return nil, false
+	}
+
+	return state, ok
 }
 
-func (a *API) GetRadioStates() []radio.State {
+func (a *API) GetRadioStates(ctx context.Context) []radio.State {
 	states := make([]radio.State, 0, len(a.radioMap))
 
 	a.radioMapRWMutex.RLock()
 	for _, v := range a.radioMap {
-		state := <-v.GetStateChan
-		states = append(states, state)
+		state, err := v.GetState(ctx)
+		if err != nil {
+			continue
+		}
+		states = append(states, *state)
 	}
 	a.radioMapRWMutex.RUnlock()
 

@@ -89,6 +89,7 @@ func (a *API) discoverRadios() error {
 	for _, v := range radios {
 		newRadioMap[v.UUID] = v
 	}
+	numRadios := len(newRadioMap)
 
 	// Close old radioMap and set new radioMap
 	a.radioMapRWMutex.Lock()
@@ -98,6 +99,7 @@ func (a *API) discoverRadios() error {
 	a.radioMap = newRadioMap
 	a.radioMapRWMutex.Unlock()
 
+	log.Printf("api.discoverRadios: discovered %d radios", numRadios)
 	return nil
 }
 
@@ -124,7 +126,6 @@ func NewService(h *radio.Hub) *API {
 		d := make(chan error)
 		a.discoverChan <- d
 		<-d
-		log.Println("api.NewService: radios discovered successfully")
 	}()
 
 	return &a

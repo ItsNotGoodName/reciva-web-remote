@@ -1,9 +1,8 @@
 <script setup>
 import {
-  PlayIcon,
   VolumeUpIcon,
-  VolumeOffIcon
-} from '@heroicons/vue/solid'
+  VolumeOffIcon,
+} from '@heroicons/vue/outline'
 
 defineProps({
   radio: Object,
@@ -14,19 +13,33 @@ defineProps({
 
 <template>
   <div>
-    <div class="space-x-2">
+    <div class="space-x-2 flex">
       <button
+        v-if="radio.power"
         @click="toggleRadioPower()"
-        v-bind:class="{ 'bg-green-300': radio.power, 'bg-red-300': !radio.power }"
-        class="inline-block w-16 rounded-xl p-2"
-      >{{ radio.power ? "ON" : "OFF" }}</button>
-      <button @click="setRadioVolume(radio.volume - 5)">
-        <VolumeOffIcon class="inline-block h-8 w-8" />
-      </button>
-      <span class>{{ radio.volume }}</span>
-      <button @click="setRadioVolume(radio.volume + 5)">
-        <VolumeUpIcon class="inline-block h-8 w-8" />
-      </button>
+        class="bg-green-300 hover:bg-green-500 inline-block w-16 rounded-xl p-2"
+      >On</button>
+      <button
+        v-else
+        @click="toggleRadioPower()"
+        class="bg-red-300 hover:bg-red-500 inline-block w-16 rounded-xl p-2"
+      >OFF</button>
+      <div v-if="!radio.isMuted" class="space-x-1 flex">
+        <button
+          class="hover:bg-gray-300 p-1 rounded-full"
+          @click="setRadioVolume(radio.volume - 5)"
+        >
+          <VolumeOffIcon class="inline-block h-8 w-8" />
+        </button>
+        <div class="m-auto w-6">{{ radio.volume }}</div>
+        <button
+          class="hover:bg-gray-300 p-1 rounded-full"
+          @click="setRadioVolume(radio.volume + 5)"
+        >
+          <VolumeUpIcon class="inline-block h-8 w-8" />
+        </button>
+      </div>
+      <div v-else class="bg-red-300 p-2">Muted</div>
     </div>
     <div class="mt-2">
       <div class="inline-block bg-gray-300 p-2">{{ radio.state }}</div>

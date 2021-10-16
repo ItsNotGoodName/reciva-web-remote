@@ -3,6 +3,7 @@ package goupnpsub
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,14 +14,14 @@ import (
 
 // NewControlPoint creates and returns a ControlPoint.
 func NewControlPoint() *ControlPoint {
-	return NewControlPointWithPort("8058")
+	return NewControlPointWithPort(8058)
 }
 
 // NewControlPoint creates and returns a ControlPoint that listens on a specific port.
-func NewControlPointWithPort(listenPort string) *ControlPoint {
+func NewControlPointWithPort(listenPort int) *ControlPoint {
 	cp := &ControlPoint{
 		listenUri:     "/eventSub",
-		listenPort:    listenPort,
+		listenPort:    fmt.Sprint(listenPort),
 		sidMap:        make(map[string]*Subscription),
 		sidMapRWMutex: sync.RWMutex{},
 	}

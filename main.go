@@ -1,15 +1,22 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
+	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
 )
 
 func main() {
+	// Create config
+	cfg := config.NewConfig()
+
 	// Create and start controlpoint
-	cp := goupnpsub.NewControlPoint()
+	cp := goupnpsub.NewControlPointWithPort(cfg.CPort)
 	go cp.Start()
 
 	// Create radio hub
@@ -28,6 +35,7 @@ func main() {
 	v1 := r.Group("/v1")
 	routes.AddRadioRoutes(v1, a, u)
 
-	// Listen and serve PORT env variable or 8080
-	r.Run()
+	// Listen and server
+	log.Println("main: listening on port", cfg.Port)
+	log.Fatal(r.Run(":" + fmt.Sprint(cfg.Port)))
 }

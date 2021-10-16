@@ -3,13 +3,14 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 
 ## Usage
 
-This program listens on port `8080` by default. It can be changed by setting the `PORT` environment variable. 
+This program's web server listens on port `8080` by default. It can be changed by setting the `-port` flag.
 ```
-export PORT=9000
+./reciva-web-remote -port=9000
 ```
-It also needs port `8058` for listening for upnp notify requests.
-
-Run the program by executing `./reciva-web-remote` or `.\reciva-web-remote.exe` depending on your platform.
+It also needs port `8058` for UPnP notify requests. It can be changed by setting the `-cport` flag.
+```
+./reciva-web-remote -cport=9058
+```
 
 ## Build
 

@@ -8,6 +8,7 @@ defineProps({
   radio: Object,
   toggleRadioPower: Function,
   setRadioVolume: Function,
+  refreshRadioVolume: Function,
   renewRadio: Function
 })
 </script>
@@ -33,7 +34,7 @@ defineProps({
           >
             <VolumeOffIcon class="inline-block h-8 w-8" />
           </button>
-          <div class="m-auto w-6">{{ radio.volume }}</div>
+          <button @click="refreshRadioVolume" class="m-auto w-6">{{ radio.volume }}</button>
           <button
             class="hover:bg-gray-300 p-1 rounded-full"
             @click="setRadioVolume(radio.volume + 5)"

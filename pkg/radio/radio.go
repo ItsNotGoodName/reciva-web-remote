@@ -19,8 +19,11 @@ func (rd *Radio) radioLoop() {
 			log.Println("Radio.radioLoop: dctx is done, exiting")
 			return
 		case rd.getStateChan <- *rd.state:
-		case rd.state.Volume = <-rd.updateVolumeChan:
-			rd.stateChanged()
+		case newVolume := <-rd.updateVolumeChan:
+			if rd.state.Volume != newVolume {
+				rd.state.Volume = newVolume
+				rd.stateChanged()
+			}
 		case newEvent := <-rd.Subscription.EventChan:
 			changed := false
 			for _, v := range newEvent.Properties {

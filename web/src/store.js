@@ -59,6 +59,14 @@ export default {
       console.log(error);
     });
   },
+  refreshRadioVolume(){
+    if (!this.state.uuid) return;
+    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid + "/volume", {
+      method: "POST",
+    }).catch((error) => {
+      console.log(error);
+    });
+  },
   toggleRadioPower() {
     if (!this.state.uuid) return;
     fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {

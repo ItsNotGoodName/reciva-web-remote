@@ -8,6 +8,8 @@ GET http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25
 GET http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25/ws
 ### Renew
 POST http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25/renew
+### Refresh volume
+POST http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25/volume
 ### Turn off radio
 PATCH  http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25
 content-type: application/json

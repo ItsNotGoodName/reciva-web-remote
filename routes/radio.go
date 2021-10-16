@@ -145,4 +145,30 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		// Renew
 		rd.Subscription.Renew()
 	})
+
+	r.POST("/radio/:UUID/volume", func(c *gin.Context) {
+		// Get UUID
+		uuid, _ := c.Params.Get("UUID")
+
+		// Return 404 if radio does not exist
+		rd, ok := a.GetRadio(uuid)
+		if !ok {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Get volume
+		volume, err := rd.GetVolume(c)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		// Update volume
+		err = rd.UpdateVolume(volume)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+	})
 }

@@ -99,7 +99,7 @@ func (a *API) discoverRadios() error {
 	a.radioMap = newRadioMap
 	a.radioMapRWMutex.Unlock()
 
-	log.Printf("api.discoverRadios: discovered %d radios", numRadios)
+	log.Printf("API.discoverRadios: discovered %d radios", numRadios)
 	return nil
 }
 

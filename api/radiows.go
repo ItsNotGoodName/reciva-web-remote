@@ -99,7 +99,7 @@ func (rs *radioWS) handleWrite() {
 
 			// Send state or end on error
 			if err := rs.conn.WriteJSON(state); err != nil {
-				log.Println(err)
+				log.Println("radioWS.handleWrite:", err)
 				return
 			}
 		case <-ticker.C:
@@ -129,7 +129,7 @@ func (rs *radioWS) handleRead() {
 		_, msg, err := rs.conn.ReadMessage()
 		if err != nil {
 			if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Println(err)
+				log.Println("radioWS.handleRead:", err)
 			}
 			return
 		}

@@ -9,14 +9,14 @@ import (
 )
 
 func (rd *Radio) radioLoop() {
-	log.Println("radioLoop: started")
+	log.Println("Radio.radioLoop: started")
 
 	rd.initState()
 
 	for {
 		select {
 		case <-rd.dctx.Done():
-			log.Println("radioLoop: dctx is done, exiting")
+			log.Println("Radio.radioLoop: dctx is done, exiting")
 			return
 		case rd.getStateChan <- *rd.state:
 		case rd.state.Volume = <-rd.updateVolumeChan:
@@ -35,7 +35,7 @@ func (rd *Radio) radioLoop() {
 					oldMetadata := rd.state.Metadata
 					rd.state.Metadata = ""
 					if err := xml.Unmarshal([]byte(v.Value), rd.state); err != nil {
-						log.Println(err)
+						log.Println("Radio.radioLoop:", err)
 						rd.state.Metadata = oldMetadata
 						continue
 					}
@@ -67,11 +67,11 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.dctx)); err != nil {
-		log.Println(err)
+		log.Println("Radio.initState:", err)
 	} else {
 		presets = presets - 2
 		if presets < 1 {
-			log.Println("radioLoop(ERROR): invalid number of presets were given from radio, ", rd.state.Presets)
+			log.Println("Radio.initState(ERROR): invalid number of presets were given from radio,", rd.state.Presets)
 		} else {
 			rd.state.Presets = presets
 		}
@@ -87,10 +87,10 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.dctx)); err != nil {
-		log.Println(err)
+		log.Println("Radio.initState:", err)
 	} else {
 		if !IsValidVolume(volume) {
-			log.Println("radioLoop(ERROR): invalid volume was given from radio, ", rd.state.Volume)
+			log.Println("Radio.initState(ERROR): invalid volume was given from radio,", rd.state.Volume)
 		} else {
 			rd.state.Volume = volume
 		}

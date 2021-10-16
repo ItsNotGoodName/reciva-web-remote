@@ -31,6 +31,7 @@ func NewControlPointWithPort(listenPort int) *ControlPoint {
 
 // Start a HTTP server that listens for notify requests.
 func (cp *ControlPoint) Start() {
+	log.Println("ControlPoint.Start: listening on port", cp.listenPort)
 	log.Fatal(http.ListenAndServe(":"+cp.listenPort, nil))
 }
 
@@ -65,7 +66,7 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get SID from request
 	sid := r.Header.Get("SID")
 	if sid == "" {
-		log.Println("ServeHTTP: notify request did not supply sid")
+		log.Println("ControlPoint.ServeHTTP(WARNING): notify request did not supply sid")
 		w.WriteHeader(http.StatusPreconditionFailed)
 		return
 	}
@@ -75,14 +76,14 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err)
+		log.Println("ControlPoint.ServeHTTP:", err)
 		return
 	}
 
 	// Parse xmlEvent from request's body
 	xmlEvent, err := parseEventXML(body)
 	if err != nil {
-		log.Println(err)
+		log.Println("ControlPoint.ServeHTTP:", err)
 		return
 	}
 
@@ -98,7 +99,7 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sub, ok := cp.sidMap[sid]
 	cp.sidMapRWMutex.RUnlock()
 	if !ok {
-		log.Println("ServeHTTP(WARNING): could not find sid in sidMap")
+		log.Println("ControlPoint.ServeHTTP(WARNING): could not find sid in sidMap")
 		w.WriteHeader(http.StatusPreconditionFailed)
 		return
 	}
@@ -106,7 +107,7 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Try to send event to sub's EventChan, fail after waiting for 20 seconds
 	select {
 	case <-time.After(20 * time.Second):
-		log.Println("ServeHTTP(ERROR): could not send event to subscription's EventChan")
+		log.Println("ControlPoint.ServeHTTP(ERROR): could not send event to subscription's EventChan")
 	case sub.EventChan <- &event:
 	}
 }
@@ -168,7 +169,7 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 // subscriptionLoop handles subscribing and renewing subscriptions.
 func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription) {
 	// TODO: Refactor this function
-	log.Println("subscriptionLoop: started")
+	log.Println("ControlPoint.subscriptionLoop: started")
 
 	// Subscription status goroutine
 	activeChan := make(chan bool)
@@ -189,29 +190,28 @@ func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription
 	renew := func() {
 		if !<-sub.ActiveChan {
 			if err := cp.subscribe(dctx, sub); err != nil {
-				log.Print(err)
+				log.Print("ControlPoint.subscriptionLoop:", err)
 				return
 			}
 			activeChan <- true
 			duration = getRenewDuration(sub.timeout)
-			log.Printf("subscriptionLoop: subscribe successful, will resubscribe in %s", duration)
+			log.Printf("ControlPoint.subscriptionLoop: subscribe successful, will resubscribe in %s intervals", duration)
 			return
 		}
 		if err := sub.resubscribe(dctx); err != nil {
 			activeChan <- false
 			duration = 5 * time.Second
-			log.Println(err)
+			log.Print("ControlPoint.subscriptionLoop:", err)
 			return
 		}
 		duration = getRenewDuration(sub.timeout)
-		log.Printf("subscriptionLoop: resubscribe successful, will resubscribe in %s", duration)
 	}
 	renew()
 
 	for {
 		select {
 		case <-dctx.Done():
-			log.Println("subscriptionLoop: dctx is done, starting cleanup")
+			log.Println("ControlPoint.subscriptionLoop: dctx is done, starting cleanup")
 
 			// Delete sub.sid from sidMap
 			cp.sidMapRWMutex.Lock()
@@ -224,13 +224,12 @@ func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription
 			defer cancel()
 			err := sub.unsubscribe(ctx)
 			if err != nil {
-				log.Println(err)
+				log.Print("ControlPoint.subscriptionLoop:", err)
 			}
 
-			log.Println("subscriptionLoop: cleanup finished")
+			log.Println("ControlPoint.subscriptionLoop: cleanup finished")
 			return
 		case <-sub.renewChan:
-			log.Println("subscriptionLoop: RenewChan received")
 			renew()
 		case <-time.After(duration): // TODO: Use time.NewTimer to prevent memory usage when RenewChan spam called
 			renew()

@@ -33,7 +33,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		// Upgrade connection to websocket
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			log.Print("Error during connection upgradation:", err)
+			log.Print("Routes.AddRadioRoutes(ERROR):", err)
 			return
 		}
 
@@ -123,7 +123,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		// Upgrade connection to websocket
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			log.Print("Error during connection upgradation:", err)
+			log.Print("Routes.AddRadioRoutes(ERROR):", err)
 			return
 		}
 

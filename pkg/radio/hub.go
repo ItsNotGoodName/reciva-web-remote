@@ -22,17 +22,17 @@ func NewHub(cp *goupnpsub.ControlPoint) *Hub {
 }
 
 func (h *Hub) hubLoop() {
-	log.Println("hubLoop: started")
+	log.Println("Hub.hubLoop: started")
 	for {
 		select {
 		case client := <-h.Register:
 			h.clients[client] = true
-			log.Println("hubLoop: registered")
+			log.Println("Hub.hubLoop: registered")
 		case client := <-h.Unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.Send)
-				log.Println("hubLoop: unregistered")
+				log.Println("Hub.hubLoop: unregistered")
 			}
 		case state := <-h.allStateChan:
 			for client := range h.clients {
@@ -41,7 +41,7 @@ func (h *Hub) hubLoop() {
 				default:
 					delete(h.clients, client)
 					close(client.Send)
-					log.Println("hubLoop: client deleted")
+					log.Println("Hub.hubLoop: client deleted")
 				}
 			}
 		}
@@ -93,7 +93,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 	for i := range clients {
 		radio, err := h.NewRadioFromClient(clients[i])
 		if err != nil {
-			log.Println(err)
+			log.Println("Hub.NewRadios:", err)
 			continue
 		}
 

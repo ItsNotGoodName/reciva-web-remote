@@ -3,8 +3,8 @@ import { reactive, readonly } from "vue";
 const API_URL = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
   : "";
-const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : (() =>{
-  if (window.location.protocol == "http:"){
+const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : (() => {
+  if (window.location.protocol == "http:") {
     return "ws://" + window.location.host
   }
   return "wss://" + window.location.host
@@ -13,7 +13,7 @@ const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : (() =
 export default {
   state: reactive({
     connecting: false,
-    connection: false,
+    connected: false,
     uuid: "",
     radio: {},
     radios: {},
@@ -84,13 +84,13 @@ export default {
     this.ws.send(uuid);
   },
   initWS() {
-    if (this.connecting) {
+    if (this.state.connecting) {
       return false;
     }
-    if (this.connection) {
+    if (this.state.connected) {
       return true;
     }
-    this.connecting = true;
+    this.state.connecting = true;
 
     // Create websocket
     if (this.state.uuid == undefined || this.state.uuid == "") {
@@ -113,8 +113,8 @@ export default {
     this.ws.addEventListener(
       "open",
       function () {
-        this.connection = true;
-        this.connecting = false;
+        this.state.connected = true;
+        this.state.connecting = false;
       }.bind(this)
     );
 
@@ -122,9 +122,8 @@ export default {
     this.ws.addEventListener(
       "close",
       function (event) {
-        this.connection = false;
-        this.connecting = false;
-        console.error(event);
+        this.state.connected = false;
+        this.state.connecting = false;
       }.bind(this)
     );
 
@@ -132,8 +131,8 @@ export default {
     this.ws.addEventListener(
       "error",
       function (event) {
-        this.connection = false;
-        this.connecting = false;
+        this.state.connected = false;
+        this.state.connecting = false;
         console.error(event);
       }.bind(this)
     );

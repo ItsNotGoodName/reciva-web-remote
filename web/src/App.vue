@@ -2,6 +2,7 @@
 import SelectRadio from './components/SelectRadio.vue';
 import RadioPanel from './components/RadioPanel.vue';
 import RadioPresets from './components/RadioPresets.vue';
+import RadioStatus from './components/RadioStatus.vue';
 
 import Store from "./store"
 
@@ -10,7 +11,8 @@ export default {
   components: {
     SelectRadio,
     RadioPanel,
-    RadioPresets
+    RadioPresets, 
+    RadioStatus
   },
   setup() {
     return {
@@ -34,6 +36,7 @@ export default {
 </script>
 
 <template>
+  <RadioStatus v-if="state.uuid" :connecting="state.connecting" :connected="state.connected" />
   <div class="container mx-auto px-2">
     <SelectRadio
       class="mt-2"

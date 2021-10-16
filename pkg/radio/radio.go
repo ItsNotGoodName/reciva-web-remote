@@ -21,7 +21,7 @@ func (rd *Radio) radioLoop() {
 		case rd.getStateChan <- *rd.state:
 		case rd.state.Volume = <-rd.updateVolumeChan:
 			rd.stateChanged()
-		case newEvent := <-rd.subscription.EventChan:
+		case newEvent := <-rd.Subscription.EventChan:
 			changed := false
 			for _, v := range newEvent.Properties {
 				if v.Name == "PowerState" {

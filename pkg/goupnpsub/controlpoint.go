@@ -230,6 +230,7 @@ func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription
 			log.Println("ControlPoint.subscriptionLoop: cleanup finished")
 			return
 		case <-sub.renewChan:
+			log.Println("ControlPoint.subscriptionLoop: renewChan received")
 			renew()
 		case <-time.After(duration): // TODO: Use time.NewTimer to prevent memory usage when RenewChan spam called
 			renew()

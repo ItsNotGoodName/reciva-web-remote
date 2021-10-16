@@ -12,7 +12,6 @@ func (sub *Subscription) Renew() {
 	select {
 	case sub.renewChan <- true:
 	default:
-		return
 	}
 }
 

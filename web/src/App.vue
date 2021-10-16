@@ -30,7 +30,8 @@ export default {
     setRadioPreset: (preset) => Store.setRadioPreset(preset),
     setRadioVolume: (volume) => Store.setRadioVolume(volume),
     discoverRadios: () => Store.discoverRadios(),
-    toggleRadioPower: () => Store.toggleRadioPower()
+    toggleRadioPower: () => Store.toggleRadioPower(),
+    renewRadio: ()=> Store.renewRadio()
   }
 }
 </script>
@@ -51,6 +52,7 @@ export default {
         :radio="state.radio"
         :toggleRadioPower="toggleRadioPower"
         :setRadioVolume="setRadioVolume"
+        :renewRadio="renewRadio"
       />
       <RadioPresets class="mt-2" :radio="state.radio" :setRadioPreset="setRadioPreset" />
     </div>

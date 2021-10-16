@@ -23,14 +23,14 @@ type HubClient struct {
 
 // Radio represents the radio on the network.
 type Radio struct {
-	Client           goupnp.ServiceClient    // Client is the goupnp SOAP client.
 	Cancel           context.CancelFunc      // Cancel should be called when the radio is being removed.
+	Client           goupnp.ServiceClient    // Client is the goupnp SOAP client.
+	Subscription     *goupnpsub.Subscription // Subscription that belongs to this Radio.
 	UUID             string                  // UUID is unique and should not change after it has been set.
 	allStateChan     chan<- State            // allStateChan is written to when State changes.
 	dctx             context.Context         // dctx is the context for radioLoop.
 	getStateChan     chan State              // GetStateChan returns a copy of the current State.
 	state            *State                  // state represents the current State of the Radio.
-	subscription     *goupnpsub.Subscription // Subscription that belongs to this Radio.
 	updateVolumeChan chan int                // UpdateVolumeChan is used to update State's volume.
 }
 

@@ -68,13 +68,13 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 	rd := Radio{
 		Cancel:           cancel,
 		Client:           client,
-		getStateChan:     make(chan State),
+		Subscription:     sub,
 		UUID:             uuid,
+		getStateChan:     make(chan State),
 		updateVolumeChan: make(chan int),
 		allStateChan:     h.allStateChan,
 		dctx:             dctx,
 		state:            &State{UUID: uuid},
-		subscription:     sub,
 	}
 	go rd.radioLoop()
 

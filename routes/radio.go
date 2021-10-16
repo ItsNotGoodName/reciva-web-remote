@@ -130,4 +130,19 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		// Handle websocket
 		a.HandleWS(conn, uuid)
 	})
+
+	r.POST("/radio/:UUID/renew", func(c *gin.Context) {
+		// Get UUID
+		uuid, _ := c.Params.Get("UUID")
+
+		// Return 404 if radio does not exist
+		rd, ok := a.GetRadio(uuid)
+		if !ok {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Renew
+		rd.Subscription.Renew()
+	})
 }

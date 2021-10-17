@@ -157,16 +157,8 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 			return
 		}
 
-		// Get volume
-		volume, err := rd.GetVolume(c)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-
-		// Update volume
-		err = rd.UpdateVolume(volume)
-		if err != nil {
+		// Refresh volume
+		if err := rd.RefreshVolume(c); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}

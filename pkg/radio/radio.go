@@ -100,6 +100,21 @@ func (rd *Radio) initState() {
 	}
 }
 
+func (rd *Radio) RefreshVolume(ctx context.Context) error {
+	// Get volume
+	volume, err := rd.GetVolume(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Update volume
+	if err = rd.UpdateVolume(volume); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (rd *Radio) UpdateVolume(volume int) error {
 	select {
 	case <-rd.dctx.Done():

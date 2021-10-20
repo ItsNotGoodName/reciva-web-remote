@@ -35,6 +35,11 @@ func main() {
 	v1 := r.Group("/v1")
 	routes.AddRadioRoutes(v1, a, u)
 
+	// Add preset routes if enabled
+	if cfg.EnablePresets {
+		routes.AddPresetRoutes(r, cfg)
+	}
+
 	// Listen and server
 	log.Println("main: listening on port", cfg.Port)
 	log.Fatal(r.Run(":" + fmt.Sprint(cfg.Port)))

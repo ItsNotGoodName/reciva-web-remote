@@ -35,6 +35,9 @@ func main() {
 	v1 := r.Group("/v1")
 	routes.AddRadioRoutes(v1, a, u)
 
+	// Add config routes
+	routes.AddConfigRoutes(r, cfg)
+
 	// Add preset routes if enabled
 	if cfg.EnablePresets {
 		routes.AddPresetRoutes(r, cfg)

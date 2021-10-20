@@ -6,10 +6,10 @@ import (
 )
 
 type Config struct {
-	Port          int
-	CPort         int
-	EnablePresets bool
-	Presets       []string
+	Port          int      `json:"port"`
+	CPort         int      `json:"cport"`
+	EnablePresets bool     `json:"enablePresets"`
+	Presets       []string `json:"presets"`
 }
 
 func NewConfig() *Config {

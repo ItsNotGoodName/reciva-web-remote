@@ -17,9 +17,9 @@ func main() {
 	cfg := config.NewConfig()
 
 	// Create store
-	_, err := store.NewService(cfg)
-	if err != nil {
-		log.Println("main.main: ", err)
+	s, sErr := store.NewService(cfg)
+	if sErr != nil {
+		log.Println("main.main: ", sErr)
 	}
 
 	// Create and start controlpoint
@@ -30,7 +30,7 @@ func main() {
 	h := radio.NewHub(cp)
 
 	// Create api
-	a := api.NewService(h)
+	a := api.NewAPI(h)
 
 	// Create router
 	r := newRouter()
@@ -45,12 +45,21 @@ func main() {
 	// Add config routes
 	routes.AddConfigRoutes(r, cfg)
 
-	// Add preset routes if enabled
-	if cfg.EnablePresets {
-		routes.AddPresetRoutes(r, cfg)
+	// Check if store has no error
+	if sErr == nil {
+		// Check if presets are enabled
+		if cfg.EnablePresets {
+			// Create preset api
+			p := api.NewPresetAPI(a, s)
+			// Add preset routes
+			routes.AddPresetRoutes(r, p)
+		} else {
+			// Close store
+			s.Cancel()
+		}
 	}
 
-	// Listen and server
+	// Listen and serve
 	log.Println("main: listening on port", cfg.Port)
 	log.Fatal(r.Run(":" + fmt.Sprint(cfg.Port)))
 }

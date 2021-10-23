@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
-const defaultTimeout = "Second-300"
+const (
+	defaultTimeout = "Second-300"
+	DefaultPort    = 8058
+)
 
 var timeoutReg = regexp.MustCompile(`(?i)second-([0-9]*)`)
 

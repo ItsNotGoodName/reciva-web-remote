@@ -3,6 +3,8 @@ package config
 import (
 	"flag"
 	"strings"
+
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 )
 
 type Config struct {
@@ -13,9 +15,11 @@ type Config struct {
 	Presets       []string `json:"presets"`
 }
 
+const DefaultPort = 8080
+
 func NewConfig() *Config {
-	port := flag.Int("port", 8080, "Listen port for web server.")
-	cport := flag.Int("cport", 8058, "Listen port for UPnP notify server.")
+	port := flag.Int("port", DefaultPort, "Listen port for web server.")
+	cport := flag.Int("cport", goupnpsub.DefaultPort, "Listen port for UPnP notify server.")
 	presetsFlag := flag.String("presets", "", "List of presets to host seperated by comma (ex. /01.m3u,/02.m3u).")
 	config := flag.String("config", "settings.json", "Path to config location.")
 	enablePresets := false

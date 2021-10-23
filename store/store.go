@@ -6,19 +6,19 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
+
+	"github.com/ItsNotGoodName/reciva-web-remote/config"
 )
 
-func NewServiceWithPath(path string) (*Store, error) {
+func NewService(cfg *config.Config) (*Store, error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	file := filepath.Join(path, "settings.json")
 
 	s := &Store{
 		ctx:               ctx,
 		Cancel:            cancel,
-		file:              file,
+		file:              cfg.ConfigPath,
 		getSettingsChan:   make(chan Settings),
 		writeSettingsChan: make(chan chan error),
 		readSettingsChan:  make(chan chan error),
@@ -33,17 +33,26 @@ func NewServiceWithPath(path string) (*Store, error) {
 		return nil, err
 	}
 
+	if len(cfg.Presets) > 0 {
+		p := make([]Preset, len(cfg.Presets))
+		for _, v := range cfg.Presets {
+			p = append(p, Preset{URI: v})
+		}
+		st.mergePresets(p)
+	}
+
+	if len(st.Presets) > 0 {
+		cfg.EnablePresets = true
+		var u []string
+		for _, v := range st.Presets {
+			u = append(u, v.URI)
+		}
+		cfg.Presets = u
+	}
+
 	go s.storeLoop(st)
 
 	return s, nil
-}
-
-func NewService() (*Store, error) {
-	path, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	return NewServiceWithPath(path)
 }
 
 func (s *Store) writeSettings(st *Settings) error {

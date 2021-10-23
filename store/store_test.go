@@ -3,8 +3,11 @@ package store
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/ItsNotGoodName/reciva-web-remote/config"
 )
 
 func TestStore(t *testing.T) {
@@ -13,9 +16,11 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	cfg := config.NewConfig()
+	cfg.ConfigPath = filepath.Join(p, "settings.json")
 
 	// Create store
-	s, err := NewServiceWithPath(p)
+	s, err := NewService(cfg)
 	if err != nil {
 		t.Error(err)
 	}

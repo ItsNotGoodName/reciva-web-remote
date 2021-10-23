@@ -9,11 +9,18 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
+	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
 func main() {
 	// Create config
 	cfg := config.NewConfig()
+
+	// Create store
+	_, err := store.NewService(cfg)
+	if err != nil {
+		panic(err)
+	}
 
 	// Create and start controlpoint
 	cp := goupnpsub.NewControlPointWithPort(cfg.CPort)

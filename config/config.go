@@ -8,20 +8,21 @@ import (
 )
 
 type Config struct {
-	ConfigPath    string   `json:"configPath"`
-	Port          int      `json:"port"`
-	CPort         int      `json:"cport"`
-	EnablePresets bool     `json:"enablePresets"`
-	Presets       []string `json:"presets"`
+	ConfigPath    string
+	Port          int
+	CPort         int
+	EnablePresets bool
+	Presets       []string
 }
 
 const DefaultPort = 8080
+const DefaultFile = "reciva-web-remote.json"
 
 func NewConfig() *Config {
 	port := flag.Int("port", DefaultPort, "Listen port for web server.")
 	cport := flag.Int("cport", goupnpsub.DefaultPort, "Listen port for UPnP notify server.")
 	presetsFlag := flag.String("presets", "", "List of presets to host seperated by comma (ex. /01.m3u,/02.m3u).")
-	config := flag.String("config", "settings.json", "Path to config location.")
+	config := flag.String("config", DefaultFile, "Path to config location.")
 	enablePresets := false
 	var presets []string
 
@@ -30,6 +31,8 @@ func NewConfig() *Config {
 	if *presetsFlag != "" {
 		presets = strings.Split(*presetsFlag, ",")
 		enablePresets = true
+	} else {
+		presets = make([]string, 0)
 	}
 
 	return &Config{

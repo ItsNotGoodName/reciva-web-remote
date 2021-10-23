@@ -33,7 +33,7 @@ func NewService(cfg *config.Config) (*Store, error) {
 	}
 
 	if len(cfg.Presets) > 0 {
-		p := make([]Preset, len(cfg.Presets))
+		p := make([]Preset, 0, len(cfg.Presets))
 		for _, v := range cfg.Presets {
 			p = append(p, Preset{URI: v})
 		}

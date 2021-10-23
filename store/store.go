@@ -12,11 +12,11 @@ import (
 )
 
 func NewService(cfg *config.Config) (*Store, error) {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	dctx := context.Background()
+	dctx, cancel := context.WithCancel(dctx)
 
 	s := &Store{
-		ctx:               ctx,
+		dctx:              dctx,
 		Cancel:            cancel,
 		file:              cfg.ConfigPath,
 		getSettingsChan:   make(chan Settings),
@@ -146,7 +146,14 @@ func (s *Store) storeLoop(st *Settings) {
 				s.writeSettings(st)
 				shouldSave = false
 			}
-		case <-s.ctx.Done():
+		case <-s.dctx.Done():
+			if shouldSave {
+				log.Println("Store.storeLoop: dctx is done, saving")
+				s.writeSettings(st)
+				return
+			}
+			log.Println("Store.storeLoop: dctx is done")
+			return
 		}
 	}
 }

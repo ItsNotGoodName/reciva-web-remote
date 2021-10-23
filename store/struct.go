@@ -17,13 +17,13 @@ type Stream struct {
 
 type Preset struct {
 	URI      string `json:"uri"`
-	StreamID int    `json:"id"`
+	StreamID int    `json:"sid"`
 }
 
 type Store struct {
 	Cancel            context.CancelFunc
 	file              string
-	ctx               context.Context
+	dctx              context.Context
 	getSettingsChan   chan Settings
 	writeSettingsChan chan chan error
 	readSettingsChan  chan chan error

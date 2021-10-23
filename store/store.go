@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 )
 
 func NewService(cfg *config.Config) (*Store, error) {
@@ -49,6 +50,14 @@ func NewService(cfg *config.Config) (*Store, error) {
 			u = append(u, v.URI)
 		}
 		cfg.Presets = u
+	}
+
+	if cfg.Port != st.Port && cfg.Port == config.DefaultPort {
+		cfg.Port = st.Port
+	}
+
+	if cfg.CPort != st.CPort && cfg.CPort == goupnpsub.DefaultPort {
+		cfg.CPort = st.CPort
 	}
 
 	go s.storeLoop(st)

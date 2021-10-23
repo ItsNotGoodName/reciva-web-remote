@@ -19,7 +19,7 @@ func main() {
 	// Create store
 	_, err := store.NewService(cfg)
 	if err != nil {
-		panic(err)
+		log.Println("main.main: ", err)
 	}
 
 	// Create and start controlpoint

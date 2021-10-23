@@ -30,6 +30,7 @@ func NewService(cfg *config.Config) (*Store, error) {
 
 	st, err := s.readSettings()
 	if err != nil {
+		cfg.EnablePresets = false
 		return nil, err
 	}
 

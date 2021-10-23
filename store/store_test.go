@@ -30,32 +30,28 @@ func TestStore(t *testing.T) {
 		t.Error(err)
 	}
 
-	testReadSettings(t, s)
+	stream := Stream{ID: 23, Name: "Name", Content: "Content"}
 
 	// Add stream
-	s.updateStreamChan <- Stream{ID: 23, Name: "Name", Content: "Content"}
+	s.UpdateStream(&stream)
+	if getStream := s.GetStream(stream.ID); getStream == nil {
+		t.Error("stream should not be nil")
+	} else {
+		if !reflect.DeepEqual(stream, *getStream) {
+			t.Error("saved stream is not equal", stream, *getStream)
+		}
+	}
 
-	// Write to disk
-	errChan := make(chan error)
-	s.writeSettingsChan <- errChan
-	<-errChan
+	// Delete stream
+	if c := s.DeleteStream(stream.ID); c != 1 {
+		t.Error("streams deleted should be 1, got", c)
+	}
+	if stream := s.GetStream(stream.ID); stream != nil {
+		t.Error("stream should be nil")
+	}
 
-	testReadSettings(t, s)
+	s.WriteSettings()
 
 	// Stop store
 	s.Cancel()
-}
-
-func testReadSettings(t *testing.T, s *Store) {
-	// Get settings from loop
-	loopSettings := <-s.getSettingsChan
-
-	// Read settings
-	if readSettings, err := s.readSettings(); err != nil {
-		t.Error(err)
-	} else {
-		if !reflect.DeepEqual(loopSettings, *readSettings) {
-			t.Error("current settings are not equal to settings on disk, ", loopSettings, *readSettings)
-		}
-	}
 }

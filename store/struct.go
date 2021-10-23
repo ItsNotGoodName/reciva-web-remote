@@ -1,6 +1,9 @@
 package store
 
-import "context"
+import (
+	"context"
+	"sync"
+)
 
 type Settings struct {
 	Port    int      `json:"port"`
@@ -21,14 +24,12 @@ type Preset struct {
 }
 
 type Store struct {
-	Cancel            context.CancelFunc
-	file              string
-	dctx              context.Context
-	getSettingsChan   chan Settings
-	writeSettingsChan chan chan error
-	readSettingsChan  chan chan error
-	deleteStreamChan  chan int
-	updateStreamChan  chan Stream
-	updatePresetChan  chan Preset
-	setPresetsChan    chan []Preset
+	Cancel         context.CancelFunc
+	file           string
+	dctx           context.Context
+	st             *Settings
+	stMutex        sync.Mutex
+	writeChan      chan chan error
+	readChan       chan chan error
+	queueWriteChan chan bool
 }

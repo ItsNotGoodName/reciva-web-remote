@@ -17,22 +17,19 @@ func NewService(cfg *config.Config) (*Store, error) {
 	dctx, cancel := context.WithCancel(dctx)
 
 	s := &Store{
-		dctx:              dctx,
-		Cancel:            cancel,
-		file:              cfg.ConfigPath,
-		getSettingsChan:   make(chan Settings),
-		writeSettingsChan: make(chan chan error),
-		readSettingsChan:  make(chan chan error),
-		deleteStreamChan:  make(chan int),
-		updateStreamChan:  make(chan Stream),
-		updatePresetChan:  make(chan Preset),
-		setPresetsChan:    make(chan []Preset),
+		dctx:           dctx,
+		Cancel:         cancel,
+		file:           cfg.ConfigPath,
+		writeChan:      make(chan chan error),
+		readChan:       make(chan chan error),
+		queueWriteChan: make(chan bool),
 	}
 
-	st, err := s.readSettings()
-	if err != nil {
+	if st, err := s.readSettings(); err != nil {
 		cfg.EnablePresets = false
 		return nil, err
+	} else {
+		s.st = st
 	}
 
 	if len(cfg.Presets) > 0 {
@@ -40,27 +37,27 @@ func NewService(cfg *config.Config) (*Store, error) {
 		for _, v := range cfg.Presets {
 			p = append(p, Preset{URI: v})
 		}
-		st.mergePresets(p)
+		s.st.mergePresets(p)
 	}
 
-	if len(st.Presets) > 0 {
+	if len(s.st.Presets) > 0 {
 		cfg.EnablePresets = true
 		var u []string
-		for _, v := range st.Presets {
+		for _, v := range s.st.Presets {
 			u = append(u, v.URI)
 		}
 		cfg.Presets = u
 	}
 
-	if cfg.Port != st.Port && cfg.Port == config.DefaultPort {
-		cfg.Port = st.Port
+	if cfg.Port != s.st.Port && cfg.Port == config.DefaultPort {
+		cfg.Port = s.st.Port
 	}
 
-	if cfg.CPort != st.CPort && cfg.CPort == goupnpsub.DefaultPort {
-		cfg.CPort = st.CPort
+	if cfg.CPort != s.st.CPort && cfg.CPort == goupnpsub.DefaultPort {
+		cfg.CPort = s.st.CPort
 	}
 
-	go s.storeLoop(st)
+	go s.storeLoop()
 
 	return s, nil
 }
@@ -83,6 +80,7 @@ func (s *Store) readSettings() (*Settings, error) {
 	b, err := ioutil.ReadFile(s.file)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Println("Store.readSettings: creating new settings file", s.file)
 			st := NewSettings()
 			err = s.writeSettings(st)
 			return st, err
@@ -98,67 +96,63 @@ func (s *Store) readSettings() (*Settings, error) {
 	return &st, nil
 }
 
-func (s *Store) storeLoop(st *Settings) {
+func (s *Store) queueWrite() {
+	select {
+	case s.queueWriteChan <- true:
+	case <-s.dctx.Done():
+	}
+}
+
+func (s *Store) storeLoop() {
 	ticker := time.NewTicker(15 * time.Second)
-	shouldSave := false
+	save := false
+	writeSettings := func() error {
+		s.stMutex.Lock()
+		st := *s.st
+		s.stMutex.Unlock()
+		return s.writeSettings(&st)
+	}
+	readSettings := func() error {
+		st, err := s.readSettings()
+		if err != nil {
+			return err
+		}
+		s.stMutex.Lock()
+		s.st = st
+		s.stMutex.Unlock()
+		return nil
+	}
 
 	for {
 		select {
-		case s.getSettingsChan <- *st:
-		case res := <-s.writeSettingsChan:
-			err := s.writeSettings(st)
-			res <- err
-			shouldSave = false
-		case res := <-s.readSettingsChan:
-			var err error
-			st, err = s.readSettings()
-			res <- err
-			shouldSave = false
-		case id := <-s.deleteStreamChan:
-			newStreams := make([]Stream, len(st.Streams))
-			for i := range st.Streams {
-				if st.Streams[i].ID != id {
-					newStreams[i] = st.Streams[i]
-				}
+		case save = <-s.queueWriteChan:
+		case res := <-s.readChan:
+			err := readSettings()
+			select {
+			case res <- err:
+			case <-s.dctx.Done():
 			}
-			shouldSave = true
-		case newStream := <-s.updateStreamChan:
-			idx := -1
-			for i := range st.Streams {
-				if newStream.ID == st.Streams[i].ID {
-					idx = i
-					break
-				}
+		case res := <-s.writeChan:
+			err := writeSettings()
+			select {
+			case res <- err:
+			case <-s.dctx.Done():
 			}
-			if idx >= 0 {
-				st.Streams[idx] = newStream
-			} else {
-				st.Streams = append(st.Streams, newStream)
-			}
-			shouldSave = true
-		case newPreset := <-s.updatePresetChan:
-			idx := -1
-			for i := range st.Presets {
-				if newPreset.URI == st.Presets[i].URI {
-					idx = i
-					break
-				}
-			}
-			if idx >= 0 {
-				st.Presets[idx] = newPreset
-				shouldSave = true
-			}
-		case st.Presets = <-s.setPresetsChan:
 		case <-ticker.C:
-			if shouldSave {
-				log.Println("Store.storeLoop: settings saved")
-				s.writeSettings(st)
-				shouldSave = false
+			if save {
+				if err := writeSettings(); err != nil {
+					log.Println("Store.storeLoop(ERROR):", err)
+				} else {
+					log.Println("Store.storeLoop: settings saved")
+					save = false
+				}
 			}
 		case <-s.dctx.Done():
-			if shouldSave {
+			if save {
 				log.Println("Store.storeLoop: dctx is done, saving")
-				s.writeSettings(st)
+				if err := writeSettings(); err != nil {
+					log.Println("Store.storeLoop(ERROR):", err)
+				}
 				return
 			}
 			log.Println("Store.storeLoop: dctx is done")
@@ -167,34 +161,98 @@ func (s *Store) storeLoop(st *Settings) {
 	}
 }
 
-func (s *Store) GetSettings() Settings {
-	return <-s.getSettingsChan
+func (s *Store) GetSettings() *Settings {
+	s.stMutex.Lock()
+	st := *s.st
+	s.stMutex.Unlock()
+	return &st
 }
 
 func (s *Store) WriteSettings() error {
 	errChan := make(chan error)
-	s.writeSettingsChan <- errChan
-	return <-errChan
+	select {
+	case s.writeChan <- errChan:
+		return <-errChan
+	case <-s.dctx.Done():
+		return s.dctx.Err()
+	}
 }
 
 func (s *Store) ReadSettings() error {
 	errChan := make(chan error)
-	s.readSettingsChan <- errChan
-	return <-errChan
+	select {
+	case s.readChan <- errChan:
+		return <-errChan
+	case <-s.dctx.Done():
+		return s.dctx.Err()
+	}
 }
 
-func (s *Store) DeleteStream(id int) {
-	s.deleteStreamChan <- id
+func (s *Store) DeleteStream(id int) int {
+	deleted := 0
+	s.stMutex.Lock()
+	newStreams := make([]Stream, 0, len(s.st.Streams))
+	for i := range s.st.Streams {
+		if s.st.Streams[i].ID != id {
+			newStreams[i] = s.st.Streams[i]
+		} else {
+			deleted += 1
+		}
+	}
+	s.st.Streams = newStreams
+	s.stMutex.Unlock()
+	s.queueWrite()
+	return deleted
+}
+
+func (s *Store) GetStream(id int) *Stream {
+	s.stMutex.Lock()
+	for i := range s.st.Streams {
+		if s.st.Streams[i].ID == id {
+			s.stMutex.Unlock()
+			return &s.st.Streams[i]
+		}
+	}
+	s.stMutex.Unlock()
+	return nil
 }
 
 func (s *Store) UpdateStream(stream *Stream) {
-	s.updateStreamChan <- *stream
+	s.stMutex.Lock()
+	for i := range s.st.Streams {
+		if stream.ID == s.st.Streams[i].ID {
+			s.st.Streams[i] = *stream
+			s.stMutex.Unlock()
+			s.queueWrite()
+			return
+		}
+	}
+	s.st.Streams = append(s.st.Streams, *stream)
+	s.stMutex.Unlock()
+	s.queueWrite()
 }
 
-func (s *Store) UpdatePreset(preset *Preset) {
-	s.updatePresetChan <- *preset
+func (s *Store) GetPreset(uri string) *Preset {
+	s.stMutex.Lock()
+	for i := range s.st.Presets {
+		if s.st.Presets[i].URI == uri {
+			s.stMutex.Unlock()
+			return &s.st.Presets[i]
+		}
+	}
+	s.stMutex.Unlock()
+	return nil
 }
 
-func (s *Store) SetPresets(presets []Preset) {
-	s.setPresetsChan <- presets
+func (s *Store) UpdatePreset(newPreset *Preset) {
+	s.stMutex.Lock()
+	for i := range s.st.Presets {
+		if newPreset.URI == s.st.Presets[i].URI {
+			s.st.Presets[i] = *newPreset
+			s.stMutex.Unlock()
+			s.queueWrite()
+			return
+		}
+	}
+	s.stMutex.Unlock()
 }

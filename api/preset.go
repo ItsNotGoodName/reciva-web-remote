@@ -6,9 +6,9 @@ import (
 
 type PresetAPI struct {
 	a *API
-	s *store.Store
+	S *store.Store
 }
 
 func NewPresetAPI(a *API, s *store.Store) *PresetAPI {
-	return &PresetAPI{a: a, s: s}
+	return &PresetAPI{a: a, S: s}
 }

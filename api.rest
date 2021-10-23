@@ -47,3 +47,5 @@ content-type: application/json
     "preset": 1,
     "volume": 3
 }
+### Get preset
+GET http://localhost:8080/01.m3u

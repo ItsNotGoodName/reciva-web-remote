@@ -14,7 +14,7 @@ import (
 
 // NewControlPoint creates and returns a ControlPoint.
 func NewControlPoint() *ControlPoint {
-	return NewControlPointWithPort(8058)
+	return NewControlPointWithPort(DefaultPort)
 }
 
 // NewControlPoint creates and returns a ControlPoint that listens on a specific port.

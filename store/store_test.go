@@ -25,7 +25,6 @@ func TestStore(t *testing.T) {
 	if !reflect.DeepEqual(*sg, *s.sg) {
 		t.Fatalf("TestStore(sg) = %+v, want %+v", *sg, *s.sg)
 	}
-
 }
 
 func testStore(t *testing.T) *Store {

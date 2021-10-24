@@ -22,7 +22,7 @@ var addStreamTests = []AddStreamTest{
 	{0, "hi", "hi", false},
 }
 
-func runCompareStream(t *testing.T, name string, at *AddStreamTest, st *Stream) {
+func runAddStreamTest(t *testing.T, name string, at *AddStreamTest, st *Stream) {
 	if st.SID != at.sid {
 		t.Errorf("%s(st.SID) = %d, want %d", name, st.SID, at.sid)
 	}
@@ -44,14 +44,14 @@ func TestStream(t *testing.T) {
 			t.Fatalf("AddStream(%q, %q) = %t, want %t", at.name, at.content, ok, at.ret)
 		}
 		if ok {
-			runCompareStream(t, "AddStream", &at, st)
+			runAddStreamTest(t, "AddStream", &at, st)
 			// GetStream
 			st, ok = s.GetStream(st.SID)
 			if !ok {
 				t.Fatal("GetStream(ok) = false, want true")
 			}
 			if ok {
-				runCompareStream(t, "GetStream", &at, st)
+				runAddStreamTest(t, "GetStream", &at, st)
 			}
 		}
 	}
@@ -61,7 +61,7 @@ func TestStream(t *testing.T) {
 	count := 0
 	for _, addTest := range addStreamTests {
 		if addTest.ret {
-			runCompareStream(t, "GetStream", &addTest, &sts[count])
+			runAddStreamTest(t, "GetStream", &addTest, &sts[count])
 			count += 1
 		}
 	}
@@ -89,7 +89,7 @@ func TestStream(t *testing.T) {
 			if !ok {
 				t.Fatal("UpdateStream: stream not found")
 			}
-			runCompareStream(t, "UpdateStream", &at, st)
+			runAddStreamTest(t, "UpdateStream", &at, st)
 
 			// DeleteStream
 			s.DeleteStream(st.SID)

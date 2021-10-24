@@ -38,11 +38,8 @@ func main() {
 	// Create websocket upgrader
 	u := newUpgrader()
 
-	// Create v1 group
-	v1 := r.Group("/v1")
-
 	// Add radio routes
-	routes.AddRadioRoutes(v1, a, u)
+	routes.AddRadioRoutes(r.Group(cfg.APIURI), a, u)
 
 	// Add config routes
 	routes.AddConfigRoutes(r, cfg)
@@ -54,7 +51,7 @@ func main() {
 			// Create preset api
 			p := api.NewPresetAPI(a, s)
 			// Add preset api routes
-			routes.AddPresetAPIRoutes(v1, p)
+			routes.AddPresetAPIRoutes(r.Group(cfg.APIURI), p)
 			// Add preset routes
 			routes.AddPresetRoutes(r, cfg, p)
 		} else {

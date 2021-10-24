@@ -30,14 +30,17 @@ func TestStore(t *testing.T) {
 		t.Error(err)
 	}
 
-	stream := Stream{ID: 23, Name: "Name", Content: "Content"}
-
 	// Add stream
-	s.UpdateStream(&stream)
-	if getStream := s.GetStream(stream.ID); getStream == nil {
-		t.Error("stream should not be nil")
+	stream, err := s.AddStream("Name", "Content")
+	if err != nil {
+		t.Error("could not create stream,", err)
+	}
+
+	// Get stream
+	if getStream, ok := s.GetStream(stream.ID); !ok {
+		t.Error("stream should exists")
 	} else {
-		if !reflect.DeepEqual(stream, *getStream) {
+		if !reflect.DeepEqual(*stream, *getStream) {
 			t.Error("saved stream is not equal", stream, *getStream)
 		}
 	}
@@ -46,8 +49,8 @@ func TestStore(t *testing.T) {
 	if c := s.DeleteStream(stream.ID); c != 1 {
 		t.Error("streams deleted should be 1, got", c)
 	}
-	if stream := s.GetStream(stream.ID); stream != nil {
-		t.Error("stream should be nil")
+	if _, ok := s.GetStream(stream.ID); ok {
+		t.Error("stream should not exists")
 	}
 
 	s.WriteSettings()

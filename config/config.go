@@ -13,6 +13,7 @@ type Config struct {
 	CPort         int
 	EnablePresets bool
 	Presets       []string
+	APIURI        string
 }
 
 const DefaultPort = 8080
@@ -28,11 +29,12 @@ func NewConfig() *Config {
 
 	flag.Parse()
 
-	if *presetsFlag != "" {
+	// Enable presets based on presetsFlag
+	if *presetsFlag == "" {
+		presets = make([]string, 0)
+	} else {
 		presets = strings.Split(*presetsFlag, ",")
 		enablePresets = true
-	} else {
-		presets = make([]string, 0)
 	}
 
 	return &Config{
@@ -41,5 +43,6 @@ func NewConfig() *Config {
 		EnablePresets: enablePresets,
 		Presets:       presets,
 		ConfigPath:    *config,
+		APIURI:        "/v1",
 	}
 }

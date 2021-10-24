@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -161,12 +162,122 @@ func (s *Store) storeLoop() {
 	}
 }
 
-func (s *Store) GetSettings() *Settings {
+func (s *Store) AddStream(name string, content string) (*Stream, error) {
 	s.stMutex.Lock()
-	st := *s.st
+	// Make sure no duplicate name and find new id for stream
+	id := 1
+	for i := range s.st.Streams {
+		if s.st.Streams[i].Name == name {
+			s.stMutex.Unlock()
+			return nil, errors.New("stream name duplicate")
+		}
+		if s.st.Streams[i].ID >= id {
+			id = s.st.Streams[i].ID + 1
+		}
+	}
+
+	// Create stream and add to settings
+	st := Stream{ID: id, Name: name, Content: content}
+	s.st.Streams = append(s.st.Streams, st)
 	s.stMutex.Unlock()
-	return &st
+	s.queueWrite()
+
+	return &st, nil
 }
+
+func (s *Store) DeleteStream(sid int) int {
+	// Delete stream
+	deleted := 0
+	s.stMutex.Lock()
+	newStreams := make([]Stream, 0, len(s.st.Streams))
+	for i := range s.st.Streams {
+		if s.st.Streams[i].ID != sid {
+			newStreams[i] = s.st.Streams[i]
+		} else {
+			deleted += 1
+		}
+	}
+	s.st.Streams = newStreams
+
+	// Clear preset stream id
+	for i := range s.st.Presets {
+		if s.st.Presets[i].StreamID == sid {
+			s.st.Presets[i].StreamID = 0
+		}
+	}
+
+	s.stMutex.Unlock()
+	s.queueWrite()
+	return deleted
+}
+
+func (s *Store) UpdateStream(stream *Stream) bool {
+	idx := -1
+	s.stMutex.Lock()
+	for i := range s.st.Streams {
+		if s.st.Streams[i].ID == stream.ID {
+			idx = i
+		} else if s.st.Streams[i].Name == stream.Name {
+			s.stMutex.Unlock()
+			return false
+		}
+	}
+	if idx == -1 {
+		s.stMutex.Unlock()
+		return false
+	}
+	s.st.Streams[idx] = *stream
+	s.stMutex.Unlock()
+	s.queueWrite()
+	return true
+}
+
+func (s *Store) GetStream(id int) (*Stream, bool) {
+	s.stMutex.Lock()
+	for i := range s.st.Streams {
+		if s.st.Streams[i].ID == id {
+			s.stMutex.Unlock()
+			return &s.st.Streams[i], true
+		}
+	}
+	s.stMutex.Unlock()
+	return nil, false
+}
+
+func (s *Store) GetPreset(uri string) (*Preset, bool) {
+	s.stMutex.Lock()
+	for i := range s.st.Presets {
+		if s.st.Presets[i].URI == uri {
+			s.stMutex.Unlock()
+			return &s.st.Presets[i], true
+		}
+	}
+	s.stMutex.Unlock()
+	return nil, false
+}
+
+func (s *Store) GetPresets() []Preset {
+	s.stMutex.Lock()
+	p := make([]Preset, len(s.st.Presets))
+	copy(p, s.st.Presets)
+	s.stMutex.Unlock()
+	return p
+}
+
+func (s *Store) GetStreams() []Stream {
+	s.stMutex.Lock()
+	ss := make([]Stream, len(s.st.Streams))
+	copy(ss, s.st.Streams)
+	s.stMutex.Unlock()
+	return ss
+}
+
+// func (s *Store) GetSettings() *Settings {
+// 	s.stMutex.Lock()
+// 	st := *s.st
+// 	s.stMutex.Unlock()
+// 	return &st
+// }
 
 func (s *Store) WriteSettings() error {
 	errChan := make(chan error)
@@ -188,71 +299,15 @@ func (s *Store) ReadSettings() error {
 	}
 }
 
-func (s *Store) DeleteStream(id int) int {
-	deleted := 0
-	s.stMutex.Lock()
-	newStreams := make([]Stream, 0, len(s.st.Streams))
-	for i := range s.st.Streams {
-		if s.st.Streams[i].ID != id {
-			newStreams[i] = s.st.Streams[i]
-		} else {
-			deleted += 1
-		}
-	}
-	s.st.Streams = newStreams
-	s.stMutex.Unlock()
-	s.queueWrite()
-	return deleted
-}
-
-func (s *Store) GetStream(id int) *Stream {
-	s.stMutex.Lock()
-	for i := range s.st.Streams {
-		if s.st.Streams[i].ID == id {
-			s.stMutex.Unlock()
-			return &s.st.Streams[i]
-		}
-	}
-	s.stMutex.Unlock()
-	return nil
-}
-
-func (s *Store) UpdateStream(stream *Stream) {
-	s.stMutex.Lock()
-	for i := range s.st.Streams {
-		if stream.ID == s.st.Streams[i].ID {
-			s.st.Streams[i] = *stream
-			s.stMutex.Unlock()
-			s.queueWrite()
-			return
-		}
-	}
-	s.st.Streams = append(s.st.Streams, *stream)
-	s.stMutex.Unlock()
-	s.queueWrite()
-}
-
-func (s *Store) GetPreset(uri string) *Preset {
-	s.stMutex.Lock()
-	for i := range s.st.Presets {
-		if s.st.Presets[i].URI == uri {
-			s.stMutex.Unlock()
-			return &s.st.Presets[i]
-		}
-	}
-	s.stMutex.Unlock()
-	return nil
-}
-
-func (s *Store) UpdatePreset(newPreset *Preset) {
-	s.stMutex.Lock()
-	for i := range s.st.Presets {
-		if newPreset.URI == s.st.Presets[i].URI {
-			s.st.Presets[i] = *newPreset
-			s.stMutex.Unlock()
-			s.queueWrite()
-			return
-		}
-	}
-	s.stMutex.Unlock()
-}
+//func (s *Store) UpdatePreset(newPreset *Preset) {
+//	s.stMutex.Lock()
+//	for i := range s.st.Presets {
+//		if newPreset.URI == s.st.Presets[i].URI {
+//			s.st.Presets[i] = *newPreset
+//			s.stMutex.Unlock()
+//			s.queueWrite()
+//			return
+//		}
+//	}
+//	s.stMutex.Unlock()
+//}

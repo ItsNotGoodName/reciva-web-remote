@@ -64,3 +64,8 @@ type PresetReq struct {
 	URI *string `json:"uri,omitempty"`
 	SID *int    `json:"sid,omitempty"`
 }
+
+func (p *PresetAPI) UpdatePreset(pt *store.Preset, r *PresetReq) bool {
+	pt.StreamID = *r.SID
+	return p.S.UpdatePreset(pt)
+}

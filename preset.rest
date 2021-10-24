@@ -3,7 +3,7 @@ GET http://localhost:8080/v1/presets
 ### Get all streams
 GET http://localhost:8080/v1/streams
 ### Get a specific stream
-GET http://localhost:8080/v1/stream/23
+GET http://localhost:8080/v1/stream/1
 ### Create a stream
 PUT http://localhost:8080/v1/stream
 content-type: application/json
@@ -18,7 +18,7 @@ content-type: application/json
 
 {
     "name":"test22",
-    "content":"test"
+    "content":"hi"
 }
 ### Update a preset to stream link
 POST http://localhost:8080/v1/preset
@@ -28,3 +28,5 @@ content-type: application/json
     "sid": 2,
     "uri": "/02.m3u"
 }
+### Get 01.m3u
+GET http://localhost:8080/02.m3u

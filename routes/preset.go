@@ -82,8 +82,8 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		}
 
 		// Add stream
-		st, err := p.S.AddStream(*streamReq.Name, *streamReq.Content)
-		if err != nil {
+		st, ok := p.S.AddStream(*streamReq.Name, *streamReq.Content)
+		if !ok {
 			c.Status(http.StatusConflict)
 			return
 		}

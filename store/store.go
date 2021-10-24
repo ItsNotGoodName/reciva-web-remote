@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -169,14 +168,14 @@ func (s *Store) storeLoop() {
 	}
 }
 
-func (s *Store) AddStream(name string, content string) (*Stream, error) {
+func (s *Store) AddStream(name string, content string) (*Stream, bool) {
 	s.sgMutex.Lock()
 	// Make sure no duplicate name and find new id for stream
 	id := 1
 	for i := range s.sg.Streams {
 		if s.sg.Streams[i].Name == name {
 			s.sgMutex.Unlock()
-			return nil, errors.New("duplicate stream name")
+			return nil, false
 		}
 		if s.sg.Streams[i].SID >= id {
 			id = s.sg.Streams[i].SID + 1
@@ -189,7 +188,7 @@ func (s *Store) AddStream(name string, content string) (*Stream, error) {
 	s.sgMutex.Unlock()
 	s.queueWrite()
 
-	return &st, nil
+	return &st, true
 }
 
 func (s *Store) DeleteStream(sid int) int {

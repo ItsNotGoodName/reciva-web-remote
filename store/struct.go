@@ -6,10 +6,10 @@ import (
 )
 
 type Settings struct {
-	Port    int      `json:"port"`
 	CPort   int      `json:"cport"`
-	Streams []Stream `json:"streams"`
+	Port    int      `json:"port"`
 	Presets []Preset `json:"presets"`
+	Streams []Stream `json:"streams"`
 }
 
 type Stream struct {
@@ -25,11 +25,11 @@ type Preset struct {
 
 type Store struct {
 	Cancel         context.CancelFunc
-	file           string
 	dctx           context.Context
-	st             *Settings
-	stMutex        sync.Mutex
-	writeChan      chan chan error
-	readChan       chan chan error
+	file           string
 	queueWriteChan chan bool
+	readChan       chan chan error
+	sg             *Settings
+	sgMutex        sync.Mutex
+	writeChan      chan chan error
 }

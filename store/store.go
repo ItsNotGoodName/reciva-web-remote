@@ -26,49 +26,52 @@ func NewService(cfg *config.Config) (*Store, error) {
 		queueWriteChan: make(chan bool),
 	}
 
-	if st, err := s.readSettings(); err != nil {
+	// Init store settings from disk
+	if sg, err := s.readSettings(); err == nil {
+		s.sg = sg
+	} else {
 		cfg.EnablePresets = false
 		return nil, err
-	} else {
-		s.st = st
 	}
 
+	// Merge presets from cfg to store
 	if len(cfg.Presets) > 0 {
 		p := make([]Preset, 0, len(cfg.Presets))
 		for _, v := range cfg.Presets {
 			p = append(p, Preset{URI: v})
 		}
-		s.st.mergePresets(p)
+		s.sg.mergePresets(p)
 	}
 
-	if len(s.st.Presets) > 0 {
+	// Merge presets from store to cfg
+	if len(s.sg.Presets) > 0 {
 		cfg.EnablePresets = true
 		var u []string
-		for _, v := range s.st.Presets {
+		for _, v := range s.sg.Presets {
 			u = append(u, v.URI)
 		}
 		cfg.Presets = u
 	}
 
-	// Prioritize flag port over settings port unless default
-	if cfg.Port != s.st.Port && cfg.Port == config.DefaultPort {
-		cfg.Port = s.st.Port
+	// Prioritize cfg port over settings port unless it is default port
+	if cfg.Port != s.sg.Port && cfg.Port == config.DefaultPort {
+		cfg.Port = s.sg.Port
 	}
 
-	// Prioritize flag cport over settings cport unless default
-	if cfg.CPort != s.st.CPort && cfg.CPort == goupnpsub.DefaultPort {
-		cfg.CPort = s.st.CPort
+	// Prioritize cfg cport over settings cport unless it is default cport
+	if cfg.CPort != s.sg.CPort && cfg.CPort == goupnpsub.DefaultPort {
+		cfg.CPort = s.sg.CPort
 	}
 
 	// Save and start loop
-	s.writeSettings(s.st)
+	s.writeSettings(s.sg)
 	go s.storeLoop()
 
 	return s, nil
 }
 
-func (s *Store) writeSettings(st *Settings) error {
-	b, err := json.MarshalIndent(st, "", "	")
+func (s *Store) writeSettings(sg *Settings) error {
+	b, err := json.MarshalIndent(sg, "", "	")
 	if err != nil {
 		return err
 	}
@@ -93,12 +96,12 @@ func (s *Store) readSettings() (*Settings, error) {
 		return nil, err
 	}
 
-	st := Settings{}
-	if err = json.Unmarshal(b, &st); err != nil {
+	sg := Settings{}
+	if err = json.Unmarshal(b, &sg); err != nil {
 		return nil, err
 	}
 
-	return &st, nil
+	return &sg, nil
 }
 
 func (s *Store) queueWrite() {
@@ -112,19 +115,19 @@ func (s *Store) storeLoop() {
 	ticker := time.NewTicker(15 * time.Second)
 	save := false
 	writeSettings := func() error {
-		s.stMutex.Lock()
-		st := *s.st
-		s.stMutex.Unlock()
-		return s.writeSettings(&st)
+		s.sgMutex.Lock()
+		sg := *s.sg
+		s.sgMutex.Unlock()
+		return s.writeSettings(&sg)
 	}
 	readSettings := func() error {
-		st, err := s.readSettings()
+		sg, err := s.readSettings()
 		if err != nil {
 			return err
 		}
-		s.stMutex.Lock()
-		s.st = st
-		s.stMutex.Unlock()
+		s.sgMutex.Lock()
+		s.sg = sg
+		s.sgMutex.Unlock()
 		return nil
 	}
 
@@ -167,23 +170,23 @@ func (s *Store) storeLoop() {
 }
 
 func (s *Store) AddStream(name string, content string) (*Stream, error) {
-	s.stMutex.Lock()
+	s.sgMutex.Lock()
 	// Make sure no duplicate name and find new id for stream
 	id := 1
-	for i := range s.st.Streams {
-		if s.st.Streams[i].Name == name {
-			s.stMutex.Unlock()
+	for i := range s.sg.Streams {
+		if s.sg.Streams[i].Name == name {
+			s.sgMutex.Unlock()
 			return nil, errors.New("duplicate stream name")
 		}
-		if s.st.Streams[i].SID >= id {
-			id = s.st.Streams[i].SID + 1
+		if s.sg.Streams[i].SID >= id {
+			id = s.sg.Streams[i].SID + 1
 		}
 	}
 
 	// Create stream and add to settings
 	st := Stream{SID: id, Name: name, Content: content}
-	s.st.Streams = append(s.st.Streams, st)
-	s.stMutex.Unlock()
+	s.sg.Streams = append(s.sg.Streams, st)
+	s.sgMutex.Unlock()
 	s.queueWrite()
 
 	return &st, nil
@@ -192,19 +195,19 @@ func (s *Store) AddStream(name string, content string) (*Stream, error) {
 func (s *Store) DeleteStream(sid int) int {
 	// Delete stream
 	deleted := 0
-	s.stMutex.Lock()
-	newStreams := make([]Stream, 0, len(s.st.Streams))
-	for i := range s.st.Streams {
-		if s.st.Streams[i].SID != sid {
-			newStreams[i] = s.st.Streams[i]
+	s.sgMutex.Lock()
+	newStreams := make([]Stream, 0, len(s.sg.Streams))
+	for i := range s.sg.Streams {
+		if s.sg.Streams[i].SID != sid {
+			newStreams[i] = s.sg.Streams[i]
 		} else {
 			deleted += 1
 		}
 	}
-	s.st.Streams = newStreams
+	s.sg.Streams = newStreams
 
 	s.clearStream(sid)
-	s.stMutex.Unlock()
+	s.sgMutex.Unlock()
 	s.queueWrite()
 
 	return deleted
@@ -213,9 +216,9 @@ func (s *Store) DeleteStream(sid int) int {
 // clearStream sets SID to 0 for all presets that have a SID of sid.
 func (s *Store) clearStream(sid int) bool {
 	changed := false
-	for i := range s.st.Presets {
-		if s.st.Presets[i].SID == sid {
-			s.st.Presets[i].SID = 0
+	for i := range s.sg.Presets {
+		if s.sg.Presets[i].SID == sid {
+			s.sg.Presets[i].SID = 0
 			changed = true
 		}
 	}
@@ -223,9 +226,9 @@ func (s *Store) clearStream(sid int) bool {
 }
 
 func (s *Store) ClearStream(sid int) bool {
-	s.stMutex.Lock()
+	s.sgMutex.Lock()
 	ok := s.clearStream(sid)
-	s.stMutex.Unlock()
+	s.sgMutex.Unlock()
 	if ok {
 		s.queueWrite()
 	}
@@ -234,108 +237,108 @@ func (s *Store) ClearStream(sid int) bool {
 
 // ClearPreset sets preset's SID to 0.
 func (s *Store) ClearPreset(uri string) bool {
-	s.stMutex.Lock()
-	for i := range s.st.Presets {
-		if s.st.Presets[i].URI != uri {
-			s.st.Presets[i].SID = 0
+	s.sgMutex.Lock()
+	for i := range s.sg.Presets {
+		if s.sg.Presets[i].URI != uri {
+			s.sg.Presets[i].SID = 0
 			s.queueWrite()
-			s.stMutex.Unlock()
+			s.sgMutex.Unlock()
 			return true
 		}
 	}
-	s.stMutex.Unlock()
+	s.sgMutex.Unlock()
 	return false
 }
 
-func (s *Store) UpdatePreset(p *Preset) bool {
-	if p.SID == 0 {
-		return s.ClearPreset(p.URI)
+func (s *Store) UpdatePreset(pt *Preset) bool {
+	if pt.SID == 0 {
+		return s.ClearPreset(pt.URI)
 	}
 
-	s.stMutex.Lock()
+	s.sgMutex.Lock()
 	changed := false
 	ok := false
-	for i := range s.st.Presets {
-		if s.st.Presets[i].URI == p.URI {
+	for i := range s.sg.Presets {
+		if s.sg.Presets[i].URI == pt.URI {
 			ok = true
-			if s.st.Presets[i].SID != p.SID {
-				s.st.Presets[i].SID = p.SID
+			if s.sg.Presets[i].SID != pt.SID {
+				s.sg.Presets[i].SID = pt.SID
 				changed = true
 			}
-		} else if s.st.Presets[i].SID == p.SID {
+		} else if s.sg.Presets[i].SID == pt.SID {
 			// Clear duplicate SID mappings
-			s.st.Presets[i].SID = 0
+			s.sg.Presets[i].SID = 0
 			changed = true
 		}
 	}
-	s.stMutex.Unlock()
+	s.sgMutex.Unlock()
 	if changed {
 		s.queueWrite()
 	}
 	return ok
 }
 
-func (s *Store) UpdateStream(stream *Stream) bool {
+func (s *Store) UpdateStream(st *Stream) bool {
 	idx := -1
-	s.stMutex.Lock()
-	for i := range s.st.Streams {
-		if s.st.Streams[i].SID == stream.SID {
+	s.sgMutex.Lock()
+	for i := range s.sg.Streams {
+		if s.sg.Streams[i].SID == st.SID {
 			idx = i
-		} else if s.st.Streams[i].Name == stream.Name {
-			s.stMutex.Unlock()
+		} else if s.sg.Streams[i].Name == st.Name {
+			s.sgMutex.Unlock()
 			return false
 		}
 	}
 	if idx == -1 {
-		s.stMutex.Unlock()
+		s.sgMutex.Unlock()
 		return false
 	}
-	s.st.Streams[idx] = *stream
-	s.stMutex.Unlock()
+	s.sg.Streams[idx] = *st
+	s.sgMutex.Unlock()
 	s.queueWrite()
 	return true
 }
 
 func (s *Store) GetStream(id int) (*Stream, bool) {
-	s.stMutex.Lock()
-	for i := range s.st.Streams {
-		if s.st.Streams[i].SID == id {
-			newST := s.st.Streams[i]
-			s.stMutex.Unlock()
-			return &newST, true
+	s.sgMutex.Lock()
+	for i := range s.sg.Streams {
+		if s.sg.Streams[i].SID == id {
+			st := s.sg.Streams[i]
+			s.sgMutex.Unlock()
+			return &st, true
 		}
 	}
-	s.stMutex.Unlock()
+	s.sgMutex.Unlock()
 	return nil, false
 }
 
 func (s *Store) GetPreset(uri string) (*Preset, bool) {
-	s.stMutex.Lock()
-	for i := range s.st.Presets {
-		if s.st.Presets[i].URI == uri {
-			newP := s.st.Presets[i]
-			s.stMutex.Unlock()
-			return &newP, true
+	s.sgMutex.Lock()
+	for i := range s.sg.Presets {
+		if s.sg.Presets[i].URI == uri {
+			pt := s.sg.Presets[i]
+			s.sgMutex.Unlock()
+			return &pt, true
 		}
 	}
-	s.stMutex.Unlock()
+	s.sgMutex.Unlock()
 	return nil, false
 }
 
 func (s *Store) GetPresets() []Preset {
-	s.stMutex.Lock()
-	p := make([]Preset, len(s.st.Presets))
-	copy(p, s.st.Presets)
-	s.stMutex.Unlock()
-	return p
+	s.sgMutex.Lock()
+	pt := make([]Preset, len(s.sg.Presets))
+	copy(pt, s.sg.Presets)
+	s.sgMutex.Unlock()
+	return pt
 }
 
 func (s *Store) GetStreams() []Stream {
-	s.stMutex.Lock()
-	ss := make([]Stream, len(s.st.Streams))
-	copy(ss, s.st.Streams)
-	s.stMutex.Unlock()
-	return ss
+	s.sgMutex.Lock()
+	st := make([]Stream, len(s.sg.Streams))
+	copy(st, s.sg.Streams)
+	s.sgMutex.Unlock()
+	return st
 }
 
 // WriteSettings to disk.

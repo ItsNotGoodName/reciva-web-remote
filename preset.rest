@@ -1,7 +1,5 @@
 ### Get all presets
 GET http://localhost:8080/v1/presets
-### Update a preset to stream link
-POST http://localhost:8080/v1/preset
 ### Get all streams
 GET http://localhost:8080/v1/streams
 ### Get a specific stream
@@ -15,10 +13,18 @@ content-type: application/json
     "content":"test"
 }
 ### Update a stream
-POST http://localhost:8080/v1/stream/2
+POST http://localhost:8080/v1/stream/1
 content-type: application/json
 
 {
     "name":"test22",
     "content":"test"
+}
+### Update a preset to stream link
+POST http://localhost:8080/v1/preset
+content-type: application/json
+
+{
+    "sid": 2,
+    "uri": "/02.m3u"
 }

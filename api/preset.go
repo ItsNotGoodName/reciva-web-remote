@@ -26,7 +26,7 @@ func (p *PresetAPI) GetStreams() *map[int]string {
 	sts := p.S.GetStreams()
 	stsMap := make(map[int]string, len(sts))
 	for _, v := range sts {
-		stsMap[v.ID] = v.Name
+		stsMap[v.SID] = v.Name
 	}
 	return &stsMap
 }
@@ -58,4 +58,9 @@ func (p *PresetAPI) UpdateStream(st *store.Stream, r *StreamReq) bool {
 	}
 
 	return true
+}
+
+type PresetReq struct {
+	URI *string `json:"uri,omitempty"`
+	SID *int    `json:"sid,omitempty"`
 }

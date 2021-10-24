@@ -10,13 +10,47 @@ import (
 
 func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/presets", func(c *gin.Context) {
-		c.JSON(http.StatusOK, p.S.GetPresets())
+		c.JSON(http.StatusOK, p.GetPresets())
 	})
 	r.POST("/preset", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"uri": "/01.m3u", "sid": 0})
+		// Get JSON
+		var presetReq api.PresetReq
+		if err := c.BindJSON(&presetReq); err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		// Check JSON
+		if presetReq.SID == nil || presetReq.URI == nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		// Get preset
+		pt, ok := p.S.GetPreset(*presetReq.URI)
+		if !ok {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Get stream
+		st, ok := p.S.GetStream(*presetReq.SID)
+		if !ok {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Link
+		newPT, ok := p.S.LinkPresetStream(pt, st)
+		if !ok {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		c.JSON(http.StatusOK, newPT)
 	})
 	r.GET("/streams", func(c *gin.Context) {
-		c.JSON(http.StatusOK, p.S.GetStreams())
+		c.JSON(http.StatusOK, p.GetStreams())
 	})
 	r.GET("/stream/:SID", ensureSID, func(c *gin.Context) {
 		sid := c.GetInt("sid")

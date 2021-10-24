@@ -53,7 +53,7 @@ func testStream(t *testing.T, s *Store) {
 		t.Error("duplicate add stream name")
 	}
 	testGetStream := func() {
-		if getStream, ok := s.GetStream(addST.ID); !ok {
+		if getStream, ok := s.GetStream(addST.SID); !ok {
 			t.Error("stream should exist")
 		} else {
 			if !reflect.DeepEqual(*addST, *getStream) {
@@ -69,10 +69,10 @@ func testStream(t *testing.T, s *Store) {
 	testGetStream()
 
 	// Test deleting stream
-	if c := s.DeleteStream(addST.ID); c != 1 {
+	if c := s.DeleteStream(addST.SID); c != 1 {
 		t.Error("deleting stream should return 1, got", c)
 	}
-	if _, ok := s.GetStream(addST.ID); ok {
+	if _, ok := s.GetStream(addST.SID); ok {
 		t.Error("stream should be deleted")
 	}
 }

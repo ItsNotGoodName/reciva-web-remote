@@ -13,7 +13,7 @@ type Settings struct {
 }
 
 type Stream struct {
-	ID      int    `json:"id"`
+	SID     int    `json:"sid"`
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }

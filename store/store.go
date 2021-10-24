@@ -60,6 +60,8 @@ func NewService(cfg *config.Config) (*Store, error) {
 		cfg.CPort = s.st.CPort
 	}
 
+	// Save and start loop
+	s.writeSettings(s.st)
 	go s.storeLoop()
 
 	return s, nil
@@ -173,13 +175,13 @@ func (s *Store) AddStream(name string, content string) (*Stream, error) {
 			s.stMutex.Unlock()
 			return nil, errors.New("duplicate stream name")
 		}
-		if s.st.Streams[i].ID >= id {
-			id = s.st.Streams[i].ID + 1
+		if s.st.Streams[i].SID >= id {
+			id = s.st.Streams[i].SID + 1
 		}
 	}
 
 	// Create stream and add to settings
-	st := Stream{ID: id, Name: name, Content: content}
+	st := Stream{SID: id, Name: name, Content: content}
 	s.st.Streams = append(s.st.Streams, st)
 	s.stMutex.Unlock()
 	s.queueWrite()
@@ -193,7 +195,7 @@ func (s *Store) DeleteStream(sid int) int {
 	s.stMutex.Lock()
 	newStreams := make([]Stream, 0, len(s.st.Streams))
 	for i := range s.st.Streams {
-		if s.st.Streams[i].ID != sid {
+		if s.st.Streams[i].SID != sid {
 			newStreams[i] = s.st.Streams[i]
 		} else {
 			deleted += 1
@@ -226,16 +228,16 @@ func (s *Store) clearStream(sid int) bool {
 
 func (s *Store) LinkPresetStream(p *Preset, st *Stream) (*Preset, bool) {
 	s.stMutex.Lock()
-	if st.ID == p.StreamID {
+	if st.SID == p.StreamID {
 		s.stMutex.Unlock()
 		return p, true
 	}
 
-	s.clearStream(st.ID)
+	s.clearStream(st.SID)
 
 	for i := range s.st.Presets {
 		if s.st.Presets[i].URI == p.URI {
-			s.st.Presets[i].StreamID = st.ID
+			s.st.Presets[i].StreamID = st.SID
 			newP := s.st.Presets[i]
 			s.stMutex.Unlock()
 			s.queueWrite()
@@ -251,7 +253,7 @@ func (s *Store) UpdateStream(stream *Stream) bool {
 	idx := -1
 	s.stMutex.Lock()
 	for i := range s.st.Streams {
-		if s.st.Streams[i].ID == stream.ID {
+		if s.st.Streams[i].SID == stream.SID {
 			idx = i
 		} else if s.st.Streams[i].Name == stream.Name {
 			s.stMutex.Unlock()
@@ -271,7 +273,7 @@ func (s *Store) UpdateStream(stream *Stream) bool {
 func (s *Store) GetStream(id int) (*Stream, bool) {
 	s.stMutex.Lock()
 	for i := range s.st.Streams {
-		if s.st.Streams[i].ID == id {
+		if s.st.Streams[i].SID == id {
 			newST := s.st.Streams[i]
 			s.stMutex.Unlock()
 			return &newST, true

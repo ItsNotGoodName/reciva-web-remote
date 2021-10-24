@@ -128,13 +128,13 @@ func getPresetHandler(p *api.PresetAPI, uri string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get preset
 		preset, ok := p.S.GetPreset(uri)
-		if !ok || preset.StreamID == 0 {
+		if !ok || preset.SID == 0 {
 			c.Status(http.StatusNotFound)
 			return
 		}
 
 		// Get stream
-		stream, ok := p.S.GetStream(preset.StreamID)
+		stream, ok := p.S.GetStream(preset.SID)
 		if !ok {
 			c.Status(http.StatusNotFound)
 			return

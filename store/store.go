@@ -210,12 +210,12 @@ func (s *Store) DeleteStream(sid int) int {
 	return deleted
 }
 
-// clearStream sets StreamID to 0 for all presets that have a StreamID of sid.
+// clearStream sets SID to 0 for all presets that have a SID of sid.
 func (s *Store) clearStream(sid int) bool {
 	changed := false
 	for i := range s.st.Presets {
-		if s.st.Presets[i].StreamID == sid {
-			s.st.Presets[i].StreamID = 0
+		if s.st.Presets[i].SID == sid {
+			s.st.Presets[i].SID = 0
 			changed = true
 		}
 	}
@@ -232,12 +232,12 @@ func (s *Store) ClearStream(sid int) bool {
 	return ok
 }
 
-// ClearPreset sets preset's sid to 0.
+// ClearPreset sets preset's SID to 0.
 func (s *Store) ClearPreset(uri string) bool {
 	s.stMutex.Lock()
 	for i := range s.st.Presets {
 		if s.st.Presets[i].URI != uri {
-			s.st.Presets[i].StreamID = 0
+			s.st.Presets[i].SID = 0
 			s.queueWrite()
 			s.stMutex.Unlock()
 			return true
@@ -248,7 +248,7 @@ func (s *Store) ClearPreset(uri string) bool {
 }
 
 func (s *Store) UpdatePreset(p *Preset) bool {
-	if p.StreamID == 0 {
+	if p.SID == 0 {
 		return s.ClearPreset(p.URI)
 	}
 
@@ -258,13 +258,13 @@ func (s *Store) UpdatePreset(p *Preset) bool {
 	for i := range s.st.Presets {
 		if s.st.Presets[i].URI == p.URI {
 			ok = true
-			if s.st.Presets[i].StreamID != p.StreamID {
-				s.st.Presets[i].StreamID = p.StreamID
+			if s.st.Presets[i].SID != p.SID {
+				s.st.Presets[i].SID = p.SID
 				changed = true
 			}
-		} else if s.st.Presets[i].StreamID == p.StreamID {
-			// Clear preset if it is equal to preset stream id
-			s.st.Presets[i].StreamID = 0
+		} else if s.st.Presets[i].SID == p.SID {
+			// Clear duplicate SID mappings
+			s.st.Presets[i].SID = 0
 			changed = true
 		}
 	}

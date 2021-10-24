@@ -19,8 +19,8 @@ type Stream struct {
 }
 
 type Preset struct {
-	URI      string `json:"uri"`
-	StreamID int    `json:"sid"`
+	URI string `json:"uri"`
+	SID int    `json:"sid"`
 }
 
 type Store struct {

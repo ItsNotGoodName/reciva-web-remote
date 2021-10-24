@@ -17,7 +17,7 @@ func (p *PresetAPI) GetPresets() *map[string]int {
 	pts := p.S.GetPresets()
 	ptsMap := make(map[string]int, len(pts))
 	for _, v := range pts {
-		ptsMap[v.URI] = v.StreamID
+		ptsMap[v.URI] = v.SID
 	}
 	return &ptsMap
 }
@@ -66,6 +66,6 @@ type PresetReq struct {
 }
 
 func (p *PresetAPI) UpdatePreset(pt *store.Preset, r *PresetReq) bool {
-	pt.StreamID = *r.SID
+	pt.SID = *r.SID
 	return p.S.UpdatePreset(pt)
 }

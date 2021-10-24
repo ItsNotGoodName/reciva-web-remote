@@ -108,18 +108,6 @@ func (s *Store) queueWrite() {
 	}
 }
 
-// clearStream sets StreamID to 0 for all presets that have a StreamID of sid.
-func (s *Store) clearStream(sid int) bool {
-	changes := false
-	for i := range s.st.Presets {
-		if s.st.Presets[i].StreamID == sid {
-			s.st.Presets[i].StreamID = 0
-			changes = true
-		}
-	}
-	return changes
-}
-
 func (s *Store) storeLoop() {
 	ticker := time.NewTicker(15 * time.Second)
 	save := false
@@ -222,34 +210,69 @@ func (s *Store) DeleteStream(sid int) int {
 	return deleted
 }
 
+// clearStream sets StreamID to 0 for all presets that have a StreamID of sid.
+func (s *Store) clearStream(sid int) bool {
+	changed := false
+	for i := range s.st.Presets {
+		if s.st.Presets[i].StreamID == sid {
+			s.st.Presets[i].StreamID = 0
+			changed = true
+		}
+	}
+	return changed
+}
+
 func (s *Store) ClearStream(sid int) bool {
 	s.stMutex.Lock()
 	ok := s.clearStream(sid)
 	s.stMutex.Unlock()
+	if ok {
+		s.queueWrite()
+	}
 	return ok
 }
 
-func (s *Store) LinkPresetStream(p *Preset, st *Stream) (*Preset, bool) {
+// ClearPreset sets preset's sid to 0.
+func (s *Store) ClearPreset(uri string) bool {
 	s.stMutex.Lock()
-	if st.SID == p.StreamID {
-		s.stMutex.Unlock()
-		return p, true
-	}
-
-	s.clearStream(st.SID)
-
 	for i := range s.st.Presets {
-		if s.st.Presets[i].URI == p.URI {
-			s.st.Presets[i].StreamID = st.SID
-			newP := s.st.Presets[i]
-			s.stMutex.Unlock()
+		if s.st.Presets[i].URI != uri {
+			s.st.Presets[i].StreamID = 0
 			s.queueWrite()
-			return &newP, true
+			s.stMutex.Unlock()
+			return true
 		}
 	}
-
 	s.stMutex.Unlock()
-	return p, false
+	return false
+}
+
+func (s *Store) UpdatePreset(p *Preset) bool {
+	if p.StreamID == 0 {
+		return s.ClearPreset(p.URI)
+	}
+
+	s.stMutex.Lock()
+	changed := false
+	ok := false
+	for i := range s.st.Presets {
+		if s.st.Presets[i].URI == p.URI {
+			ok = true
+			if s.st.Presets[i].StreamID != p.StreamID {
+				s.st.Presets[i].StreamID = p.StreamID
+				changed = true
+			}
+		} else if s.st.Presets[i].StreamID == p.StreamID {
+			// Clear preset if it is equal to preset stream id
+			s.st.Presets[i].StreamID = 0
+			changed = true
+		}
+	}
+	s.stMutex.Unlock()
+	if changed {
+		s.queueWrite()
+	}
+	return ok
 }
 
 func (s *Store) UpdateStream(stream *Stream) bool {
@@ -315,13 +338,7 @@ func (s *Store) GetStreams() []Stream {
 	return ss
 }
 
-// func (s *Store) GetSettings() *Settings {
-// 	s.stMutex.Lock()
-// 	st := *s.st
-// 	s.stMutex.Unlock()
-// 	return &st
-// }
-
+// WriteSettings to disk.
 func (s *Store) WriteSettings() error {
 	errChan := make(chan error)
 	select {
@@ -332,6 +349,7 @@ func (s *Store) WriteSettings() error {
 	}
 }
 
+// ReadSettings from disk, do not use this function as it may discard current settings that have pending saves.
 func (s *Store) ReadSettings() error {
 	errChan := make(chan error)
 	select {
@@ -341,16 +359,3 @@ func (s *Store) ReadSettings() error {
 		return s.dctx.Err()
 	}
 }
-
-//func (s *Store) UpdatePreset(newPreset *Preset) {
-//	s.stMutex.Lock()
-//	for i := range s.st.Presets {
-//		if newPreset.URI == s.st.Presets[i].URI {
-//			s.st.Presets[i] = *newPreset
-//			s.stMutex.Unlock()
-//			s.queueWrite()
-//			return
-//		}
-//	}
-//	s.stMutex.Unlock()
-//}

@@ -25,6 +25,6 @@ POST http://localhost:8080/v1/preset
 content-type: application/json
 
 {
-    "sid": 1,
-    "uri": "/01.m3u"
+    "sid": 2,
+    "uri": "/02.m3u"
 }

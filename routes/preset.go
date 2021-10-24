@@ -33,21 +33,14 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			return
 		}
 
-		// Get stream
-		st, ok := p.S.GetStream(*presetReq.SID)
-		if !ok {
+		// Link
+		pt.StreamID = *presetReq.SID
+		if !p.S.UpdatePreset(pt) {
 			c.Status(http.StatusNotFound)
 			return
 		}
 
-		// Link
-		newPT, ok := p.S.LinkPresetStream(pt, st)
-		if !ok {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-
-		c.JSON(http.StatusOK, newPT)
+		c.JSON(http.StatusOK, pt)
 	})
 	r.GET("/streams", func(c *gin.Context) {
 		c.JSON(http.StatusOK, p.GetStreams())

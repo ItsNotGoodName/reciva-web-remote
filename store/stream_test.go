@@ -4,14 +4,14 @@ import (
 	"testing"
 )
 
-type AddTest struct {
+type AddStreamTest struct {
 	sid     int
 	name    string
 	content string
 	ret     bool
 }
 
-var addTests = []AddTest{
+var addStreamTests = []AddStreamTest{
 	{1, "Name", "Content", true},
 	{0, "Name", "Content", false},
 	{0, "Name", "tent", false},
@@ -22,37 +22,83 @@ var addTests = []AddTest{
 	{0, "hi", "hi", false},
 }
 
-func compareAddTest(t *testing.T, name string, addTest *AddTest, st *Stream) {
-	if st.SID != addTest.sid {
-		t.Fatalf("%s(st.SID) = %d, want %d", name, st.SID, addTest.sid)
+func runCompareStream(t *testing.T, name string, at *AddStreamTest, st *Stream) {
+	if st.SID != at.sid {
+		t.Errorf("%s(st.SID) = %d, want %d", name, st.SID, at.sid)
 	}
-	if st.Name != addTest.name {
-		t.Fatalf("%s(st.Name) = %q, want %q", name, st.Name, addTest.name)
+	if st.Name != at.name {
+		t.Errorf("%s(st.Name) = %q, want %q", name, st.Name, at.name)
 	}
-	if st.Content != addTest.content {
-		t.Fatalf("%s(st.Content) = %q, want %q", name, st.Content, addTest.content)
+	if st.Content != at.content {
+		t.Errorf("%s(st.Content) = %q, want %q", name, st.Content, at.content)
 	}
 }
 
 func TestStream(t *testing.T) {
 	s := testStore(t)
 
-	for _, addTest := range addTests {
-		// AddTest
-		st, ok := s.AddStream(addTest.name, addTest.content)
-		if ok != addTest.ret {
-			t.Fatalf("TestStream(%q, %q) = %t, want %t", addTest.name, addTest.content, ok, addTest.ret)
+	for _, at := range addStreamTests {
+		// AddStream
+		st, ok := s.AddStream(at.name, at.content)
+		if ok != at.ret {
+			t.Fatalf("AddStream(%q, %q) = %t, want %t", at.name, at.content, ok, at.ret)
 		}
 		if ok {
-			compareAddTest(t, "AddTest", &addTest, st)
-			// GetTest
+			runCompareStream(t, "AddStream", &at, st)
+			// GetStream
 			st, ok = s.GetStream(st.SID)
 			if !ok {
-				t.Fatal("GetTest(ok) = false, want true")
+				t.Fatal("GetStream(ok) = false, want true")
 			}
 			if ok {
-				compareAddTest(t, "GetTest", &addTest, st)
+				runCompareStream(t, "GetStream", &at, st)
 			}
+		}
+	}
+
+	// GetStreams
+	sts := s.GetStreams()
+	count := 0
+	for _, addTest := range addStreamTests {
+		if addTest.ret {
+			runCompareStream(t, "GetStream", &addTest, &sts[count])
+			count += 1
+		}
+	}
+
+	// UpdateStream
+	for _, at := range addStreamTests {
+		if at.ret {
+			mod := "UpdateStream"
+
+			st, ok := s.GetStream(at.sid)
+			if !ok {
+				t.Fatal("UpdateStream: stream not found")
+			}
+
+			st.Name = st.Name + mod
+			at.name = st.Name
+			st.Content = st.Content + mod
+			at.content = st.Content
+
+			if !s.UpdateStream(st) {
+				t.Fatal("UpdateStream: stream could not be updated")
+			}
+
+			st, ok = s.GetStream(at.sid)
+			if !ok {
+				t.Fatal("UpdateStream: stream not found")
+			}
+			runCompareStream(t, "UpdateStream", &at, st)
+
+			// DeleteStream
+			s.DeleteStream(st.SID)
+			_, ok = s.GetStream(st.SID)
+			if ok {
+				t.Fatal("UpdateStream: stream shuold not exist")
+			}
+
+			break
 		}
 	}
 }

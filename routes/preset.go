@@ -2,80 +2,54 @@ package routes
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/gin-gonic/gin"
 )
 
-type StreamPost struct {
-	Name    *string `json:"name,omitempty"`
-	Content *string `json:"content,omitempty"`
-}
-
 func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/presets", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{})
+		c.JSON(http.StatusOK, p.S.GetPresets())
 	})
 	r.POST("/preset", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"uri": "/01.m3u", "sid": 0})
 	})
 	r.GET("/streams", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{})
+		c.JSON(http.StatusOK, p.S.GetStreams())
 	})
-	r.GET("/stream/:SID", func(c *gin.Context) {
-		sidStr, ok := c.Params.Get("SID")
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{})
-			return
-		}
-
-		sid, err := strconv.Atoi(sidStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{})
-			return
-		}
+	r.GET("/stream/:SID", ensureSID, func(c *gin.Context) {
+		sid := c.GetInt("sid")
 
 		c.JSON(http.StatusOK, gin.H{"sid": sid, "name": "", "content": ""})
 	})
-	r.DELETE("/stream/:SID", func(c *gin.Context) {
-		sidStr, ok := c.Params.Get("SID")
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{})
+	r.DELETE("/stream/:SID", ensureSID, func(c *gin.Context) {
+		sid := c.GetInt("sid")
+
+		// Delete Stream
+		if !p.DeleteStream(sid) {
+			c.Status(http.StatusNotFound)
 			return
 		}
 
-		sid, err := strconv.Atoi(sidStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{})
-			return
-		}
-
-		deleted := p.S.DeleteStream(sid)
-		if deleted < 1 {
-			c.JSON(http.StatusNotFound, gin.H{})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"deleted": deleted})
+		c.Status(http.StatusOK)
 	})
 	r.PUT("/stream", func(c *gin.Context) {
 		// Get JSON
-		var streamPost StreamPost
-		if err := c.BindJSON(&streamPost); err != nil {
+		var streamReq api.StreamReq
+		if err := c.BindJSON(&streamReq); err != nil {
 			c.Status(http.StatusBadRequest)
 			return
 		}
 
 		// Check JSON
-		if streamPost.Name == nil || streamPost.Content == nil {
+		if streamReq.Name == nil || streamReq.Content == nil {
 			c.Status(http.StatusBadRequest)
 			return
 		}
 
 		// Add stream
-		st, err := p.S.AddStream(*streamPost.Name, *streamPost.Content)
+		st, err := p.S.AddStream(*streamReq.Name, *streamReq.Content)
 		if err != nil {
 			c.Status(http.StatusConflict)
 			return
@@ -84,24 +58,12 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		// Return stream
 		c.JSON(http.StatusOK, st)
 	})
-	r.POST("/stream/:SID", func(c *gin.Context) {
-		// Get sid
-		sidStr, ok := c.Params.Get("SID")
-		if !ok {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-
-		// Convert sid to int
-		sid, err := strconv.Atoi(sidStr)
-		if err != nil {
-			c.Status(http.StatusBadRequest)
-			return
-		}
+	r.POST("/stream/:SID", ensureSID, func(c *gin.Context) {
+		sid := c.GetInt("sid")
 
 		// Get JSON
-		var streamPost StreamPost
-		if err := c.BindJSON(&streamPost); err != nil {
+		var streamReq api.StreamReq
+		if err := c.BindJSON(&streamReq); err != nil {
 			c.Status(http.StatusBadRequest)
 			return
 		}
@@ -113,22 +75,10 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			return
 		}
 
-		// Update and save stream
-		save := false
-		if streamPost.Name != nil && *streamPost.Name != st.Name {
-			st.Name = *streamPost.Name
-			save = true
-		}
-		if streamPost.Content != nil && *streamPost.Content != st.Content {
-			st.Content = *streamPost.Content
-			save = true
-		}
-		if save {
-			success := p.S.UpdateStream(st)
-			if !success {
-				c.Status(http.StatusConflict)
-				return
-			}
+		// Update stream
+		if !p.UpdateStream(st, &streamReq) {
+			c.Status(http.StatusConflict)
+			return
 		}
 
 		c.JSON(http.StatusOK, st)

@@ -19,6 +19,6 @@ POST http://localhost:8080/v1/stream/2
 content-type: application/json
 
 {
-    "name":"test",
+    "name":"test22",
     "content":"test"
 }

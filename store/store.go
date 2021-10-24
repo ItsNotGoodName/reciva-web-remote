@@ -50,10 +50,12 @@ func NewService(cfg *config.Config) (*Store, error) {
 		cfg.Presets = u
 	}
 
+	// Prioritize flag port over settings port unless default
 	if cfg.Port != s.st.Port && cfg.Port == config.DefaultPort {
 		cfg.Port = s.st.Port
 	}
 
+	// Prioritize flag cport over settings cport unless default
 	if cfg.CPort != s.st.CPort && cfg.CPort == goupnpsub.DefaultPort {
 		cfg.CPort = s.st.CPort
 	}
@@ -169,7 +171,7 @@ func (s *Store) AddStream(name string, content string) (*Stream, error) {
 	for i := range s.st.Streams {
 		if s.st.Streams[i].Name == name {
 			s.stMutex.Unlock()
-			return nil, errors.New("stream name duplicate")
+			return nil, errors.New("duplicate stream name")
 		}
 		if s.st.Streams[i].ID >= id {
 			id = s.st.Streams[i].ID + 1
@@ -199,16 +201,50 @@ func (s *Store) DeleteStream(sid int) int {
 	}
 	s.st.Streams = newStreams
 
-	// Clear preset stream id
+	s.clearStream(sid)
+	s.stMutex.Unlock()
+	s.queueWrite()
+
+	return deleted
+}
+
+func (s *Store) ClearStream(sid int) bool {
+	s.stMutex.Lock()
+	ok := s.clearStream(sid)
+	s.stMutex.Unlock()
+	return ok
+}
+
+func (s *Store) clearStream(sid int) bool {
 	for i := range s.st.Presets {
 		if s.st.Presets[i].StreamID == sid {
 			s.st.Presets[i].StreamID = 0
 		}
 	}
+	return true
+}
+
+func (s *Store) LinkPresetStream(p *Preset, st *Stream) (*Preset, bool) {
+	s.stMutex.Lock()
+	if st.ID == p.StreamID {
+		s.stMutex.Unlock()
+		return p, true
+	}
+
+	s.clearStream(st.ID)
+
+	for i := range s.st.Presets {
+		if s.st.Presets[i].URI == p.URI {
+			s.st.Presets[i].StreamID = st.ID
+			newP := s.st.Presets[i]
+			s.stMutex.Unlock()
+			s.queueWrite()
+			return &newP, true
+		}
+	}
 
 	s.stMutex.Unlock()
-	s.queueWrite()
-	return deleted
+	return p, false
 }
 
 func (s *Store) UpdateStream(stream *Stream) bool {
@@ -236,8 +272,9 @@ func (s *Store) GetStream(id int) (*Stream, bool) {
 	s.stMutex.Lock()
 	for i := range s.st.Streams {
 		if s.st.Streams[i].ID == id {
+			newST := s.st.Streams[i]
 			s.stMutex.Unlock()
-			return &s.st.Streams[i], true
+			return &newST, true
 		}
 	}
 	s.stMutex.Unlock()
@@ -248,8 +285,9 @@ func (s *Store) GetPreset(uri string) (*Preset, bool) {
 	s.stMutex.Lock()
 	for i := range s.st.Presets {
 		if s.st.Presets[i].URI == uri {
+			newP := s.st.Presets[i]
 			s.stMutex.Unlock()
-			return &s.st.Presets[i], true
+			return &newP, true
 		}
 	}
 	s.stMutex.Unlock()

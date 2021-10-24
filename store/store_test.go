@@ -11,6 +11,16 @@ import (
 )
 
 func TestStore(t *testing.T) {
+	s := testStore(t)
+
+	testStream(t, s)
+
+	// Test canceling context right after writing settings
+	s.WriteSettings()
+	s.Cancel()
+}
+
+func testStore(t *testing.T) *Store {
 	// Create temp directory
 	p, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -30,31 +40,39 @@ func TestStore(t *testing.T) {
 		t.Error(err)
 	}
 
-	// Add stream
-	stream, err := s.AddStream("Name", "Content")
-	if err != nil {
-		t.Error("could not create stream,", err)
-	}
+	return s
+}
 
-	// Get stream
-	if getStream, ok := s.GetStream(stream.ID); !ok {
-		t.Error("stream should exists")
-	} else {
-		if !reflect.DeepEqual(*stream, *getStream) {
-			t.Error("saved stream is not equal", stream, *getStream)
+func testStream(t *testing.T, s *Store) {
+	// Test adding a stream and getting the stream back
+	addST, err := s.AddStream("Name", "Content")
+	if err != nil {
+		t.Error("could not add stream,", err)
+	}
+	if _, err = s.AddStream("Name", "Content"); err == nil {
+		t.Error("duplicate add stream name")
+	}
+	testGetStream := func() {
+		if getStream, ok := s.GetStream(addST.ID); !ok {
+			t.Error("stream should exist")
+		} else {
+			if !reflect.DeepEqual(*addST, *getStream) {
+				t.Error("saved stream is not equal", addST, *getStream)
+			}
 		}
 	}
+	testGetStream()
 
-	// Delete stream
-	if c := s.DeleteStream(stream.ID); c != 1 {
-		t.Error("streams deleted should be 1, got", c)
-	}
-	if _, ok := s.GetStream(stream.ID); ok {
-		t.Error("stream should not exists")
-	}
-
+	// Test getting the stream back after writing and reading
 	s.WriteSettings()
+	s.ReadSettings()
+	testGetStream()
 
-	// Stop store
-	s.Cancel()
+	// Test deleting stream
+	if c := s.DeleteStream(addST.ID); c != 1 {
+		t.Error("deleting stream should return 1, got", c)
+	}
+	if _, ok := s.GetStream(addST.ID); ok {
+		t.Error("stream should be deleted")
+	}
 }

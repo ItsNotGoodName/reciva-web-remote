@@ -120,20 +120,26 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 func AddPresetRoutes(r *gin.Engine, cfg *config.Config, p *api.PresetAPI) {
 	for _, v := range cfg.Presets {
-		r.GET(v, func(c *gin.Context) {
-			preset, ok := p.S.GetPreset(v)
-			if !ok || preset.StreamID == 0 {
-				c.Status(http.StatusNotFound)
-				return
-			}
+		r.GET(v, getPresetHandler(p, v))
+	}
+}
 
-			stream, ok := p.S.GetStream(preset.StreamID)
-			if !ok {
-				c.Status(http.StatusNotFound)
-				return
-			}
+func getPresetHandler(p *api.PresetAPI, uri string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		// Get preset
+		preset, ok := p.S.GetPreset(uri)
+		if !ok || preset.StreamID == 0 {
+			c.Status(http.StatusNotFound)
+			return
+		}
 
-			c.Writer.Write([]byte(stream.Content))
-		})
+		// Get stream
+		stream, ok := p.S.GetStream(preset.StreamID)
+		if !ok {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		c.Writer.Write([]byte(stream.Content))
 	}
 }

@@ -68,7 +68,7 @@ func NewService(cfg *config.Config) (*Store, error) {
 }
 
 func (s *Store) writeSettings(st *Settings) error {
-	b, err := json.MarshalIndent(st, "", "")
+	b, err := json.MarshalIndent(st, "", "	")
 	if err != nil {
 		return err
 	}
@@ -106,6 +106,18 @@ func (s *Store) queueWrite() {
 	case s.queueWriteChan <- true:
 	case <-s.dctx.Done():
 	}
+}
+
+// clearStream sets StreamID to 0 for all presets that have a StreamID of sid.
+func (s *Store) clearStream(sid int) bool {
+	changes := false
+	for i := range s.st.Presets {
+		if s.st.Presets[i].StreamID == sid {
+			s.st.Presets[i].StreamID = 0
+			changes = true
+		}
+	}
+	return changes
 }
 
 func (s *Store) storeLoop() {
@@ -215,15 +227,6 @@ func (s *Store) ClearStream(sid int) bool {
 	ok := s.clearStream(sid)
 	s.stMutex.Unlock()
 	return ok
-}
-
-func (s *Store) clearStream(sid int) bool {
-	for i := range s.st.Presets {
-		if s.st.Presets[i].StreamID == sid {
-			s.st.Presets[i].StreamID = 0
-		}
-	}
-	return true
 }
 
 func (s *Store) LinkPresetStream(p *Preset, st *Stream) (*Preset, bool) {

@@ -41,6 +41,28 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 		c.JSON(http.StatusOK, pt)
 	})
+	r.DELETE("/preset", func(c *gin.Context) {
+		// Get JSON
+		var presetReq api.PresetReq
+		if err := c.BindJSON(&presetReq); err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		// Check JSON
+		if presetReq.URI == nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		// Clear preset
+		if !p.S.ClearPreset(*presetReq.URI) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		c.Status(http.StatusOK)
+	})
 	r.GET("/streams", func(c *gin.Context) {
 		c.JSON(http.StatusOK, p.GetStreams())
 	})

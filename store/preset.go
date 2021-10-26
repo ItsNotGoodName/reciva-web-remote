@@ -62,7 +62,7 @@ func (s *Store) UpdatePreset(pt *Preset) bool {
 func (s *Store) ClearPreset(uri string) bool {
 	s.sgMutex.Lock()
 	for i := range s.sg.Presets {
-		if s.sg.Presets[i].URI != uri {
+		if s.sg.Presets[i].URI == uri {
 			s.sg.Presets[i].SID = 0
 			s.queueWrite()
 			s.sgMutex.Unlock()

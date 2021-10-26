@@ -12,15 +12,16 @@ type ConfigJSON struct {
 	Presets       []string `json:"presets"`
 }
 
-func configJSON(cfg *config.Config) *ConfigJSON {
-	return &ConfigJSON{
+func configHandler(cfg *config.Config) func(c *gin.Context) {
+	cfgJSON := ConfigJSON{
 		EnablePresets: cfg.PresetsEnabled,
 		Presets:       cfg.Presets,
+	}
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, cfgJSON)
 	}
 }
 
 func AddConfigRoutes(r *gin.Engine, cfg *config.Config) {
-	r.GET("/config.json", func(c *gin.Context) {
-		c.JSON(http.StatusOK, configJSON(cfg))
-	})
+	r.GET("/config.json", configHandler(cfg))
 }

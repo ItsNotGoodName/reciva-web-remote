@@ -66,29 +66,6 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/streams", func(c *gin.Context) {
 		c.JSON(http.StatusOK, p.GetStreams())
 	})
-	r.GET("/stream/:SID", ensureSID, func(c *gin.Context) {
-		sid := c.GetInt("sid")
-
-		// Get stream
-		st, ok := p.S.GetStream(sid)
-		if !ok {
-			c.Status(http.StatusNotFound)
-			return
-		}
-
-		c.JSON(http.StatusOK, st)
-	})
-	r.DELETE("/stream/:SID", ensureSID, func(c *gin.Context) {
-		sid := c.GetInt("sid")
-
-		// Delete Stream
-		if !p.DeleteStream(sid) {
-			c.Status(http.StatusNotFound)
-			return
-		}
-
-		c.Status(http.StatusOK)
-	})
 	r.POST("/stream/new", func(c *gin.Context) {
 		// Get JSON
 		var streamReq api.StreamReq
@@ -111,6 +88,18 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		}
 
 		// Return stream
+		c.JSON(http.StatusOK, st)
+	})
+	r.GET("/stream/:SID", ensureSID, func(c *gin.Context) {
+		sid := c.GetInt("sid")
+
+		// Get stream
+		st, ok := p.S.GetStream(sid)
+		if !ok {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
 		c.JSON(http.StatusOK, st)
 	})
 	r.POST("/stream/:SID", ensureSID, func(c *gin.Context) {
@@ -137,6 +126,17 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		}
 
 		c.JSON(http.StatusOK, st)
+	})
+	r.DELETE("/stream/:SID", ensureSID, func(c *gin.Context) {
+		sid := c.GetInt("sid")
+
+		// Delete Stream
+		if !p.DeleteStream(sid) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		c.Status(http.StatusOK)
 	})
 }
 

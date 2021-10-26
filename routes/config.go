@@ -22,6 +22,6 @@ func getConfigHandler(cfg *config.Config) func(c *gin.Context) {
 	}
 }
 
-func AddConfigRoutes(r *gin.Engine, cfg *config.Config) {
-	r.GET("/config.json", getConfigHandler(cfg))
+func AddConfigRoutes(r *gin.RouterGroup, cfg *config.Config) {
+	r.GET("/config", getConfigHandler(cfg))
 }

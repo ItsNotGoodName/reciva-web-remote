@@ -37,7 +37,7 @@ const emptyResponse = (req) => {
 
 export default {
 	getConfig() {
-		return jsonResponse(fetch(API_URL + "/config.json"))
+		return jsonResponse(fetch(API_URL + "/v1/config"))
 	},
 	getPresets() {
 		return jsonResponse(fetch(API_URL + "/v1/presets"))

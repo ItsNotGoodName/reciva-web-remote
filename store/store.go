@@ -264,6 +264,12 @@ func (s *Store) UpdatePreset(pt *Preset) bool {
 	}
 
 	s.sgMutex.Lock()
+
+	if _, ok := s.getStream(pt.SID); !ok {
+		s.sgMutex.Unlock()
+		return false
+	}
+
 	changed := false
 	ok := false
 	for i := range s.sg.Presets {
@@ -307,17 +313,21 @@ func (s *Store) UpdateStream(st *Stream) bool {
 	return true
 }
 
-func (s *Store) GetStream(id int) (*Stream, bool) {
-	s.sgMutex.Lock()
+func (s *Store) getStream(id int) (*Stream, bool) {
 	for i := range s.sg.Streams {
 		if s.sg.Streams[i].SID == id {
 			st := s.sg.Streams[i]
-			s.sgMutex.Unlock()
 			return &st, true
 		}
 	}
-	s.sgMutex.Unlock()
 	return nil, false
+}
+
+func (s *Store) GetStream(id int) (*Stream, bool) {
+	s.sgMutex.Lock()
+	st, ok := s.getStream(id)
+	s.sgMutex.Unlock()
+	return st, ok
 }
 
 func (s *Store) GetPreset(uri string) (*Preset, bool) {

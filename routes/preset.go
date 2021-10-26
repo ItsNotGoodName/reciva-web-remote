@@ -35,7 +35,7 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 		// Update preset
 		if !p.UpdatePreset(pt, &presetReq) {
-			c.Status(http.StatusInternalServerError)
+			c.Status(http.StatusNotFound)
 			return
 		}
 
@@ -67,7 +67,7 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 		c.Status(http.StatusOK)
 	})
-	r.PUT("/stream", func(c *gin.Context) {
+	r.POST("/stream/new", func(c *gin.Context) {
 		// Get JSON
 		var streamReq api.StreamReq
 		if err := c.BindJSON(&streamReq); err != nil {

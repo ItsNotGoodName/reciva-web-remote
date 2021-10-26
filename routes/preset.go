@@ -118,12 +118,6 @@ func AddPresetAPIRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	})
 }
 
-func AddPresetRoutes(r *gin.Engine, cfg *config.Config, p *api.PresetAPI) {
-	for _, v := range cfg.Presets {
-		r.GET(v, getPresetHandler(p, v))
-	}
-}
-
 func getPresetHandler(p *api.PresetAPI, uri string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get preset
@@ -141,5 +135,11 @@ func getPresetHandler(p *api.PresetAPI, uri string) func(c *gin.Context) {
 		}
 
 		c.Writer.Write([]byte(stream.Content))
+	}
+}
+
+func AddPresetRoutes(r *gin.Engine, cfg *config.Config, p *api.PresetAPI) {
+	for _, v := range cfg.Presets {
+		r.GET(v, getPresetHandler(p, v))
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 )
 
 func NewService(cfg *config.Config) (*Store, error) {
@@ -17,56 +16,64 @@ func NewService(cfg *config.Config) (*Store, error) {
 	dctx, cancel := context.WithCancel(dctx)
 
 	s := &Store{
-		dctx:           dctx,
 		Cancel:         cancel,
+		dctx:           dctx,
 		file:           cfg.ConfigPath,
-		writeChan:      make(chan chan error),
-		readChan:       make(chan chan error),
 		queueWriteChan: make(chan bool),
+		readChan:       make(chan chan error),
+		writeChan:      make(chan chan error),
 	}
 
-	// Init store settings from disk
-	if sg, err := s.readSettings(); err == nil {
-		s.sg = sg
-	} else {
+	// Read settings from disk
+	if sg, err := s.readSettings(); err != nil {
 		cfg.EnablePresets = false
 		return nil, err
+	} else {
+		s.sg = sg
 	}
 
-	// Merge presets from cfg to store
-	if len(cfg.Presets) > 0 {
-		p := make([]Preset, 0, len(cfg.Presets))
-		for _, v := range cfg.Presets {
-			p = append(p, Preset{URI: v})
-		}
-		s.sg.mergePresets(p)
+	// Sync settings with config
+	s.config(cfg)
+
+	// Write settings to disk
+	if err := s.writeSettings(s.sg); err != nil {
+		log.Fatal(err)
 	}
 
-	// Merge presets from store to cfg
-	if len(s.sg.Presets) > 0 {
-		cfg.EnablePresets = true
-		var u []string
-		for _, v := range s.sg.Presets {
-			u = append(u, v.URI)
-		}
-		cfg.Presets = u
-	}
-
-	// Prioritize cfg port over settings port unless it is default port
-	if cfg.Port != s.sg.Port && cfg.Port == config.DefaultPort {
-		cfg.Port = s.sg.Port
-	}
-
-	// Prioritize cfg cport over settings cport unless it is default cport
-	if cfg.CPort != s.sg.CPort && cfg.CPort == goupnpsub.DefaultPort {
-		cfg.CPort = s.sg.CPort
-	}
-
-	// Save and start loop
-	s.writeSettings(s.sg)
+	// Start loop
 	go s.storeLoop()
 
 	return s, nil
+}
+
+func (s *Store) config(cfg *config.Config) {
+	// port
+	if cfg.PortFlag {
+		s.sg.Port = cfg.Port
+	} else {
+		cfg.Port = s.sg.Port
+	}
+
+	// cport
+	if cfg.CPortFlag {
+		s.sg.CPort = cfg.CPort
+	} else {
+		cfg.CPort = s.sg.CPort
+	}
+
+	// presets
+	for _, u := range cfg.Presets {
+		if i := getPresetIndex(s.sg.Presets, u); i < 0 {
+			s.sg.Presets = append(s.sg.Presets, Preset{URI: u})
+		}
+	}
+	cfg.Presets = make([]string, 0, len(s.sg.Presets))
+	for _, p := range s.sg.Presets {
+		cfg.Presets = append(cfg.Presets, p.URI)
+	}
+	if len(cfg.Presets) > 0 {
+		cfg.EnablePresets = true
+	}
 }
 
 func (s *Store) writeSettings(sg *Settings) error {
@@ -103,6 +110,7 @@ func (s *Store) readSettings() (*Settings, error) {
 	return &sg, nil
 }
 
+// queueWrite tells store to that settings have changed and it should write settings to disk at some point.
 func (s *Store) queueWrite() {
 	select {
 	case s.queueWriteChan <- true:
@@ -192,9 +200,10 @@ func (s *Store) AddStream(name string, content string) (*Stream, bool) {
 }
 
 func (s *Store) DeleteStream(sid int) int {
-	// Delete stream
 	deleted := 0
 	s.sgMutex.Lock()
+
+	// Delete stream
 	newStreams := make([]Stream, len(s.sg.Streams))
 	for i := range s.sg.Streams {
 		if s.sg.Streams[i].SID != sid {
@@ -351,7 +360,7 @@ func (s *Store) WriteSettings() error {
 	}
 }
 
-// ReadSettings from disk, do not use this function as it may discard current settings that have pending saves.
+// ReadSettings from disk, do not use this function as it may discard current settings that have pending writes.
 func (s *Store) ReadSettings() error {
 	errChan := make(chan error)
 	select {

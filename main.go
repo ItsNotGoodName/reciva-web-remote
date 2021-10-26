@@ -18,9 +18,6 @@ func main() {
 
 	// Create store
 	s, sErr := store.NewService(cfg)
-	if sErr != nil {
-		log.Println("main.main: ", sErr)
-	}
 
 	// Create and start controlpoint
 	cp := goupnpsub.NewControlPointWithPort(cfg.CPort)
@@ -58,6 +55,8 @@ func main() {
 			// Close store
 			s.Cancel()
 		}
+	} else {
+		log.Println("main.main(WARNING):", sErr)
 	}
 
 	// Listen and serve

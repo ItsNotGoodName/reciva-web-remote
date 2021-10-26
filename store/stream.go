@@ -1,5 +1,6 @@
 package store
 
+// AddStream creates stream. Returns false when name is not unique.
 func (s *Store) AddStream(name string, content string) (*Stream, bool) {
 	s.sgMutex.Lock()
 	// Make sure no duplicate name and find new id for stream
@@ -23,6 +24,7 @@ func (s *Store) AddStream(name string, content string) (*Stream, bool) {
 	return &st, true
 }
 
+// GetStreams returns all streams.
 func (s *Store) GetStreams() []Stream {
 	s.sgMutex.Lock()
 	st := make([]Stream, len(s.sg.Streams))
@@ -31,9 +33,9 @@ func (s *Store) GetStreams() []Stream {
 	return st
 }
 
-func (s *Store) getStream(id int) (*Stream, bool) {
+func (s *Store) getStream(sid int) (*Stream, bool) {
 	for i := range s.sg.Streams {
-		if s.sg.Streams[i].SID == id {
+		if s.sg.Streams[i].SID == sid {
 			st := s.sg.Streams[i]
 			return &st, true
 		}
@@ -41,13 +43,15 @@ func (s *Store) getStream(id int) (*Stream, bool) {
 	return nil, false
 }
 
-func (s *Store) GetStream(id int) (*Stream, bool) {
+// GetStream finds a stream by the given sid.
+func (s *Store) GetStream(sid int) (*Stream, bool) {
 	s.sgMutex.Lock()
-	st, ok := s.getStream(id)
+	st, ok := s.getStream(sid)
 	s.sgMutex.Unlock()
 	return st, ok
 }
 
+// UpdateStream changes stream's name and content.
 func (s *Store) UpdateStream(st *Stream) bool {
 	idx := -1
 	s.sgMutex.Lock()
@@ -69,6 +73,7 @@ func (s *Store) UpdateStream(st *Stream) bool {
 	return true
 }
 
+// DeleteStream remove a stream and it's preset bindings.
 func (s *Store) DeleteStream(sid int) int {
 	deleted := 0
 	s.sgMutex.Lock()
@@ -91,7 +96,6 @@ func (s *Store) DeleteStream(sid int) int {
 	return deleted
 }
 
-// clearStream sets SID to 0 for all presets that have a SID of sid.
 func (s *Store) clearStream(sid int) bool {
 	changed := false
 	for i := range s.sg.Presets {
@@ -103,6 +107,7 @@ func (s *Store) clearStream(sid int) bool {
 	return changed
 }
 
+// clearStream sets sid to 0 for all presets that have the given sid.
 func (s *Store) ClearStream(sid int) bool {
 	s.sgMutex.Lock()
 	ok := s.clearStream(sid)

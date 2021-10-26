@@ -1,5 +1,6 @@
 package store
 
+// GetPresets returns all presets.
 func (s *Store) GetPresets() []Preset {
 	s.sgMutex.Lock()
 	pt := make([]Preset, len(s.sg.Presets))
@@ -8,6 +9,7 @@ func (s *Store) GetPresets() []Preset {
 	return pt
 }
 
+// GetPreset finds a preset by uri.
 func (s *Store) GetPreset(uri string) (*Preset, bool) {
 	s.sgMutex.Lock()
 	for i := range s.sg.Presets {
@@ -21,6 +23,7 @@ func (s *Store) GetPreset(uri string) (*Preset, bool) {
 	return nil, false
 }
 
+// UpdatePreset changes preset's sid. One to one mapping of preset to stream.
 func (s *Store) UpdatePreset(pt *Preset) bool {
 	if pt.SID == 0 {
 		return s.ClearPreset(pt.URI)
@@ -55,7 +58,7 @@ func (s *Store) UpdatePreset(pt *Preset) bool {
 	return ok
 }
 
-// ClearPreset sets preset's SID to 0.
+// ClearPreset sets preset's sid to 0.
 func (s *Store) ClearPreset(uri string) bool {
 	s.sgMutex.Lock()
 	for i := range s.sg.Presets {

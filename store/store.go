@@ -207,7 +207,7 @@ func (s *Store) DeleteStream(sid int) int {
 	newStreams := make([]Stream, 0, len(s.sg.Streams))
 	for i := range s.sg.Streams {
 		if s.sg.Streams[i].SID != sid {
-			newStreams[i] = s.sg.Streams[i]
+			newStreams = append(newStreams, s.sg.Streams[i])
 		} else {
 			deleted += 1
 		}

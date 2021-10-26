@@ -8,14 +8,14 @@ import (
 )
 
 type ConfigJSON struct {
-	EnablePresets bool     `json:"enablePresets"`
-	Presets       []string `json:"presets"`
+	PresetsEnabled bool     `json:"presetsEnabled"`
+	Presets        []string `json:"presets"`
 }
 
 func getConfigHandler(cfg *config.Config) func(c *gin.Context) {
 	cfgJSON := ConfigJSON{
-		EnablePresets: cfg.PresetsEnabled,
-		Presets:       cfg.Presets,
+		PresetsEnabled: cfg.PresetsEnabled,
+		Presets:        cfg.Presets,
 	}
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, cfgJSON)

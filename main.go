@@ -44,7 +44,7 @@ func main() {
 	// Check if store has no error
 	if sErr == nil {
 		// Check if presets are enabled
-		if cfg.EnablePresets {
+		if cfg.PresetsEnabled {
 			// Create preset api
 			p := api.NewPresetAPI(a, s)
 			// Add preset api routes

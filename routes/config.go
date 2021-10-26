@@ -14,7 +14,7 @@ type ConfigJSON struct {
 
 func configJSON(cfg *config.Config) *ConfigJSON {
 	return &ConfigJSON{
-		EnablePresets: cfg.EnablePresets,
+		EnablePresets: cfg.PresetsEnabled,
 		Presets:       cfg.Presets,
 	}
 }

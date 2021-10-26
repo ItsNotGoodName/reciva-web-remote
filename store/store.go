@@ -26,7 +26,7 @@ func NewService(cfg *config.Config) (*Store, error) {
 
 	// Read settings from disk
 	if sg, err := s.readSettings(); err != nil {
-		cfg.EnablePresets = false
+		cfg.PresetsEnabled = false
 		return nil, err
 	} else {
 		s.sg = sg
@@ -72,7 +72,7 @@ func (s *Store) config(cfg *config.Config) {
 		cfg.Presets = append(cfg.Presets, p.URI)
 	}
 	if len(cfg.Presets) > 0 {
-		cfg.EnablePresets = true
+		cfg.PresetsEnabled = true
 	}
 }
 

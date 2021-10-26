@@ -204,7 +204,7 @@ func (s *Store) DeleteStream(sid int) int {
 	s.sgMutex.Lock()
 
 	// Delete stream
-	newStreams := make([]Stream, len(s.sg.Streams))
+	newStreams := make([]Stream, 0, len(s.sg.Streams))
 	for i := range s.sg.Streams {
 		if s.sg.Streams[i].SID != sid {
 			newStreams[i] = s.sg.Streams[i]

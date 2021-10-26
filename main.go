@@ -9,11 +9,15 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
+	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
 func main() {
 	// Create config
 	cfg := config.NewConfig()
+
+	// Create store
+	s, sErr := store.NewService(cfg)
 
 	// Create and start controlpoint
 	cp := goupnpsub.NewControlPointWithPort(cfg.CPort)
@@ -23,7 +27,7 @@ func main() {
 	h := radio.NewHub(cp)
 
 	// Create api
-	a := api.NewService(h)
+	a := api.NewAPI(h)
 
 	// Create router
 	r := newRouter()
@@ -31,11 +35,31 @@ func main() {
 	// Create websocket upgrader
 	u := newUpgrader()
 
-	// Add radio routes to v1 group
-	v1 := r.Group("/v1")
-	routes.AddRadioRoutes(v1, a, u)
+	// Add radio routes
+	routes.AddRadioRoutes(r.Group(cfg.APIURI), a, u)
 
-	// Listen and server
+	// Add config routes
+	routes.AddConfigRoutes(r, cfg)
+
+	// Check if store has no error
+	if sErr == nil {
+		// Check if presets are enabled
+		if cfg.PresetsEnabled {
+			// Create preset api
+			p := api.NewPresetAPI(a, s)
+			// Add preset api routes
+			routes.AddPresetAPIRoutes(r.Group(cfg.APIURI), p)
+			// Add preset routes
+			routes.AddPresetRoutes(r, cfg, p)
+		} else {
+			// Close store
+			s.Cancel()
+		}
+	} else {
+		log.Println("main.main(WARNING):", sErr)
+	}
+
+	// Listen and serve
 	log.Println("main: listening on port", cfg.Port)
 	log.Fatal(r.Run(":" + fmt.Sprint(cfg.Port)))
 }

@@ -1,0 +1,34 @@
+### Get all presets
+GET http://localhost:8080/v1/presets
+### Get all streams
+GET http://localhost:8080/v1/streams
+### Get a specific stream
+GET http://localhost:8080/v1/stream/1
+### Create a stream
+POST http://localhost:8080/v1/stream/new
+content-type: application/json
+
+{
+    "name":"hello",
+    "content":"test"
+}
+### Update a stream
+POST http://localhost:8080/v1/stream/3
+content-type: application/json
+
+{
+    "name":"Hello",
+    "content":"hi"
+}
+### Delete a stream
+DELETE http://localhost:8080/v1/stream/3
+### Update a preset to stream link
+POST http://localhost:8080/v1/preset
+content-type: application/json
+
+{
+    "sid": 3,
+    "uri": "/01.m3u"
+}
+### Get 01.m3u
+GET http://localhost:8080/01.m3u

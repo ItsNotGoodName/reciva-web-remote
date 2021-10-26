@@ -113,7 +113,7 @@ func (a *API) HandleWS(conn *websocket.Conn, uuid string) {
 	newRadioWS(conn, a, uuid).start()
 }
 
-func NewService(h *radio.Hub) *API {
+func NewAPI(h *radio.Hub) *API {
 	a := API{
 		discoverChan:    make(chan chan error),
 		h:               h,

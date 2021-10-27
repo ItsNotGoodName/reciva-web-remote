@@ -1,5 +1,5 @@
 <template>
-	<div class="bg-white py-2 flex flex-wrap gap-y-2">
+	<div class="bg-white flex flex-wrap gap-2">
 		<template v-if="radio">
 			<div class="flex space-x-2 flex-grow">
 				<button
@@ -16,7 +16,7 @@
 			<div class="flex">
 				<VolumeOffIcon v-if="radio.isMuted" class="w-8" />
 				<VolumeUpIcon v-else class="w-8" />
-				<button class="w-8 hover:bg-gray-200 rounded" @click="decreaseRadioVolume">
+				<button class="ml-2 w-8 hover:bg-gray-200 rounded" @click="decreaseRadioVolume">
 					<ChevronDownIcon />
 				</button>
 				<button

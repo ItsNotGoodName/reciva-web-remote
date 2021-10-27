@@ -25,7 +25,7 @@ export default {
 
 <template >
 	<div class="container mx-auto px-2">
-		<Player class="sticky top-0 mx-auto border-b-2" />
+		<Player class="sticky top-0 mx-auto border-b-2 py-2 mb-2" />
 		<div>Lorem</div>
 		<div>Lorem</div>
 		<div>Lorem</div>

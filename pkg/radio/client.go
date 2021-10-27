@@ -81,12 +81,7 @@ func (rd *Radio) SetVolume(volume int) error {
 	request.NewVolumeValue = fmt.Sprint(volume)
 
 	// Send request
-	if err := rd.Client.SOAPClient.PerformActionCtx(rd.dctx, rd.Client.Service.ServiceType, "SetVolume", request, response); err != nil {
-		return err
-	}
-
-	// Update state volume
-	return rd.UpdateVolume(volume)
+	return rd.Client.SOAPClient.PerformActionCtx(rd.dctx, rd.Client.Service.ServiceType, "SetVolume", request, response)
 }
 
 func (rd *Radio) GetVolume(ctx context.Context) (int, error) {

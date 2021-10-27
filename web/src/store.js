@@ -50,7 +50,7 @@ export default createStore({
 		},
 		loadStreams({ commit, state }) {
 			if (!state.config.presetsEnabled) {
-				return Promise.resolve()
+				return Promise.reject()
 			}
 			return api.getStreams()
 				.then((streams) => {
@@ -59,7 +59,7 @@ export default createStore({
 		},
 		loadPresets({ commit, state }) {
 			if (!state.config.presetsEnabled) {
-				return Promise.resolve()
+				return Promise.reject()
 			}
 			return api.getPresets()
 				.then((presets) => {

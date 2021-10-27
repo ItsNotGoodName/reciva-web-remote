@@ -76,4 +76,10 @@ export default {
 	updateRadio(uuid, state) {
 		return emptyResponse(fetch(API_URL + "/v1/radio/" + uuid, { method: "PATCH", body: JSON.stringify(state) }))
 	},
+	radioWS(uuid) {
+		if (uuid == undefined || uuud == "") {
+			return new WebSocket(WS_URL + "/v1/radio/ws")
+		}
+		return new WebSocket(WS_URL + "/v1/radio/" + uuid + "/ws")
+	}
 }

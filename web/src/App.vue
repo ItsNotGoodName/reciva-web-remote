@@ -1,16 +1,19 @@
 <script>
 import { mapActions } from 'vuex';
+import Player from './components/Player.vue'
 
 export default {
 	name: "App",
-	components: { },
+	components: {
+		Player
+	},
 	mounted() {
 		this.loadAll()
 	},
 	computed: {
 		state() {
 			return this.$store.state
-		}
+		},
 	},
 	methods: {
 		...mapActions([
@@ -20,9 +23,14 @@ export default {
 }
 </script>
 
-<template>
+<template >
 	<div class="container mx-auto px-2">
-		<pre><code>{{ JSON.stringify(state, null, 2) }}</code></pre>
+		<Player class="sticky top-0 mx-auto border-b-2" />
+		<div>Lorem</div>
+		<div>Lorem</div>
+		<div>Lorem</div>
+		<div>Lorem</div>
+		<div>Lorem</div>
 	</div>
 </template>
 

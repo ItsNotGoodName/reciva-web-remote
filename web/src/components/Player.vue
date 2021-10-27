@@ -22,7 +22,7 @@
 				<button
 					class="my-auto p-1 hover:bg-gray-200 rounded w-10"
 					@click="refreshRadioVolume"
-				>{{ radio.volume }}</button>
+				>{{ radio.volume }}%</button>
 				<button class="w-8 hover:bg-gray-200 rounded" @click="increaseRadioVolume">
 					<ChevronUpIcon />
 				</button>

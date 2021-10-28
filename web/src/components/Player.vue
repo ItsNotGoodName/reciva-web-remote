@@ -1,37 +1,44 @@
 <template>
-	<div class="bg-white flex flex-wrap gap-2">
-		<template v-if="radio">
-			<div class="flex space-x-2 flex-grow">
+	<div class="bg-white space-y-2">
+		<div class="space-y-2 sm:space-y-0 sm:flex">
+			<div class="flex gap-2">
+				<button class="p-1 bg-yellow-200 hover:bg-yellow-300 rounded" @click="discoverRadios">Discover</button>
+				<select class="flex-1 h-8 bg-gray-200 rounded" v-model="radioUUID">
+					<option :value="null" disabled value>Select Radio</option>
+					<option v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
+				</select>
 				<button
-					v-if="radio.power"
-					class="bg-green-200 hover:bg-green-400 rounded w-10"
-					@click="toggleRadioPower"
-				>ON</button>
-				<button v-else class="bg-red-200 hover:bg-red-400 rounded w-10" @click="toggleRadioPower">OFF</button>
-				<PlayIcon v-if="radio.state == 'Playing'" class="w-8" />
-				<StopIcon v-else-if="radio.state == 'Stopped'" class="w-8" />
-				<RefreshIcon v-else class="w-8" />
-				<div class="my-auto">{{ radio.title }}</div>
+					v-if="radio"
+					class="p-1 bg-gray-200 hover:bg-gray-300 rounded"
+					@click="renewRadio"
+				>Refresh</button>
 			</div>
-			<div class="flex">
-				<VolumeOffIcon v-if="radio.isMuted" class="w-8" />
-				<VolumeUpIcon v-else class="w-8" />
-				<button class="ml-2 w-8 hover:bg-gray-200 rounded" @click="decreaseRadioVolume">
+			<div class="ml-auto flex gap-2" v-if="radio">
+				<div class="flex gap-2 flex-grow">
+					<VolumeOffIcon v-if="radio.isMuted" class="w-8" />
+					<VolumeUpIcon v-else class="w-8" />
+					<button class="flex-grow my-auto h-8 text-left" @click="refreshRadioVolume">{{ radio.volume }}%</button>
+				</div>
+				<button class="w-8 border-2 hover:bg-gray-300 rounded" @click="decreaseRadioVolume">
 					<ChevronDownIcon />
 				</button>
-				<button
-					class="my-auto p-1 hover:bg-gray-200 rounded w-10"
-					@click="refreshRadioVolume"
-				>{{ radio.volume }}%</button>
-				<button class="w-8 hover:bg-gray-200 rounded" @click="increaseRadioVolume">
+				<button class="w-8 border-2 hover:bg-gray-300 rounded" @click="increaseRadioVolume">
 					<ChevronUpIcon />
 				</button>
+				<button
+					v-if="radio.power"
+					class="bg-green-200 hover:bg-green-300 rounded w-12"
+					@click="toggleRadioPower"
+				>ON</button>
+				<button v-else class="bg-red-200 hover:bg-red-300 rounded w-12" @click="toggleRadioPower">OFF</button>
 			</div>
-		</template>
-		<select class="ml-auto h-8" v-model="radioUUID">
-			<option :value="null" disabled value>Select Radio</option>
-			<option v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
-		</select>
+		</div>
+		<div class="flex space-x-2" v-if="radio">
+			<PlayIcon v-if="radio.state == 'Playing'" class="w-8" />
+			<StopIcon v-else-if="radio.state == 'Stopped'" class="w-8" />
+			<RefreshIcon v-else class="w-8" />
+			<span class="my-auto truncate">{{ radio.title }}</span>
+		</div>
 	</div>
 </template>
 
@@ -72,6 +79,12 @@ export default {
 		}
 	},
 	methods: {
+		discoverRadios() {
+			api.discoverRadios()
+		},
+		renewRadio() {
+			api.renewRadio(this.radio.uuid)
+		},
 		toggleRadioPower() {
 			api.updateRadio(this.radio.uuid, { power: !this.radio.power })
 		},

@@ -25,49 +25,57 @@ const (
 )
 
 type radioWS struct {
-	c         *radio.HubClient
+	readChan  chan *radio.State
+	hubChan   *chan radio.State
 	a         *API
+	sendChan  chan *radio.State
 	conn      *websocket.Conn
 	uuid      string
 	uuidMutex sync.Mutex
 }
 
 func newRadioWS(conn *websocket.Conn, a *API, uuid string) *radioWS {
+	hc := make(chan radio.State)
 	return &radioWS{
-		&radio.HubClient{Send: make(chan radio.State)},
-		a,
-		conn,
-		uuid,
-		sync.Mutex{},
+		readChan:  make(chan *radio.State),
+		hubChan:   &hc,
+		a:         a,
+		sendChan:  make(chan *radio.State),
+		conn:      conn,
+		uuid:      uuid,
+		uuidMutex: sync.Mutex{},
 	}
 }
 
 func (rs *radioWS) start() {
-	// Start write handler
-	go rs.handleWrite()
-
-	// Send state if uuid not empty
-	if rs.uuid != "" {
-		// Get radio state
-		ctx := context.Background()
-		ctx, cancel := context.WithCancel(ctx)
-		state, ok := rs.a.GetRadioState(ctx, rs.uuid)
-		cancel()
-
-		if !ok {
-			log.Printf("radioWS.start(ERROR): GetRadioState return not ok with uuid %s", rs.uuid)
-			close(rs.c.Send)
-			return
+	// Aggregate readChan and hubChan into sendChan
+	go func() {
+		for {
+			select {
+			case state, ok := <-*rs.hubChan:
+				if !ok {
+					close(rs.sendChan)
+					return
+				}
+				rs.sendChan <- &state
+			case state, ok := <-rs.readChan:
+				if !ok {
+					close(rs.sendChan)
+					return
+				}
+				rs.sendChan <- state
+			}
 		}
+	}()
 
-		rs.c.Send <- *state
-	}
+	// Register with hub
+	rs.a.h.Register <- rs.hubChan
 
 	// Start read handler
 	go rs.handleRead()
 
-	// Register client with hub
-	rs.a.h.Register <- rs.c
+	// Start write handler
+	go rs.handleWrite()
 }
 
 func (rs *radioWS) handleWrite() {
@@ -79,7 +87,7 @@ func (rs *radioWS) handleWrite() {
 
 	for {
 		select {
-		case state, ok := <-rs.c.Send:
+		case state, ok := <-rs.sendChan:
 			// Set 10 second deadline
 			rs.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 
@@ -114,12 +122,27 @@ func (rs *radioWS) handleWrite() {
 func (rs *radioWS) handleRead() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-
 	defer func() {
-		rs.a.h.Unregister <- rs.c
+		rs.a.h.Unregister <- rs.hubChan
 		rs.conn.Close()
 		cancel()
 	}()
+
+	// Send initial state if uuid is set
+	if rs.uuid != "" {
+		rs.uuidMutex.Lock()
+		uuid := rs.uuid
+		rs.uuidMutex.Unlock()
+
+		state, ok := rs.a.GetRadioState(ctx, uuid)
+
+		if !ok {
+			log.Printf("radioWS.handleRead(ERROR): GetRadioState did not find state with radio uuid %s", uuid)
+			return
+		}
+
+		rs.readChan <- state
+	}
 
 	rs.conn.SetReadLimit(maxMessageSize)
 	rs.conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -149,6 +172,6 @@ func (rs *radioWS) handleRead() {
 		rs.uuidMutex.Unlock()
 
 		// Send state to client
-		rs.c.Send <- *state
+		rs.readChan <- state
 	}
 }

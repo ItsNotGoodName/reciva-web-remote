@@ -9,16 +9,11 @@ import (
 
 // Hub handles creating Radios and pushing State changes to HubClients.
 type Hub struct {
-	Register     chan *HubClient         // Register requests from clients.
-	Unregister   chan *HubClient         // Unregister requests from clients.
-	clients      map[*HubClient]bool     // clients are registered to receive state changes from all radios.
-	cp           *goupnpsub.ControlPoint // cp is used to create subscriptions.
-	allStateChan chan State              // allStateChan gets State changes from radioLoop.
-}
-
-// HubClient receives State from Hub.
-type HubClient struct {
-	Send chan State // Send receives State from Hub.
+	Register        chan *chan State        // Register requests from clients.
+	Unregister      chan *chan State        // Unregister requests from clients.
+	clients         map[*chan State]bool    // clients are registered to receive state changes from all radios.
+	cp              *goupnpsub.ControlPoint // cp is used to create subscriptions.
+	stateUpdateChan chan State              // allStateChan gets State changes from radioLoop.
 }
 
 // Radio represents the radio on the network.

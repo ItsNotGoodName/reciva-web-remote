@@ -11,11 +11,11 @@ import (
 
 func NewHub(cp *goupnpsub.ControlPoint) *Hub {
 	h := Hub{
-		Register:     make(chan *HubClient),
-		Unregister:   make(chan *HubClient),
-		clients:      make(map[*HubClient]bool),
-		cp:           cp,
-		allStateChan: make(chan State),
+		Register:        make(chan *chan State),
+		Unregister:      make(chan *chan State),
+		clients:         make(map[*chan State]bool),
+		cp:              cp,
+		stateUpdateChan: make(chan State),
 	}
 	go h.hubLoop()
 	return &h
@@ -31,16 +31,16 @@ func (h *Hub) hubLoop() {
 		case client := <-h.Unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				close(client.Send)
+				close(*client)
 				log.Println("Hub.hubLoop: unregistered")
 			}
-		case state := <-h.allStateChan:
+		case state := <-h.stateUpdateChan:
 			for client := range h.clients {
 				select {
-				case client.Send <- state:
+				case *client <- state:
 				default:
 					delete(h.clients, client)
-					close(client.Send)
+					close(*client)
 					log.Println("Hub.hubLoop: client deleted")
 				}
 			}
@@ -70,7 +70,7 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 		Client:            client,
 		Subscription:      sub,
 		UUID:              uuid,
-		allStateChan:      h.allStateChan,
+		allStateChan:      h.stateUpdateChan,
 		dctx:              dctx,
 		getStateChan:      make(chan State),
 		state:             &State{UUID: uuid},

@@ -39,7 +39,7 @@ func main() {
 	routes.AddRadioRoutes(r.Group(cfg.APIURI), a, u)
 
 	// Add config routes
-	routes.AddConfigRoutes(r, cfg)
+	routes.AddConfigRoutes(r.Group(cfg.APIURI), cfg)
 
 	// Check if store has no error
 	if sErr == nil {

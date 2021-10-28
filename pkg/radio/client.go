@@ -3,6 +3,7 @@ package radio
 import (
 	"context"
 	"fmt"
+	"strconv"
 )
 
 const radioServiceType = "urn:reciva-com:service:RecivaRadio:0.0"
@@ -71,6 +72,42 @@ func (rd *Radio) GetNumberOfPresets(ctx context.Context) (int, error) {
 	return response.RetNumberOfPresetsValue, nil
 }
 
+func (rd *Radio) GetPreset(ctx context.Context, num int) (*Preset, error) {
+	// Create request
+	request := &struct {
+		RetPresetNumberValue string
+	}{}
+	response := &struct {
+		RetPresetName string
+		RetPresetURL  string
+	}{}
+
+	request.RetPresetNumberValue = strconv.Itoa(num)
+
+	// Send request
+	err := rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "GetPreset", request, response)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Preset{Number: num, Name: response.RetPresetName, URL: response.RetPresetURL}, nil
+}
+
+func (rd *Radio) GetPresets(ctx context.Context) ([]Preset, error) {
+	var pts []Preset
+
+	for i := 1; i <= rd.state.NumPresets; i++ {
+		p, err := rd.GetPreset(ctx, i)
+		if err != nil {
+			return pts, err
+		}
+		pts = append(pts, *p)
+	}
+
+	return pts, nil
+}
+
 func (rd *Radio) SetVolume(volume int) error {
 	// Create request
 	request := &struct {
@@ -81,12 +118,7 @@ func (rd *Radio) SetVolume(volume int) error {
 	request.NewVolumeValue = fmt.Sprint(volume)
 
 	// Send request
-	if err := rd.Client.SOAPClient.PerformActionCtx(rd.dctx, rd.Client.Service.ServiceType, "SetVolume", request, response); err != nil {
-		return err
-	}
-
-	// Update state volume
-	return rd.UpdateVolume(volume)
+	return rd.Client.SOAPClient.PerformActionCtx(rd.dctx, rd.Client.Service.ServiceType, "SetVolume", request, response)
 }
 
 func (rd *Radio) GetVolume(ctx context.Context) (int, error) {

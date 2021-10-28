@@ -1,156 +1,143 @@
-import { reactive, readonly } from "vue";
+import { createStore } from 'vuex'
+import api from './api'
 
-const API_URL = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL
-  : "";
-const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : (() => {
-  if (window.location.protocol == "http:") {
-    return "ws://" + window.location.host
-  }
-  return "wss://" + window.location.host
-})();
+export default createStore({
+	state() {
+		return {
+			config: null,
+			presets: null,
+			radio: null,
+			radioUUID: null,
+			radioWS: null,
+			radios: null,
+			streams: null,
+		}
+	},
+	mutations: {
+		SET_CONFIG(state, config) {
+			state.config = config
+		},
+		SET_STREAMS(state, streams) {
+			state.streams = streams
+		},
+		SET_PRESETS(state, presets) {
+			state.presets = presets
+		},
+		SET_RADIO(state, radio) {
+			state.radio = radio
+		},
+		SET_RADIO_POWER(state, power) {
+			//state.radio = { ...state.radio, power }
+			state.radio.power = power
+		},
+		SET_RADIO_UUID(state, uuid) {
+			state.radioUUID = uuid
+		},
+		SET_RADIO_WS(state, radioWS) {
+			state.radioWS = radioWS
+		},
+		SET_RADIOS(state, radios) {
+			let rds = {};
+			for (let r in radios) {
+				rds[radios[r].uuid] = radios[r].name;
+			}
+			state.radios = rds;
+		},
+	},
+	actions: {
+		loadAll({ dispatch }) {
+			return dispatch('loadConfig').then(() => {
+				dispatch('loadRadios')
+				dispatch('loadPresets')
+				dispatch('loadStreams')
+			})
+		},
+		loadConfig({ commit }) {
+			return api.getConfig()
+				.then((config) => {
+					commit("SET_CONFIG", config)
+				})
+		},
+		loadRadios({ commit }) {
+			return api.getRadios()
+				.then((radios) => {
+					commit("SET_RADIOS", radios)
+				})
+		},
+		loadStreams({ commit, state }) {
+			if (!state.config.presetsEnabled) {
+				return Promise.reject()
+			}
+			return api.getStreams()
+				.then((streams) => {
+					commit("SET_STREAMS", streams)
+				})
+		},
+		loadPresets({ commit, state }) {
+			if (!state.config.presetsEnabled) {
+				return Promise.reject()
+			}
+			return api.getPresets()
+				.then((presets) => {
+					commit("SET_PRESETS", presets)
+				})
+		},
+		refreshRadio({ dispatch, state }) {
+			if (!state.radioUUID) {
+				return Promise.resolve()
+			}
+			if (!state.radioWS) {
+				dispatch("setRadioUUID", state.radioUUID)
+			}
+			return api.renewRadio(state.radioUUID)
+		},
+		setRadioUUID({ commit, state }, uuid) {
+			let ws
+			if (!state.radioWS) {
+				ws = api.radioWS(state.radioUUID)
 
-export default {
-  state: reactive({
-    connecting: false,
-    connected: false,
-    uuid: "",
-    radio: {},
-    radios: {},
-  }),
-  getState() {
-    return readonly(this.state);
-  },
-  updateRadios() {
-    return fetch(API_URL + "/v1/radios")
-      .then((res) => {
-        if (!res.ok) {
-          throw Error(res.statusText);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        let radios = {};
-        for (let d in data) {
-          radios[data[d].uuid] = data[d].name;
-        }
-        this.state.radios = radios;
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  },
-  discoverRadios() {
-    fetch(API_URL + "/v1/radios", {
-      method: "POST",
-    })
-      .then(() => {
-        this.updateRadios();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  },
-  renewRadio(){
-    if (!this.state.uuid) return;
-    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid + "/renew", {
-      method: "POST",
-    }).catch((error) => {
-      console.log(error);
-    });
-  },
-  refreshRadioVolume(){
-    if (!this.state.uuid) return;
-    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid + "/volume", {
-      method: "POST",
-    }).catch((error) => {
-      console.log(error);
-    });
-  },
-  toggleRadioPower() {
-    if (!this.state.uuid) return;
-    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
-      method: "PATCH",
-      body: JSON.stringify({ power: !this.state.radio.power }),
-    }).catch((error) => {
-      console.log(error);
-    });
-  },
-  setRadioPreset(preset) {
-    if (!this.state.uuid) return;
-    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
-      method: "PATCH",
-      body: JSON.stringify({ preset: preset }),
-    }).catch((error) => {
-      console.log(error);
-    });
-  },
-  setRadioVolume(volume) {
-    if (!this.state.uuid) return;
-    fetch(API_URL + "/v1/radio/" + this.state.radio.uuid, {
-      method: "PATCH",
-      body: JSON.stringify({ volume: volume }),
-    }).catch((error) => {
-      console.log(error);
-    });
-  },
-  selectRadio(uuid = "") {
-    this.state.uuid = uuid;
-    if (!this.initWS()) return;
-    this.ws.send(uuid);
-  },
-  initWS() {
-    if (this.state.connecting) {
-      return false;
-    }
-    if (this.state.connected) {
-      return true;
-    }
-    this.state.connecting = true;
+				// Handle messsage
+				ws.addEventListener(
+					"message",
+					function (event) {
+						let radio = JSON.parse(event.data);
+						if (radio.uuid != state.radioUUID) return;
+						commit("SET_RADIO", radio)
+					}
+				);
 
-    // Create websocket
-    if (this.state.uuid == undefined || this.state.uuid == "") {
-      this.ws = new WebSocket(WS_URL + "/v1/radio/ws");
-    } else {
-      this.ws = new WebSocket(WS_URL + "/v1/radio/" + this.state.uuid + "/ws");
-    }
+				// Handle open
+				ws.addEventListener(
+					"open",
+					function () {
+						ws.send(uuid)
+					}
+				);
 
-    // Handle radio state message
-    this.ws.addEventListener(
-      "message",
-      function (event) {
-        let radio = JSON.parse(event.data);
-        if (radio.uuid != this.state.uuid) return;
-        this.state.radio = radio;
-      }.bind(this)
-    );
+				// Handle close
+				ws.addEventListener(
+					"close",
+					function (event) {
+						console.log(event);
+						commit("SET_RADIO_WS", null)
+					}
+				);
 
-    // Handle open
-    this.ws.addEventListener(
-      "open",
-      function () {
-        this.state.connected = true;
-        this.state.connecting = false;
-      }.bind(this)
-    );
+				// Handle error
+				ws.addEventListener(
+					"error",
+					function (event) {
+						console.error(event);
+						commit("SET_RADIO_WS", null)
+					}
+				);
 
-    // Handle close
-    this.ws.addEventListener(
-      "close",
-      function (event) {
-        this.state.connected = false;
-        this.state.connecting = false;
-      }.bind(this)
-    );
+				commit("SET_RADIO_WS", ws)
+			} else {
+				state.radioWS.send(uuid)
+			}
 
-    // Handle error
-    this.ws.addEventListener(
-      "error",
-      function (event) {
-        this.state.connected = false;
-        this.state.connecting = false;
-        console.error(event);
-      }.bind(this)
-    );
-  },
-};
+			commit("SET_RADIO_UUID", uuid)
+		}
+	}
+})

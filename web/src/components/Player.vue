@@ -2,18 +2,19 @@
 	<div class="bg-white space-y-2">
 		<div class="space-y-2 sm:space-y-0 sm:flex">
 			<div class="flex gap-2">
-				<button class="p-1 bg-yellow-200 hover:bg-yellow-300 rounded w-" @click="discoverRadios">
-					<div v-if="discover" class="w-6 h-6 my-auto border-2 border-blue-600 rounded-full loader" />
-					<div v-else>Discover</div>
-				</button>
+				<loading-button
+					class="p-1 bg-yellow-200 hover:bg-yellow-300 rounded"
+					:on-click="discoverRadios"
+				>Discover</loading-button>
 				<select class="flex-1 h-8 bg-gray-200 rounded" v-model="radioUUID">
 					<option :value="null" disabled value>Select Radio</option>
 					<option v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
 				</select>
-				<button v-if="radio" class="p-1 bg-gray-200 hover:bg-gray-300 rounded" @click="renewRadio">
-					<div v-if="renew" class="w-6 h-6 my-auto border-2 border-blue-600 rounded-full loader" />
-					<div v-else>Refresh</div>
-				</button>
+				<loading-button
+					v-if="radio"
+					class="p-1 bg-gray-200 hover:bg-gray-300 rounded"
+					:on-click="renewRadio"
+				>Refresh</loading-button>
 			</div>
 			<div class="ml-auto flex gap-2" v-if="radio">
 				<div class="flex gap-2 flex-grow">
@@ -21,32 +22,22 @@
 					<VolumeUpIcon v-else class="w-8" />
 					<button class="flex-grow my-auto h-8 text-left" @click="refreshRadioVolume">{{ radio.volume }}%</button>
 				</div>
-				<button class="w-8 border-2 hover:bg-gray-300 rounded" @click="decreaseRadioVolume">
-					<div
-						v-if="decreaseVolume"
-						class="w-6 h-6 my-auto border-2 border-blue-600 rounded-full loader"
-					/>
-					<ChevronDownIcon v-else />
-				</button>
-				<button class="w-8 border-2 hover:bg-gray-300 rounded" @click="increaseRadioVolume">
-					<div
-						v-if="increaseVolume"
-						class="w-6 h-6 my-auto border-2 border-blue-600 rounded-full loader"
-					/>
-					<ChevronUpIcon v-else />
-				</button>
-				<button
+				<loading-button class="w-8 border-2 hover:bg-gray-300 rounded" :on-click="decreaseRadioVolume">
+					<ChevronDownIcon />
+				</loading-button>
+				<loading-button class="w-8 border-2 hover:bg-gray-300 rounded" :on-click="increaseRadioVolume">
+					<ChevronUpIcon />
+				</loading-button>
+				<loading-button
 					v-if="radio.power"
 					class="bg-green-200 hover:bg-green-300 rounded w-12"
-					@click="toggleRadioPower"
-				>
-					<div v-if="power" class="w-6 h-6 m-auto border-2 border-blue-600 rounded-full loader" />
-					<div v-else>ON</div>
-				</button>
-				<button v-else class="bg-red-200 hover:bg-red-300 rounded w-12" @click="toggleRadioPower">
-					<div v-if="power" class="w-6 h-6 m-auto border-2 border-blue-600 rounded-full loader" />
-					<div v-else>OFF</div>
-				</button>
+					:on-click="toggleRadioPower"
+				>ON</loading-button>
+				<loading-button
+					v-else
+					class="bg-red-200 hover:bg-red-300 rounded w-12"
+					:on-click="toggleRadioPower"
+				>OFF</loading-button>
 			</div>
 		</div>
 		<div class="flex space-x-2" v-if="radio">
@@ -68,6 +59,7 @@ import VolumeOffIcon from "@heroicons/vue/solid/VolumeOffIcon"
 import VolumeUpIcon from "@heroicons/vue/solid/VolumeUpIcon"
 import ChevronUpIcon from "@heroicons/vue/solid/ChevronUpIcon"
 import ChevronDownIcon from "@heroicons/vue/solid/ChevronDownIcon"
+import LoadingButton from "./LoadingButton.vue"
 import api from '../api';
 
 export default {
@@ -78,16 +70,8 @@ export default {
 		VolumeOffIcon,
 		VolumeUpIcon,
 		ChevronUpIcon,
-		ChevronDownIcon
-	},
-	data() {
-		return {
-			discover: false,
-			power: false,
-			renew: false,
-			increaseVolume: false,
-			decreaseVolume: false,
-		}
+		ChevronDownIcon,
+		LoadingButton
 	},
 	computed: {
 		...mapState([
@@ -111,58 +95,24 @@ export default {
 			'SET_RADIO_POWER'
 		]),
 		discoverRadios() {
-			if (this.discover) {
-				return
-			}
-			this.discover = true
-			api.discoverRadios()
-				.then(() => {
-					this.loadRadios()
-					this.discover = false
-				})
-				.catch(() => this.discover = false)
+			return api.discoverRadios().then(() => this.loadRadios)
 		},
 		renewRadio() {
-			if (this.renew) {
-				return
-			}
-			this.renew = true
-			api.renewRadio(this.radio.uuid)
-				.then(() => this.renew = false)
-				.catch(() => this.renew = false)
+			return api.renewRadio(this.radio.uuid)
 		},
 		toggleRadioPower() {
-			if (this.power) {
-				return
-			}
-			this.power = true
 			let newPower = !this.radio.power
-			api.updateRadio(this.radio.uuid, { power: newPower })
-				.then(() => {
-					this.SET_RADIO_POWER(newPower)
-					this.power = false
-				}).catch(() => this.power = false)
+			return api.updateRadio(this.radio.uuid, { power: newPower })
+				.then(() => this.SET_RADIO_POWER(newPower))
 		},
 		refreshRadioVolume() {
-			api.refreshRadioVolume(this.radio.uuid)
+			return api.refreshRadioVolume(this.radio.uuid)
 		},
 		increaseRadioVolume() {
-			if (this.increaseVolume) {
-				return
-			}
-			this.increaseVolume = true
-			api.updateRadio(this.radio.uuid, { volume: this.radio.volume + 5 })
-				.then(() => this.increaseVolume = false)
-				.catch(() => this.increaseVolume = false)
+			return api.updateRadio(this.radio.uuid, { volume: this.radio.volume + 5 })
 		},
 		decreaseRadioVolume() {
-			if (this.decreaseVolume) {
-				return
-			}
-			this.decreaseVolume = true
-			api.updateRadio(this.radio.uuid, { volume: this.radio.volume - 5 })
-				.then(() => this.decreaseVolume = false)
-				.catch(() => this.decreaseVolume = false)
+			return api.updateRadio(this.radio.uuid, { volume: this.radio.volume - 5 })
 		}
 	},
 }

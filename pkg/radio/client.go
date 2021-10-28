@@ -40,7 +40,7 @@ func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
 	select {
 	case state := <-rd.getStateChan:
 		// Turn on radio if it is not already on
-		if !state.Power {
+		if !*state.Power {
 			if err := rd.SetPowerState(ctx, true); err != nil {
 				return err
 			}

@@ -20,40 +20,84 @@ func (rd *Radio) radioLoop() {
 			return
 		case rd.getStateChan <- *rd.state:
 		case newVolume := <-rd.updateVolumeChan:
-			if rd.state.Volume != newVolume {
-				rd.state.Volume = newVolume
-				rd.stateChanged()
+			// Volume change
+			if *rd.state.Volume != newVolume {
+				rd.state.Volume = &newVolume
+				rd.emitState(&State{Volume: &newVolume})
 			}
 		case newEvent := <-rd.Subscription.EventChan:
+			newState := State{}
 			changed := false
+
 			for _, v := range newEvent.Properties {
 				if v.Name == "PowerState" {
-					rd.state.Power = v.Value == "On"
-					changed = true
+					newPower := v.Value == "On"
+
+					// Power change
+					if newPower != *rd.state.Power {
+						rd.state.Power = &newPower
+						newState.Power = &newPower
+						changed = true
+					}
 				} else if v.Name == "PlaybackXML" {
 					if v.Value == "" {
 						continue
 					}
 
-					oldMetadata := rd.state.Metadata
-					rd.state.Metadata = ""
-					if err := xml.Unmarshal([]byte(v.Value), rd.state); err != nil {
+					sXML := stateXML{}
+					if err := xml.Unmarshal([]byte(v.Value), &sXML); err != nil {
 						log.Println("Radio.radioLoop:", err)
-						rd.state.Metadata = oldMetadata
 						continue
 					}
 
-					changed = true
+					// State change
+					if sXML.State != rd.state.State {
+						rd.state.State = sXML.State
+						newState.State = sXML.State
+						changed = true
+					}
+
+					// Title change
+					if sXML.Title != rd.state.Title {
+						rd.state.Title = sXML.Title
+						newState.Title = sXML.Title
+						changed = true
+					}
+
+					// Url change
+					if sXML.Url != rd.state.Url {
+						rd.state.Url = sXML.Url
+						newState.Url = sXML.Url
+						changed = true
+					}
+
+					// Metadata change
+					if sXML.Metadata != *rd.state.Metadata {
+						newMetadata := sXML.Metadata
+						rd.state.Metadata = &newMetadata
+						newState.Metadata = &newMetadata
+						changed = true
+					}
 				} else if v.Name == "IsMuted" {
-					rd.state.IsMuted = v.Value == "TRUE"
-					changed = true
+					newIsMuted := v.Value == "TRUE"
+
+					if newIsMuted != *rd.state.IsMuted {
+						rd.state.IsMuted = &newIsMuted
+						newState.IsMuted = &newIsMuted
+						changed = true
+					}
 				}
 			}
 			if changed {
-				rd.stateChanged()
+				rd.emitState(&newState)
 			}
 		}
 	}
+}
+
+func (rd *Radio) emitState(state *State) {
+	state.UUID = rd.state.UUID
+	rd.allStateChan <- *state
 }
 
 func (rd *Radio) initState() {
@@ -95,7 +139,7 @@ func (rd *Radio) initState() {
 		if !IsValidVolume(volume) {
 			log.Println("Radio.initState(ERROR): invalid volume was given from radio,", volume)
 		} else {
-			rd.state.Volume = volume
+			rd.state.Volume = &volume
 		}
 	}
 
@@ -168,10 +212,6 @@ func (rd *Radio) GetState(ctx context.Context) (*State, error) {
 	case state := <-rd.getStateChan:
 		return &state, nil
 	}
-}
-
-func (rd *Radio) stateChanged() {
-	rd.allStateChan <- *rd.state
 }
 
 func (rd *Radio) IsPresetValid(preset int) bool {

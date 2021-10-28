@@ -24,7 +24,12 @@ export default createStore({
 			state.presets = presets
 		},
 		SET_RADIO(state, radio) {
-			state.radio = radio
+			if (!state.radio) {
+				state.radio = {}
+			}
+			for (let k in radio) {
+				state.radio[k] = radio[k]
+			}
 		},
 		SET_RADIO_POWER(state, power) {
 			//state.radio = { ...state.radio, power }

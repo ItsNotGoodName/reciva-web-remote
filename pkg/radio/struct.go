@@ -38,15 +38,22 @@ type Preset struct {
 
 // State of the radio.
 type State struct {
-	IsMuted    bool     `json:"isMuted"`                                         // IsMuted represents if the Radio's volume is muted.
-	Metadata   string   `json:"metadata" xml:"playback-details>stream>metadata"` // Metadata that is received from the stream url.
-	Name       string   `json:"name"`                                            // Name of the radio.
-	NumPresets int      `json:"numPresets"`                                      // NumPresets on the radio, does not change after it is set.
-	Power      bool     `json:"power"`                                           // Power represents if the radio is not in standby.
-	Presets    []Preset `json:"presets"`                                         // Presets on the radio.
-	State      string   `json:"state" xml:"playback-details>state"`              // State is either playing, connecting, or stopped.
-	Title      string   `json:"title" xml:"playback-details>stream>title"`       // Title of the preset.
-	UUID       string   `json:"uuid"`                                            // UUID will not change once it has been set.
-	Url        string   `json:"url" xml:"playback-details>stream>url"`           // Url of the stream that is currently selected.
-	Volume     int      `json:"volume"`                                          // Volume of the Radio.
+	IsMuted    *bool    `json:"isMuted,omitempty"`    // IsMuted represents if the Radio's volume is muted.
+	Metadata   *string  `json:"metadata,omitempty"`   // Metadata that is received from the stream url.
+	Name       string   `json:"name,omitempty"`       // Name of the radio.
+	NumPresets int      `json:"numPresets,omitempty"` // NumPresets on the radio, does not change after it is set.
+	Power      *bool    `json:"power,omitempty"`      // Power represents if the radio is not in standby.
+	Presets    []Preset `json:"presets,omitempty"`    // Presets on the radio.
+	State      string   `json:"state,omitempty"`      // State is either playing, connecting, or stopped.
+	Title      string   `json:"title,omitempty"`      // Title of the preset.
+	UUID       string   `json:"uuid"`                 // UUID will not change once it has been set.
+	Url        string   `json:"url,omitempty"`        // Url of the stream that is currently selected.
+	Volume     *int     `json:"volume,omitempty"`     // Volume of the Radio.
+}
+
+type stateXML struct {
+	Metadata string `xml:"playback-details>stream>metadata"`
+	State    string `xml:"playback-details>state"`
+	Title    string `xml:"playback-details>stream>title"`
+	Url      string `xml:"playback-details>stream>url"`
 }

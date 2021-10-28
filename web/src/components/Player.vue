@@ -44,7 +44,10 @@
 			<PlayIcon v-if="radio.state == 'Playing'" class="w-8 h-8" />
 			<StopIcon v-else-if="radio.state == 'Stopped'" class="w-8 h-8" />
 			<RefreshIcon v-else class="w-8 h-8" />
-			<span class="my-auto truncate">{{ radio.title }}</span>
+			<span class="my-auto truncate">
+				{{ radio.title }}
+				<span v-if="radio.metadata">| {{ radio.metadata }}</span>
+			</span>
 		</div>
 	</div>
 </template>

@@ -73,7 +73,7 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 		allStateChan:      h.stateUpdateChan,
 		dctx:              dctx,
 		getStateChan:      make(chan State),
-		state:             &State{UUID: uuid},
+		state:             NewState(uuid),
 		updatePresetsChan: make(chan []Preset),
 		updateVolumeChan:  make(chan int),
 	}

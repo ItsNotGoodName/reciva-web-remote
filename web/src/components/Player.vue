@@ -20,12 +20,12 @@
 				<div class="flex gap-2 flex-grow">
 					<VolumeOffIcon v-if="radio.isMuted" class="w-8" />
 					<VolumeUpIcon v-else class="w-8" />
-					<button class="flex-grow my-auto h-8 text-left" @click="refreshRadioVolume">{{ radio.volume }}%</button>
+					<button class="h-8 text-left" @click="refreshRadioVolume">{{ radio.volume }}%</button>
 				</div>
-				<loading-button class="w-8 border-2 hover:bg-gray-300 rounded" :on-click="decreaseRadioVolume">
+				<loading-button class="w-8 border-2 hover:bg-gray-200 rounded" :on-click="decreaseRadioVolume">
 					<ChevronDownIcon />
 				</loading-button>
-				<loading-button class="w-8 border-2 hover:bg-gray-300 rounded" :on-click="increaseRadioVolume">
+				<loading-button class="w-8 border-2 hover:bg-gray-200 rounded" :on-click="increaseRadioVolume">
 					<ChevronUpIcon />
 				</loading-button>
 				<loading-button

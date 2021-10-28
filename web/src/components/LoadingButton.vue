@@ -24,12 +24,24 @@ export default {
 			}
 			this.loading = true
 			this.onClick()
-				.then((() => { this.loading = false }).bind(this))
-				.catch((() => { this.loading = false }).bind(this))
+				.then((() => this.loading = false))
+				.catch((() => this.loading = false))
 		},
 	},
 }
 </script>
 
 <style scoped>
+@keyframes loader-rotate {
+	0% {
+		transform: rotate(0);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+.loader {
+	border-right-color: transparent;
+	animation: loader-rotate 1s linear infinite;
+}
 </style>

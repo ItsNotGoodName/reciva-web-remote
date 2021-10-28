@@ -26,6 +26,10 @@ export default createStore({
 		SET_RADIO(state, radio) {
 			state.radio = radio
 		},
+		SET_RADIO_POWER(state, power) {
+			//state.radio = { ...state.radio, power }
+			state.radio.power = power
+		},
 		SET_RADIO_UUID(state, uuid) {
 			state.radioUUID = uuid
 		},

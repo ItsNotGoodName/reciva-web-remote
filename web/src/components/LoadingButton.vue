@@ -1,6 +1,6 @@
 <template>
 	<button @click="handleClick">
-		<div v-if="loading" class="w-5 h-5 m-auto border-2 border-blue-600 rounded-full loader" />
+		<div v-if="loading" class="w-6 h-6 m-auto border-2 border-blue-600 rounded-full loader" />
 		<slot v-else></slot>
 	</button>
 </template>
@@ -31,6 +31,8 @@ export default {
 }
 </script>
 
+
+// https://tailwindcomponents.com/component/spinner-1
 <style scoped>
 @keyframes loader-rotate {
 	0% {

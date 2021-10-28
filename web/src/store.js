@@ -6,11 +6,11 @@ export default createStore({
 		return {
 			config: null,
 			presets: null,
-			streams: null,
-			radios: null,
-			radioWS: null,
+			radio: null,
 			radioUUID: null,
-			radio: null
+			radioWS: null,
+			radios: null,
+			streams: null,
 		}
 	},
 	mutations: {
@@ -82,6 +82,15 @@ export default createStore({
 					commit("SET_PRESETS", presets)
 				})
 		},
+		refreshRadio({ dispatch, state }) {
+			if (!state.radioUUID) {
+				return Promise.resolve()
+			}
+			if (!state.radioWS) {
+				dispatch("setRadioUUID", state.radioUUID)
+			}
+			return api.renewRadio(state.radioUUID)
+		},
 		setRadioUUID({ commit, state }, uuid) {
 			let ws
 			if (!state.radioWS) {
@@ -100,8 +109,7 @@ export default createStore({
 				// Handle open
 				ws.addEventListener(
 					"open",
-					function (event) {
-						console.log(event)
+					function () {
 						ws.send(uuid)
 					}
 				);
@@ -111,6 +119,7 @@ export default createStore({
 					"close",
 					function (event) {
 						console.log(event);
+						commit("SET_RADIO_WS", null)
 					}
 				);
 
@@ -119,6 +128,7 @@ export default createStore({
 					"error",
 					function (event) {
 						console.error(event);
+						commit("SET_RADIO_WS", null)
 					}
 				);
 

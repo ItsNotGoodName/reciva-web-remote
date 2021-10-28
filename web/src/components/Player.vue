@@ -1,5 +1,5 @@
 <template>
-	<div class="bg-white space-y-2">
+	<div v-bind:class="{ 'border-red-400': radio && !radioWS }" class="bg-white space-y-2">
 		<div class="space-y-2 sm:space-y-0 sm:flex">
 			<div class="flex gap-2">
 				<loading-button
@@ -13,7 +13,7 @@
 				<loading-button
 					v-if="radio"
 					class="p-1 bg-gray-200 hover:bg-gray-300 rounded"
-					:on-click="renewRadio"
+					:on-click="refreshRadio"
 				>Refresh</loading-button>
 			</div>
 			<div class="ml-auto flex gap-2" v-if="radio">
@@ -76,7 +76,8 @@ export default {
 	computed: {
 		...mapState([
 			'radio',
-			'radios'
+			'radioWS',
+			'radios',
 		]),
 		radioUUID: {
 			get() {
@@ -89,16 +90,14 @@ export default {
 	},
 	methods: {
 		...mapActions([
-			'loadRadios'
+			'loadRadios',
+			'refreshRadio'
 		]),
 		...mapMutations([
 			'SET_RADIO_POWER'
 		]),
 		discoverRadios() {
 			return api.discoverRadios().then(() => this.loadRadios)
-		},
-		renewRadio() {
-			return api.renewRadio(this.radio.uuid)
 		},
 		toggleRadioPower() {
 			let newPower = !this.radio.power
@@ -120,3 +119,4 @@ export default {
 
 <style scoped>
 </style>
+

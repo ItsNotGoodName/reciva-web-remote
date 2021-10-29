@@ -11,11 +11,11 @@ import (
 
 func NewHub(cp *goupnpsub.ControlPoint) *Hub {
 	h := Hub{
-		Register:        make(chan *chan State),
-		Unregister:      make(chan *chan State),
-		clients:         make(map[*chan State]bool),
-		cp:              cp,
-		stateUpdateChan: make(chan State),
+		Register:         make(chan *chan State),
+		Unregister:       make(chan *chan State),
+		clients:          make(map[*chan State]bool),
+		cp:               cp,
+		receiveStateChan: make(chan State),
 	}
 	go h.hubLoop()
 	return &h
@@ -34,7 +34,7 @@ func (h *Hub) hubLoop() {
 				close(*client)
 				log.Println("Hub.hubLoop: unregistered")
 			}
-		case state := <-h.stateUpdateChan:
+		case state := <-h.receiveStateChan:
 			for client := range h.clients {
 				select {
 				case *client <- state:
@@ -48,11 +48,11 @@ func (h *Hub) hubLoop() {
 	}
 }
 
-func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
+func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (*Radio, error) {
 	// Get UUID from client
 	uuid, ok := getServiceClientUUID(&client)
 	if !ok {
-		return Radio{}, errors.New("could not find uuid from client")
+		return nil, errors.New("could not find uuid from client")
 	}
 
 	// Create sub
@@ -61,7 +61,7 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 	sub, err := h.cp.NewSubscription(dctx, &client.Service.EventSubURL.URL)
 	if err != nil {
 		cancel()
-		return Radio{}, err
+		return nil, err
 	}
 
 	// Create rd and start radioLoop
@@ -70,7 +70,7 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 		Client:            client,
 		Subscription:      sub,
 		UUID:              uuid,
-		allStateChan:      h.stateUpdateChan,
+		sendStateChan:     h.receiveStateChan,
 		dctx:              dctx,
 		getStateChan:      make(chan State),
 		state:             NewState(uuid),
@@ -79,7 +79,7 @@ func (h *Hub) NewRadioFromClient(client goupnp.ServiceClient) (Radio, error) {
 	}
 	go rd.radioLoop()
 
-	return rd, nil
+	return &rd, nil
 }
 
 func (h *Hub) NewRadios() ([]Radio, error) {
@@ -98,7 +98,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 			continue
 		}
 
-		radios[i] = radio
+		radios[i] = *radio
 	}
 
 	return radios, nil

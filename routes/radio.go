@@ -77,11 +77,9 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 			return
 		}
 
-		// TODO: Add shorter ctx timeout, currently soap timeout is 30 seconds
-
 		// Set power if not nil
 		if radioPost.Power != nil {
-			if err := rd.SetPowerState(c, *radioPost.Power); err != nil {
+			if err := rd.SetPower(c, *radioPost.Power); err != nil {
 				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err})
 				return
 			}
@@ -89,25 +87,20 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 
 		// Play preset if not nil
 		if radioPost.Preset != nil {
-			if !rd.IsPresetValid(*radioPost.Preset) {
-				c.JSON(http.StatusBadRequest, gin.H{"err": "preset is not valid"})
-				return
-			}
 			if err := rd.PlayPreset(c, *radioPost.Preset); err != nil {
-				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err})
+				if err == radio.ErrInvalidPreset {
+					c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+					return
+				}
+				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 				return
 			}
 		}
 
 		// Set volume if not nil
 		if radioPost.Volume != nil {
-			vol := radio.NormalizeVolume(*radioPost.Volume)
-			if err := rd.SetVolume(vol); err != nil {
-				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err})
-				return
-			}
-			if err := rd.UpdateVolume(vol); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+			if err := rd.SetVolume(*radioPost.Volume); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 				return
 			}
 		}
@@ -164,7 +157,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 
 		// Refresh volume
 		if err := rd.RefreshVolume(c); err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.Status(http.StatusServiceUnavailable)
 			return
 		}
 	})

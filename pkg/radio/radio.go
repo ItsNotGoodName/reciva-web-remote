@@ -23,7 +23,7 @@ func (rd *Radio) radioLoop() {
 			// Volume change
 			if *rd.state.Volume != newVolume {
 				rd.state.Volume = &newVolume
-				rd.emitState(&State{Volume: &newVolume})
+				rd.sendState(&State{Volume: &newVolume})
 			}
 		case newEvent := <-rd.Subscription.EventChan:
 			newState := State{}
@@ -65,9 +65,9 @@ func (rd *Radio) radioLoop() {
 					}
 
 					// Url change
-					if sXML.Url != rd.state.Url {
-						rd.state.Url = sXML.Url
-						newState.Url = sXML.Url
+					if sXML.URL != rd.state.URL {
+						rd.state.URL = sXML.URL
+						newState.URL = sXML.URL
 						changed = true
 					}
 
@@ -89,15 +89,26 @@ func (rd *Radio) radioLoop() {
 				}
 			}
 			if changed {
-				rd.emitState(&newState)
+				rd.sendState(&newState)
 			}
 		}
 	}
 }
 
-func (rd *Radio) emitState(state *State) {
+func (rd *Radio) GetState(ctx context.Context) (*State, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-rd.dctx.Done():
+		return nil, rd.dctx.Err()
+	case state := <-rd.getStateChan:
+		return &state, nil
+	}
+}
+
+func (rd *Radio) sendState(state *State) {
 	state.UUID = rd.state.UUID
-	rd.allStateChan <- *state
+	rd.sendStateChan <- *state
 }
 
 func (rd *Radio) initState() {
@@ -107,7 +118,7 @@ func (rd *Radio) initState() {
 	// Get number of presets
 	var numPresets int
 	if err := retry.Do(func() error {
-		if p, e := rd.GetNumberOfPresets(rd.dctx); e != nil {
+		if p, e := rd.getNumberOfPresets(rd.dctx); e != nil {
 			return e
 		} else {
 			numPresets = p
@@ -127,7 +138,7 @@ func (rd *Radio) initState() {
 	// Get volume
 	var volume int
 	if err := retry.Do(func() error {
-		if v, e := rd.GetVolume(rd.dctx); e != nil {
+		if v, e := rd.getVolume(rd.dctx); e != nil {
 			return e
 		} else {
 			volume = v
@@ -136,17 +147,13 @@ func (rd *Radio) initState() {
 	}, retry.Context(rd.dctx)); err != nil {
 		log.Println("Radio.initState:", err)
 	} else {
-		if !IsValidVolume(volume) {
-			log.Println("Radio.initState(ERROR): invalid volume was given from radio,", volume)
-		} else {
-			rd.state.Volume = &volume
-		}
+		rd.state.Volume = &volume
 	}
 
 	// Get presets
 	var presets []Preset
 	if err := retry.Do(func() error {
-		if p, e := rd.GetPresets(rd.dctx); e != nil {
+		if p, e := rd.getPresets(rd.dctx); e != nil {
 			return e
 		} else {
 			presets = p
@@ -159,61 +166,49 @@ func (rd *Radio) initState() {
 	}
 }
 
-func (rd *Radio) RefreshVolume(ctx context.Context) error {
-	// Get volume
-	volume, err := rd.GetVolume(ctx)
+func (rd *Radio) SetPower(ctx context.Context, power bool) error {
+	return rd.setPowerState(ctx, power)
+}
+
+func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
+	if preset < 1 || preset > rd.state.NumPresets {
+		return ErrInvalidPreset
+	}
+
+	state, err := rd.GetState(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Update volume
-	if err = rd.UpdateVolume(volume); err != nil {
+	if !*state.Power && rd.setPowerState(ctx, true) != nil {
 		return err
 	}
 
-	return nil
+	return rd.playPreset(ctx, preset)
 }
 
-func (rd *Radio) UpdateVolume(volume int) error {
+func (rd *Radio) SetVolume(volume int) error {
+	volume = NormalizeVolume(volume)
+	if err := rd.setVolume(rd.dctx, volume); err != nil {
+		return err
+	}
+	return rd.updateVolume(volume)
+}
+
+func (rd *Radio) RefreshVolume(ctx context.Context) error {
+	vol, err := rd.getVolume(ctx)
+	if err != nil {
+		return err
+	}
+
+	return rd.updateVolume(vol)
+}
+
+func (rd *Radio) updateVolume(volume int) error {
 	select {
 	case <-rd.dctx.Done():
 		return rd.dctx.Err()
 	case rd.updateVolumeChan <- volume:
 		return nil
 	}
-}
-
-func (rd *Radio) RefreshPresets(ctx context.Context) error {
-	// Get presets
-	presets, err := rd.GetPresets(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Update presets
-	return rd.UpdatePresets(presets)
-}
-
-func (rd *Radio) UpdatePresets(presets []Preset) error {
-	select {
-	case <-rd.dctx.Done():
-		return rd.dctx.Err()
-	case rd.updatePresetsChan <- presets:
-		return nil
-	}
-}
-
-func (rd *Radio) GetState(ctx context.Context) (*State, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case <-rd.dctx.Done():
-		return nil, rd.dctx.Err()
-	case state := <-rd.getStateChan:
-		return &state, nil
-	}
-}
-
-func (rd *Radio) IsPresetValid(preset int) bool {
-	return !(preset < 1 || preset > rd.state.NumPresets)
 }

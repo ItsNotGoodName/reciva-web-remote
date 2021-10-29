@@ -179,8 +179,8 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription) {
 	log.Println("ControlPoint.subscriptionLoop: started")
 
-	// Renew sub and get duration til next renewal
-	duration := cp.renew(ctx, sub)
+	// Renew sub and get d til next renewal
+	t := time.NewTimer(cp.renew(ctx, sub))
 
 	for {
 		select {
@@ -204,9 +204,12 @@ func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription)
 			return
 		case <-sub.renewChan:
 			log.Println("ControlPoint.subscriptionLoop: renewChan received")
-			duration = cp.renew(ctx, sub)
-		case <-time.After(duration): // TODO: Use time.NewTimer to prevent memory usage when RenewChan spam called
-			duration = cp.renew(ctx, sub)
+			if !t.Stop() {
+				<-t.C
+			}
+			t.Reset(cp.renew(ctx, sub))
+		case <-t.C:
+			t.Reset(cp.renew(ctx, sub))
 		}
 	}
 }

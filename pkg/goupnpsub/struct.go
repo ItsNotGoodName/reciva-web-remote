@@ -33,9 +33,9 @@ type Property struct {
 
 // Event represents a parsed notify request.
 type Event struct {
-	// TODO: Add seq number
-	sid        string
 	Properties []Property
+	SEQ        int
+	sid        string
 }
 
 // propertyVariableXML represents the inner information of the property tag in the notify request's xml.

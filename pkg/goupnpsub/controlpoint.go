@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -62,33 +63,42 @@ func (cp *ControlPoint) NewSubscription(ctx context.Context, eventURL *url.URL) 
 
 // ServeHTTP handles notify requests from event publishers.
 func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Validate NT and NTS
+	// Get NT and NTS
 	nt, nts := r.Header.Get("NT"), r.Header.Get("NTS")
 	if nt == "" || nts == "" {
 		log.Println("ControlPoint.ServeHTTP(WARNING): request has no nt or nts")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	// Get SEQ
+	var seq int
+	if seqStr := r.Header.Get("SEQ"); seqStr != "" {
+		seqInt, err := strconv.Atoi(seqStr)
+		if err != nil {
+			log.Println("ControlPoint.ServeHTTP(WARNING): invalid seq", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		seq = seqInt
+	}
+
+	// Validate NT and NTS
 	if nt != NT || nts != NTS {
-		log.Printf("ControlPoint.ServeHTTP(WARNING): bad nt or nts, %s, %s", nt, nts)
+		log.Printf("ControlPoint.ServeHTTP(WARNING): invalid nt or nts, %s, %s", nt, nts)
 		w.WriteHeader(http.StatusPreconditionFailed)
 		return
 	}
 
-	// Validate SID
+	// Get SID
 	sid := r.Header.Get("SID")
-	if sid == "" {
-		log.Println("ControlPoint.ServeHTTP(WARNING): request has no sid")
-		w.WriteHeader(http.StatusPreconditionFailed)
-		return
-	}
 
 	// Find sub from sidMap using SID
 	cp.sidMapRWMutex.RLock()
 	sub, ok := cp.sidMap[sid]
 	cp.sidMapRWMutex.RUnlock()
 	if !ok {
-		log.Println("ControlPoint.ServeHTTP(WARNING): could not find sid in sidMap")
+		log.Println("ControlPoint.ServeHTTP(WARNING): sid not found or valid,", sid)
 		w.WriteHeader(http.StatusPreconditionFailed)
 		return
 	}
@@ -110,14 +120,11 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Parse properties from xmlEvent
 	properties := parseProperties(xmlEvent)
 
-	// Create event using SID and properties
-	event := Event{sid: sid, Properties: properties}
-
 	// Try to send event to sub's EventChan, fail after waiting for 20 seconds
 	select {
 	case <-time.After(20 * time.Second):
 		log.Println("ControlPoint.ServeHTTP(ERROR): could not send event to subscription's EventChan")
-	case sub.EventChan <- &event:
+	case sub.EventChan <- &Event{Properties: properties, SEQ: seq, sid: sid}:
 	}
 }
 

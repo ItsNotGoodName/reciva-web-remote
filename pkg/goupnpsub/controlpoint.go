@@ -12,75 +12,95 @@ import (
 	"time"
 )
 
-// NewControlPoint creates and returns a ControlPoint.
+// NewControlPoint creates a ControlPoint.
 func NewControlPoint() *ControlPoint {
 	return NewControlPointWithPort(DefaultPort)
 }
 
-// NewControlPoint creates and returns a ControlPoint that listens on a specific port.
+// NewControlPoint creates a ControlPoint that listens on a specific port.
 func NewControlPointWithPort(listenPort int) *ControlPoint {
 	cp := &ControlPoint{
-		listenUri:     "/eventSub",
+		listenURI:     ListenURI,
 		listenPort:    fmt.Sprint(listenPort),
 		sidMap:        make(map[string]*Subscription),
 		sidMapRWMutex: sync.RWMutex{},
 	}
-	http.Handle(cp.listenUri, cp)
+	http.Handle(cp.listenURI, cp)
 	return cp
 }
 
-// Start a HTTP server that listens for notify requests.
+// Start HTTP server that listens for notify requests.
 func (cp *ControlPoint) Start() {
 	log.Println("ControlPoint.Start: listening on port", cp.listenPort)
 	log.Fatal(http.ListenAndServe(":"+cp.listenPort, nil))
 }
 
 // NewSubscription creates and returns a Subscription.
-func (cp *ControlPoint) NewSubscription(dctx context.Context, eventUrl *url.URL) (*Subscription, error) {
-	// Get callback url
-	callbackUrl, err := getCallbackIP(eventUrl)
+func (cp *ControlPoint) NewSubscription(ctx context.Context, eventURL *url.URL) (*Subscription, error) {
+	// Find callback ip
+	callbackIP, err := findCallbackIP(eventURL)
 	if err != nil {
 		return nil, err
 	}
 
-	// Crete sub and start subscriptionLoop
+	// Create sub
 	sub := &Subscription{
-		ActiveChan:  make(chan bool),
-		EventChan:   make(chan *Event, 10),
-		renewChan:   make(chan bool),
-		eventUrl:    eventUrl.String(),
-		callbackUrl: "<http://" + callbackUrl + ":" + cp.listenPort + cp.listenUri + ">",
+		EventChan:     make(chan *Event, 10),
+		GetActiveChan: make(chan bool),
+		callbackURL:   "<http://" + callbackIP + ":" + cp.listenPort + cp.listenURI + ">",
+		eventURL:      eventURL.String(),
+		renewChan:     make(chan bool),
+		setActiveChan: make(chan bool),
 	}
-	go cp.subscriptionLoop(dctx, sub)
+
+	// Start sub loops
+	go cp.subscriptionLoop(ctx, sub)
+	go sub.activeLoop(ctx)
 
 	return sub, nil
 }
 
-// ServeHTTP handles notify requests from event publishers and is called by the http module.
+// ServeHTTP handles notify requests from event publishers.
 func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// TODO: Do I need w.Write(nil)?
-	defer w.Write(nil)
-
-	// TODO: Validate request
-
-	// Get SID from request
-	sid := r.Header.Get("SID")
-	if sid == "" {
-		log.Println("ControlPoint.ServeHTTP(WARNING): notify request did not supply sid")
+	// Validate NT and NTS
+	nt, nts := r.Header.Get("NT"), r.Header.Get("NTS")
+	if nt == "" || nts == "" {
+		log.Println("ControlPoint.ServeHTTP(WARNING): request has no nt or nts")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if nt != NT || nts != NTS {
+		log.Printf("ControlPoint.ServeHTTP(WARNING): bad nt or nts, %s, %s", nt, nts)
 		w.WriteHeader(http.StatusPreconditionFailed)
 		return
 	}
 
-	// Get body from from request
-	// TODO: Do I need r.Body.Close()?
-	defer r.Body.Close()
+	// Validate SID
+	sid := r.Header.Get("SID")
+	if sid == "" {
+		log.Println("ControlPoint.ServeHTTP(WARNING): request has no sid")
+		w.WriteHeader(http.StatusPreconditionFailed)
+		return
+	}
+
+	// Find sub from sidMap using SID
+	cp.sidMapRWMutex.RLock()
+	sub, ok := cp.sidMap[sid]
+	cp.sidMapRWMutex.RUnlock()
+	if !ok {
+		log.Println("ControlPoint.ServeHTTP(WARNING): could not find sid in sidMap")
+		w.WriteHeader(http.StatusPreconditionFailed)
+		return
+	}
+
+	// Get body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println("ControlPoint.ServeHTTP:", err)
 		return
 	}
 
-	// Parse xmlEvent from request's body
+	// Parse xmlEvent from body
 	xmlEvent, err := parseEventXML(body)
 	if err != nil {
 		log.Println("ControlPoint.ServeHTTP:", err)
@@ -93,17 +113,6 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create event using SID and properties
 	event := Event{sid: sid, Properties: properties}
 
-	// TODO: Move this section up if it does not causes locking issues with ControlPoint.subscribe() function
-	// Find sub from sidMap using SID
-	cp.sidMapRWMutex.RLock()
-	sub, ok := cp.sidMap[sid]
-	cp.sidMapRWMutex.RUnlock()
-	if !ok {
-		log.Println("ControlPoint.ServeHTTP(WARNING): could not find sid in sidMap")
-		w.WriteHeader(http.StatusPreconditionFailed)
-		return
-	}
-
 	// Try to send event to sub's EventChan, fail after waiting for 20 seconds
 	select {
 	case <-time.After(20 * time.Second):
@@ -112,25 +121,25 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// subscribe sends SUBSCRIBE request to event publisher to create a new subscription.
+// subscribe sends SUBSCRIBE request to event publisher.
 func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error {
 	// Create request
-	req, err := http.NewRequest("SUBSCRIBE", sub.eventUrl, nil)
+	req, err := http.NewRequest("SUBSCRIBE", sub.eventURL, nil)
 	if err != nil {
 		return err
 	}
 	req = req.WithContext(ctx)
 
 	// Add headers to request
-	req.Header.Add("CALLBACK", sub.callbackUrl)
-	req.Header.Add("NT", "upnp:event")
-	req.Header.Add("TIMEOUT", defaultTimeout)
+	req.Header.Add("CALLBACK", sub.callbackURL)
+	req.Header.Add("NT", NT)
+	req.Header.Add("TIMEOUT", DefaultTimeout)
 
 	// Execute request
 	client := http.Client{}
 	res, err := client.Do(req)
 
-	// Lock map as soon as possible to prevent a race condition with UPnP publisher
+	// Lock map as soon as possible to prevent race condition with ServeHTTP
 	cp.sidMapRWMutex.Lock()
 
 	// Check request and get SID from request
@@ -167,51 +176,16 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 }
 
 // subscriptionLoop handles subscribing and renewing subscriptions.
-func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription) {
-	// TODO: Refactor this function
+func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription) {
 	log.Println("ControlPoint.subscriptionLoop: started")
 
-	// Subscription status goroutine
-	activeChan := make(chan bool)
-	go func() {
-		active := false
-		for {
-			select {
-			case <-dctx.Done():
-				return
-			case active = <-activeChan:
-			case sub.ActiveChan <- active:
-			}
-		}
-	}()
-
-	// Renew
-	var duration time.Duration
-	renew := func() {
-		if !<-sub.ActiveChan {
-			if err := cp.subscribe(dctx, sub); err != nil {
-				log.Print("ControlPoint.subscriptionLoop:", err)
-				return
-			}
-			activeChan <- true
-			duration = getRenewDuration(sub.timeout)
-			log.Printf("ControlPoint.subscriptionLoop: subscribe successful, will resubscribe in %s intervals", duration)
-			return
-		}
-		if err := sub.resubscribe(dctx); err != nil {
-			activeChan <- false
-			duration = 5 * time.Second
-			log.Print("ControlPoint.subscriptionLoop:", err)
-			return
-		}
-		duration = getRenewDuration(sub.timeout)
-	}
-	renew()
+	// Renew sub and get duration til next renewal
+	duration := cp.renew(ctx, sub)
 
 	for {
 		select {
-		case <-dctx.Done():
-			log.Println("ControlPoint.subscriptionLoop: dctx is done, starting cleanup")
+		case <-ctx.Done():
+			log.Println("ControlPoint.subscriptionLoop: ctx is done, starting cleanup")
 
 			// Delete sub.sid from sidMap
 			cp.sidMapRWMutex.Lock()
@@ -222,8 +196,7 @@ func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription
 			ctx := context.Background()
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
-			err := sub.unsubscribe(ctx)
-			if err != nil {
+			if err := sub.unsubscribe(ctx); err != nil {
 				log.Print("ControlPoint.subscriptionLoop:", err)
 			}
 
@@ -231,9 +204,30 @@ func (cp *ControlPoint) subscriptionLoop(dctx context.Context, sub *Subscription
 			return
 		case <-sub.renewChan:
 			log.Println("ControlPoint.subscriptionLoop: renewChan received")
-			renew()
+			duration = cp.renew(ctx, sub)
 		case <-time.After(duration): // TODO: Use time.NewTimer to prevent memory usage when RenewChan spam called
-			renew()
+			duration = cp.renew(ctx, sub)
 		}
 	}
+}
+
+// renew handles subscribing or resubscribing.
+func (cp *ControlPoint) renew(ctx context.Context, sub *Subscription) time.Duration {
+	if !<-sub.GetActiveChan {
+		if err := cp.subscribe(ctx, sub); err != nil {
+			log.Print("ControlPoint.subscriptionLoop:", err)
+			return sub.getRenewDuration()
+		}
+		sub.setActiveChan <- true
+		duration := sub.getRenewDuration()
+		log.Printf("ControlPoint.subscriptionLoop: subscribe successful, will resubscribe in %s intervals", duration)
+		return duration
+	}
+	if err := sub.resubscribe(ctx); err != nil {
+		sub.setActiveChan <- false
+		duration := 5 * time.Second
+		log.Print("ControlPoint.subscriptionLoop:", err)
+		return duration
+	}
+	return sub.getRenewDuration()
 }

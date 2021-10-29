@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // Renew tells subscription to renew if it is not already renewing.
@@ -15,10 +16,28 @@ func (sub *Subscription) Renew() {
 	}
 }
 
+// getRenewDuration returns half the sub timeout as time.Duration.
+func (sub *Subscription) getRenewDuration() time.Duration {
+	return time.Duration(sub.timeout/2) * time.Second
+}
+
+// activeLoop handles active status of subscription.
+func (sub *Subscription) activeLoop(ctx context.Context) {
+	active := false
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case active = <-sub.setActiveChan:
+		case sub.GetActiveChan <- active:
+		}
+	}
+}
+
 // unsubscribe sends an UNSUBSCRIBE request to event publisher.
 func (sub *Subscription) unsubscribe(ctx context.Context) error {
 	// Create request
-	req, err := http.NewRequest("UNSUBSCRIBE", sub.eventUrl, nil)
+	req, err := http.NewRequest("UNSUBSCRIBE", sub.eventURL, nil)
 	if err != nil {
 		return err
 	}
@@ -45,7 +64,7 @@ func (sub *Subscription) unsubscribe(ctx context.Context) error {
 // resubscribe sends a SUBSCRIBE request to event publisher that renews the existing subscription.
 func (sub *Subscription) resubscribe(ctx context.Context) error {
 	// Create request
-	req, err := http.NewRequest("SUBSCRIBE", sub.eventUrl, nil)
+	req, err := http.NewRequest("SUBSCRIBE", sub.eventURL, nil)
 	if err != nil {
 		return err
 	}
@@ -53,7 +72,7 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 
 	// Add headers to request
 	req.Header.Add("SID", sub.sid)
-	req.Header.Add("TIMEOUT", defaultTimeout)
+	req.Header.Add("TIMEOUT", DefaultTimeout)
 
 	// Execute request
 	client := http.Client{}

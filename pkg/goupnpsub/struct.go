@@ -7,21 +7,22 @@ import (
 
 // ControlPoint handles the HTTP notify server and keeps track of subscriptions.
 type ControlPoint struct {
-	listenUri     string                   // The URI that the publisher sends it's notify request.
-	listenPort    string                   // The port that the publisher sends it's notify request.
-	sidMap        map[string]*Subscription // SID to Subscription map.
-	sidMapRWMutex sync.RWMutex             // Read and write lock for sidMap.
+	listenURI     string                   // listenURI is the URI for consuming notify requests.
+	listenPort    string                   // listenPort is the HTTP server's port.
+	sidMap        map[string]*Subscription // sidMap hold all active subscriptions.
+	sidMapRWMutex sync.RWMutex             // sidMapRWMutex read-write mutex.
 }
 
 // Subscription represents the subscription to the UPnP publisher.
 type Subscription struct {
-	EventChan   chan *Event // Events sent from publisher to this Subscription.
-	ActiveChan  chan bool   // ActiveChan returns true if the Subscription is active.
-	renewChan   chan bool   // Force a Subscription renewal.
-	eventUrl    string      // URL to send subscribe request.
-	callbackUrl string      // The full url that the publisher sends it's notify request.
-	sid         string      // Do not read or write unless in subsciptionLoop.
-	timeout     int         // Do not read or write unless in subscriptionLoop.
+	EventChan     chan *Event // EventChan are UPnP events from publisher.
+	GetActiveChan chan bool   // GetActiveChan returns true if the Subscription is active.
+	callbackURL   string      // callbackURL is the full URL that the publisher send's notify requests.
+	eventURL      string      // eventURL is the UPnP event url on the publisher.
+	renewChan     chan bool   // renewChan forces a subscription renewal.
+	setActiveChan chan bool   // SetActiveChan sets the active status.
+	sid           string      // Do not read or write unless in subsciptionLoop.
+	timeout       int         // Do not read or write unless in subscriptionLoop.
 }
 
 // Property are notify request's property.

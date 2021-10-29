@@ -8,12 +8,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
-	defaultTimeout = "Second-300"
 	DefaultPort    = 8058
+	DefaultTimeout = "Second-300"
+	ListenURI      = "/eventSub"
+	NT             = "upnp:event"
+	NTS            = "upnp:propchange"
 )
 
 var timeoutReg = regexp.MustCompile(`(?i)second-([0-9]*)`)
@@ -46,16 +48,12 @@ func parseTimeout(timeoutPre string) (int, error) {
 		return 0, err
 	}
 	if timeoutInt < 0 {
-		return 0, errors.New("timeout is invalid" + timeoutString)
+		return 0, errors.New("timeout is invalid, " + timeoutString)
 	}
 	return timeoutInt, nil
 }
 
-func getRenewDuration(timeout int) time.Duration {
-	return time.Duration(timeout/2) * time.Second
-}
-
-func getCallbackIP(url *url.URL) (string, error) {
+func findCallbackIP(url *url.URL) (string, error) {
 	// https://stackoverflow.com/a/37382208
 	conn, err := net.Dial("udp", url.Host)
 	conn.Close()

@@ -5,7 +5,7 @@ GET http://localhost:8080/v1/radios
 ### Get radio state
 GET http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25
 ### Websocket, should get bad request
-GET http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25/ws
+GET http://localhost:8080/v1/radio/ws?uuid=93f9a5e1-814a-400f-9b70-a25210bbcd25
 ### Renew
 POST http://localhost:8080/v1/radio/93f9a5e1-814a-400f-9b70-a25210bbcd25/renew
 ### Refresh volume

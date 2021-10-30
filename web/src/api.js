@@ -80,6 +80,6 @@ export default {
 		if (uuid == undefined || uuid == "") {
 			return new WebSocket(WS_URL + "/v1/radio/ws")
 		}
-		return new WebSocket(WS_URL + "/v1/radio/" + uuid + "/ws")
+		return new WebSocket(WS_URL + "/v1/radio/ws?uuid=" + uuid)
 	}
 }

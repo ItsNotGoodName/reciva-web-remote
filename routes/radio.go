@@ -30,6 +30,16 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 	})
 
 	r.GET("/radio/ws", func(c *gin.Context) {
+		// Get UUID
+		uuid, ok := c.GetQuery("uuid")
+		if ok {
+			// Return 404 if radio does not exist
+			if !a.IsValidRadio(uuid) {
+				c.Status(http.StatusNotFound)
+				return
+			}
+		}
+
 		// Upgrade connection to websocket
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -38,7 +48,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		}
 
 		// Handle websocket
-		a.HandleWS(conn, "")
+		a.HandleWS(conn, uuid)
 	})
 
 	r.Use(ensureUUID(a))
@@ -106,27 +116,6 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		}
 
 		c.JSON(http.StatusOK, radioPost)
-	})
-
-	r.GET("/radio/:UUID/ws", func(c *gin.Context) {
-		// Get UUID
-		uuid, _ := c.Params.Get("UUID")
-
-		// Return 404 if radio does not exist
-		if !a.IsValidRadio(uuid) {
-			c.Status(http.StatusNotFound)
-			return
-		}
-
-		// Upgrade connection to websocket
-		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-		if err != nil {
-			log.Print("Routes.AddRadioRoutes(ERROR):", err)
-			return
-		}
-
-		// Handle websocket
-		a.HandleWS(conn, uuid)
 	})
 
 	r.POST("/radio/:UUID/renew", func(c *gin.Context) {

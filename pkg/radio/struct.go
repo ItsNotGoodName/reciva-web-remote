@@ -9,11 +9,8 @@ import (
 
 // Hub handles creating Radios and pushing State changes to HubClients.
 type Hub struct {
-	Register         chan *chan State        // Register requests from clients.
-	Unregister       chan *chan State        // Unregister requests from clients.
-	clients          map[*chan State]bool    // clients are registered to receive state changes from all radios.
-	cp               *goupnpsub.ControlPoint // cp is used to create subscriptions.
-	receiveStateChan chan State              // receiveStateChan gets State changes from radioLoop.
+	cp  *goupnpsub.ControlPoint         // cp is used to create subscriptions.
+	ops chan func(map[*chan State]bool) //
 }
 
 // Radio represents the radio on the network.
@@ -23,8 +20,8 @@ type Radio struct {
 	Subscription      *goupnpsub.Subscription // Subscription that belongs to this Radio.
 	UUID              string                  // UUID is unique and will not change after it has been set.
 	dctx              context.Context         // dctx is the context for radioLoop.
+	emitState         func(*State)            // emitState function that receives state changes.
 	getStateChan      chan State              // getStateChan returns a copy of the current State.
-	sendStateChan     chan<- State            // sendStateChan sends state to hubLoop.
 	state             *State                  // state represents the current State of the Radio.
 	updatePresetsChan chan []Preset           // updatePresetsChan is used to update State's presets.
 	updateVolumeChan  chan int                // updateVolumeChan is used to update State's volume.

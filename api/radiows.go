@@ -69,7 +69,7 @@ func (rs *radioWS) start() {
 	}()
 
 	// Register with hub
-	rs.a.h.Register <- rs.hubChan
+	rs.a.h.AddClient(rs.hubChan)
 
 	// Start read handler
 	go rs.handleRead()
@@ -123,7 +123,7 @@ func (rs *radioWS) handleRead() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
-		rs.a.h.Unregister <- rs.hubChan
+		rs.a.h.RemoveClient(rs.hubChan)
 		rs.conn.Close()
 		cancel()
 	}()

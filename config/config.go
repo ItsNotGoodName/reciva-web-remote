@@ -2,66 +2,53 @@ package config
 
 import (
 	"flag"
-	"strings"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 )
 
 type Config struct {
-	APIURI         string
-	CPort          int
-	CPortFlag      bool
-	ConfigPath     string
-	Port           int
-	PortFlag       bool
-	Presets        []string
-	PresetsEnabled bool
+	APIURI     string
+	CPort      int
+	CPortFlag  bool
+	ConfigPath string
+	Port       int
+	PortFlag   bool
 }
 
 const (
 	APIURI      = "/v1"
-	DefaultFile = "reciva-web-remote.json"
 	DefaultPort = 8080
 )
 
-func NewConfig() *Config {
-	cportFlag := false
-	portFlag := false
-	PresetsEnabled := false
-	var presets []string
+func NewConfig(options ...func(*Config)) *Config {
+	c := &Config{
+		APIURI: APIURI,
+		CPort:  goupnpsub.DefaultPort,
+		Port:   DefaultPort,
+	}
+	for _, option := range options {
+		option(c)
+	}
+	return c
+}
 
-	cport := flag.Int("cport", goupnpsub.DefaultPort, "Listen port for UPnP notify server.")
-	port := flag.Int("port", DefaultPort, "Listen port for web server.")
-	config := flag.String("config", DefaultFile, "Path to config location.")
-	presetsFlag := flag.String("presets", "", "List of presets to host seperated by comma (ex. /01.m3u,/02.m3u).")
+func WithFlag(c *Config) {
+	cport := flag.Int("cport", c.CPort, "Listen port for UPnP notify server.")
+	port := flag.Int("port", c.Port, "Listen port for web server.")
+	config := flag.String("config", c.ConfigPath, "Path to config location.")
 
 	flag.Parse()
 
-	// Check if flag was specified for port and cport
+	c.CPort = *cport
+	c.Port = *port
+	c.ConfigPath = *config
+
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "port" {
-			portFlag = true
+			c.CPortFlag = true
 		}
 		if f.Name == "cport" {
-			cportFlag = true
+			c.CPortFlag = true
 		}
 	})
-
-	// Enable presets based on presetsFlag
-	if *presetsFlag == "" {
-		presets = make([]string, 0)
-	} else {
-		presets = strings.Split(*presetsFlag, ",")
-	}
-
-	return &Config{
-		APIURI:         APIURI,
-		CPort:          *cport,
-		CPortFlag:      cportFlag,
-		ConfigPath:     *config,
-		Port:           *port,
-		PortFlag:       portFlag,
-		Presets:        presets,
-		PresetsEnabled: PresetsEnabled,
-	}
 }

@@ -6,7 +6,7 @@ export default createStore({
 		return {
 			config: null,
 			presets: null,
-			radio: null,
+			radio: {},
 			radioUUID: null,
 			radioWS: null,
 			radios: null,
@@ -24,15 +24,11 @@ export default createStore({
 			state.presets = presets
 		},
 		SET_RADIO(state, radio) {
-			if (!state.radio) {
-				state.radio = {}
-			}
 			for (let k in radio) {
 				state.radio[k] = radio[k]
 			}
 		},
 		SET_RADIO_POWER(state, power) {
-			//state.radio = { ...state.radio, power }
 			state.radio.power = power
 		},
 		SET_RADIO_UUID(state, uuid) {
@@ -71,7 +67,7 @@ export default createStore({
 		},
 		loadStreams({ commit, state }) {
 			if (!state.config.presetsEnabled) {
-				return Promise.reject()
+				return Promise.resolve()
 			}
 			return api.getStreams()
 				.then((streams) => {
@@ -80,7 +76,7 @@ export default createStore({
 		},
 		loadPresets({ commit, state }) {
 			if (!state.config.presetsEnabled) {
-				return Promise.reject()
+				return Promise.resolve()
 			}
 			return api.getPresets()
 				.then((presets) => {

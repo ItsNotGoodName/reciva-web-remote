@@ -1,5 +1,5 @@
 <template>
-	<div v-if="radio" class="gap-1 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
+	<div v-if="radioUUID" class="gap-1 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
 		<loading-button
 			:on-click="() => playPreset(preset.number)"
 			class="hover:bg-gray-300 rounded p-1"
@@ -21,7 +21,8 @@ export default {
 	},
 	computed: {
 		...mapState([
-			'radio'
+			'radio',
+			'radioUUID'
 		])
 	},
 	methods: {

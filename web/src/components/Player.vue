@@ -1,5 +1,5 @@
 <template>
-	<div v-bind:class="{ 'border-red-400': radioUUID && !radioWS }" class="bg-white space-y-2">
+	<div class="bg-white space-y-2">
 		<div class="space-y-2 sm:space-y-0 sm:flex">
 			<div class="flex gap-2">
 				<loading-button
@@ -12,7 +12,8 @@
 				</select>
 				<loading-button
 					v-if="radioUUID"
-					class="w-16 p-1 bg-gray-200 hover:bg-gray-300 rounded"
+					class="w-16 p-1 hover:bg-gray-300 rounded"
+					v-bind:class="{ 'bg-gray-200': radioWS, 'bg-red-300': !radioWS }"
 					:on-click="refreshRadio"
 				>Refresh</loading-button>
 			</div>

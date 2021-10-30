@@ -95,7 +95,7 @@ export default createStore({
 		setRadioUUID({ commit, state }, uuid) {
 			let ws
 			if (!state.radioWS) {
-				ws = api.radioWS(state.radioUUID)
+				ws = api.radioWS(uuid)
 
 				// Handle messsage
 				ws.addEventListener(
@@ -111,7 +111,9 @@ export default createStore({
 				ws.addEventListener(
 					"open",
 					function () {
-						ws.send(uuid)
+						if (uuid) {
+							ws.send(uuid)
+						}
 					}
 				);
 

@@ -121,10 +121,14 @@ func (cp *ControlPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	properties := parseProperties(xmlEvent)
 
 	// Try to send event to sub's EventChan, fail after waiting for 20 seconds
+	t := time.NewTimer(20 * time.Second)
 	select {
-	case <-time.After(20 * time.Second):
+	case <-t.C:
 		log.Println("ControlPoint.ServeHTTP(ERROR): could not send event to subscription's EventChan")
 	case sub.EventChan <- &Event{Properties: properties, SEQ: seq, sid: sid}:
+		if !t.Stop() {
+			<-t.C
+		}
 	}
 }
 
@@ -182,11 +186,11 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 	return nil
 }
 
-// subscriptionLoop handles subscribing and renewing subscriptions.
+// subscriptionLoop handles sending subscribe requests to event publisher.
 func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription) {
 	log.Println("ControlPoint.subscriptionLoop: started")
 
-	// Renew sub and get d til next renewal
+	// Subscribe
 	t := time.NewTimer(cp.renew(ctx, sub))
 
 	for {
@@ -211,11 +215,14 @@ func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription)
 			return
 		case <-sub.renewChan:
 			log.Println("ControlPoint.subscriptionLoop: renewChan received")
+
+			// Manual renew
 			if !t.Stop() {
 				<-t.C
 			}
 			t.Reset(cp.renew(ctx, sub))
 		case <-t.C:
+			// Renew
 			t.Reset(cp.renew(ctx, sub))
 		}
 	}
@@ -226,18 +233,18 @@ func (cp *ControlPoint) renew(ctx context.Context, sub *Subscription) time.Durat
 	if !<-sub.GetActiveChan {
 		if err := cp.subscribe(ctx, sub); err != nil {
 			log.Print("ControlPoint.subscriptionLoop:", err)
-			return sub.getRenewDuration()
+			return getRenewDuration(sub)
 		}
-		sub.setActiveChan <- true
-		duration := sub.getRenewDuration()
+		sub.setActive(ctx, true)
+		duration := getRenewDuration(sub)
 		log.Printf("ControlPoint.subscriptionLoop: subscribe successful, will resubscribe in %s intervals", duration)
 		return duration
 	}
 	if err := sub.resubscribe(ctx); err != nil {
-		sub.setActiveChan <- false
+		sub.setActive(ctx, false)
 		duration := 5 * time.Second
 		log.Print("ControlPoint.subscriptionLoop:", err)
 		return duration
 	}
-	return sub.getRenewDuration()
+	return getRenewDuration(sub)
 }

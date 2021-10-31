@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -23,6 +24,11 @@ var timeoutReg = regexp.MustCompile(`(?i)second-([0-9]*)`)
 func parseEventXML(body []byte) (*eventXML, error) {
 	xmlEvent := &eventXML{}
 	return xmlEvent, xml.Unmarshal(body, xmlEvent)
+}
+
+// getRenewDuration returns half the sub timeout as a time.Duration.
+func getRenewDuration(sub *Subscription) time.Duration {
+	return time.Duration(sub.timeout/2) * time.Second
 }
 
 func parseProperties(xmlEvent *eventXML) []Property {

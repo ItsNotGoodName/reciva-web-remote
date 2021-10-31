@@ -12,11 +12,6 @@ export default {
 	mounted() {
 		this.loadAll()
 	},
-	computed: {
-		state() {
-			return this.$store.state
-		},
-	},
 	methods: {
 		...mapActions([
 			'loadAll'

@@ -11,13 +11,12 @@
 					<option v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
 				</select>
 				<loading-button
-					v-if="radioUUID"
-					class="w-16 p-1 hover:bg-gray-300 rounded"
-					v-bind:class="{ 'bg-gray-200': radioWS, 'bg-red-300': !radioWS }"
+					v-if="radioUUID || radioConnected"
+					class="w-16 p-1 bg-gray-200 hover:bg-gray-300 rounded"
 					:on-click="refreshRadio"
 				>Refresh</loading-button>
 			</div>
-			<div class="ml-auto flex gap-2" v-if="radioUUID">
+			<div class="ml-auto flex gap-2" v-if="radioConnected">
 				<div class="flex gap-2 flex-grow">
 					<VolumeOffIcon v-if="radio.isMuted" class="w-8 h-8" />
 					<VolumeUpIcon v-else class="w-8 h-8" />
@@ -41,7 +40,7 @@
 				>OFF</loading-button>
 			</div>
 		</div>
-		<div class="flex space-x-2" v-if="radioUUID">
+		<div class="flex space-x-2" v-if="radioConnected">
 			<PlayIcon v-if="radio.state == 'Playing'" class="w-8 h-8" />
 			<StopIcon v-else-if="radio.state == 'Stopped'" class="w-8 h-8" />
 			<RefreshIcon v-else class="w-8 h-8" />
@@ -81,7 +80,7 @@ export default {
 		...mapState([
 			'radio',
 			'radioUUID',
-			'radioWS',
+			'radioConnected',
 			'radios',
 		]),
 		radioUUID: {

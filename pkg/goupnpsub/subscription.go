@@ -16,15 +16,15 @@ func (sub *Subscription) Renew() {
 }
 
 // activeLoop handles active status of subscription.
-func (sub *Subscription) activeLoop(ctx context.Context) {
+func (sub *Subscription) activeLoop() {
 	active := false
 	for {
 		select {
-		case <-ctx.Done():
-			close(sub.GetActiveChan)
+		case <-sub.Done:
+			close(sub.Active)
 			return
 		case active = <-sub.setActiveChan:
-		case sub.GetActiveChan <- active:
+		case sub.Active <- active:
 		}
 	}
 }

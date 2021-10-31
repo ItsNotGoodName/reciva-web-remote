@@ -26,6 +26,7 @@ func NewControlPointWithPort(listenPort int) *ControlPoint {
 		sidMap:        make(map[string]*Subscription),
 		sidMapRWMutex: sync.RWMutex{},
 	}
+
 	http.Handle(cp.listenURI, cp)
 	return cp
 }
@@ -46,8 +47,9 @@ func (cp *ControlPoint) NewSubscription(ctx context.Context, eventURL *url.URL) 
 
 	// Create sub
 	sub := &Subscription{
+		Active:        make(chan bool),
+		Done:          make(chan bool),
 		EventChan:     make(chan *Event, 10),
-		GetActiveChan: make(chan bool),
 		callbackURL:   "<http://" + callbackIP + ":" + cp.listenPort + cp.listenURI + ">",
 		eventURL:      eventURL.String(),
 		renewChan:     make(chan bool),
@@ -56,7 +58,7 @@ func (cp *ControlPoint) NewSubscription(ctx context.Context, eventURL *url.URL) 
 
 	// Start sub loops
 	go cp.subscriptionLoop(ctx, sub)
-	go sub.activeLoop(ctx)
+	go sub.activeLoop()
 
 	return sub, nil
 }
@@ -189,6 +191,8 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription) {
 	log.Println("ControlPoint.subscriptionLoop: started")
 
+	defer close(sub.Done)
+
 	// Subscribe
 	t := time.NewTimer(cp.renew(ctx, sub))
 
@@ -229,7 +233,7 @@ func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription)
 
 // renew handles subscribing or resubscribing.
 func (cp *ControlPoint) renew(ctx context.Context, sub *Subscription) time.Duration {
-	if !<-sub.GetActiveChan {
+	if !<-sub.Active {
 		if err := cp.subscribe(ctx, sub); err != nil {
 			log.Print("ControlPoint.subscriptionLoop:", err)
 			return getRenewDuration(sub)

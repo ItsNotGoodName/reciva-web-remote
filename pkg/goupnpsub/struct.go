@@ -15,8 +15,9 @@ type ControlPoint struct {
 
 // Subscription represents the subscription to the UPnP publisher.
 type Subscription struct {
-	EventChan     chan *Event // EventChan are UPnP events from publisher.
-	GetActiveChan chan bool   // GetActiveChan returns true if the Subscription is active.
+	Active        chan bool   // Active represents the subscription status to publisher.
+	Done          chan bool   // Done is closed when subscriptionLoop is finished.
+	EventChan     chan *Event // EventChan is the UPnP events from publisher.
 	callbackURL   string      // callbackURL is the full URL that the publisher send's notify requests.
 	eventURL      string      // eventURL is the UPnP event url on the publisher.
 	renewChan     chan bool   // renewChan forces a subscription renewal.

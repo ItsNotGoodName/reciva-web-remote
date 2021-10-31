@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
+	"os/signal"
 	"sync"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
@@ -15,6 +17,22 @@ type API struct {
 	h               *radio.Hub
 	radioMap        map[string]radio.Radio
 	radioMapRWMutex sync.RWMutex
+}
+
+func NewAPI(h *radio.Hub) *API {
+	a := API{
+		discoverChan:    make(chan chan error),
+		h:               h,
+		radioMap:        make(map[string]radio.Radio),
+		radioMapRWMutex: sync.RWMutex{},
+	}
+
+	log.Println("API.NewAPI: discovering radios...")
+	a.discoverRadios()
+
+	go a.apiLoop()
+
+	return &a
 }
 
 func (a *API) GetRadio(uuid string) (*radio.Radio, bool) {
@@ -33,7 +51,7 @@ func (a *API) GetRadioState(ctx context.Context, uuid string) (*radio.State, boo
 	radio, ok := a.radioMap[uuid]
 	a.radioMapRWMutex.RUnlock()
 	if !ok {
-		return nil, false
+		return nil, ok
 	}
 
 	state, err := radio.GetState(ctx)
@@ -77,6 +95,10 @@ func (a *API) DiscoverRadios() error {
 	}
 }
 
+func (a *API) HandleWS(conn *websocket.Conn, uuid string) {
+	newRadioWS(conn, a, uuid).start()
+}
+
 func (a *API) discoverRadios() error {
 	// Discover radios
 	radios, err := a.h.NewRadios()
@@ -103,30 +125,25 @@ func (a *API) discoverRadios() error {
 	return nil
 }
 
-func (a *API) discoverRadiosLoop() {
-	for d := range a.discoverChan {
-		d <- a.discoverRadios()
+func (a *API) apiLoop() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	for {
+		select {
+		case d := <-a.discoverChan:
+			d <- a.discoverRadios()
+		case <-c:
+			a.radioMapRWMutex.Lock()
+
+			for _, v := range a.radioMap {
+				v.Cancel()
+			}
+			for _, v := range a.radioMap {
+				<-v.Subscription.Done
+			}
+
+			os.Exit(0)
+		}
 	}
-}
-
-func (a *API) HandleWS(conn *websocket.Conn, uuid string) {
-	newRadioWS(conn, a, uuid).start()
-}
-
-func NewAPI(h *radio.Hub) *API {
-	a := API{
-		discoverChan:    make(chan chan error),
-		h:               h,
-		radioMap:        make(map[string]radio.Radio),
-		radioMapRWMutex: sync.RWMutex{},
-	}
-
-	go a.discoverRadiosLoop()
-	go func() {
-		d := make(chan error)
-		a.discoverChan <- d
-		<-d
-	}()
-
-	return &a
 }

@@ -47,9 +47,9 @@ func (cp *ControlPoint) NewSubscription(ctx context.Context, eventURL *url.URL) 
 
 	// Create sub
 	sub := &Subscription{
-		Active:        make(chan bool),
 		Done:          make(chan bool),
-		EventChan:     make(chan *Event, 10),
+		EventChan:     make(chan *Event, 8),
+		activeChan:    make(chan bool),
 		callbackURL:   "<http://" + callbackIP + ":" + cp.listenPort + cp.listenURI + ">",
 		eventURL:      eventURL.String(),
 		renewChan:     make(chan bool),
@@ -233,7 +233,7 @@ func (cp *ControlPoint) subscriptionLoop(ctx context.Context, sub *Subscription)
 
 // renew handles subscribing or resubscribing.
 func (cp *ControlPoint) renew(ctx context.Context, sub *Subscription) time.Duration {
-	if !<-sub.Active {
+	if !<-sub.activeChan {
 		if err := cp.subscribe(ctx, sub); err != nil {
 			log.Print("ControlPoint.subscriptionLoop:", err)
 			return getRenewDuration(sub)

@@ -21,10 +21,10 @@ func (sub *Subscription) activeLoop() {
 	for {
 		select {
 		case <-sub.Done:
-			close(sub.Active)
+			close(sub.activeChan)
 			return
 		case active = <-sub.setActiveChan:
-		case sub.Active <- active:
+		case sub.activeChan <- active:
 		}
 	}
 }

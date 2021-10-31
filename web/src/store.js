@@ -71,19 +71,26 @@ export default createStore({
 			if (!state.radioUUID) {
 				return Promise.resolve()
 			}
-			if (!(state.radioConnected && state.radioConnecting)) {
-				dispatch("setRadioUUID", state.radioUUID)
-			}
+			dispatch("refreshRadioWS")
 			return api.renewRadio(state.radioUUID)
 		},
 		setRadioUUID({ commit, state, dispatch }, uuid) {
-			commit("SET_RADIO_UUID", uuid)
-
+			if (uuid != state.radioUUID) {
+				commit("SET_RADIO_UUID", uuid)
+				dispatch("refreshRadioWS")
+			}
+		},
+		refreshRadioWS({ state, commit, dispatch }) {
+			// Full state update when radio websocket is connected
 			if (state.radioConnected) {
-				state.radioWS.send(state.radioUUID)
+				if (state.radioUUID) {
+					state.radioWS.send(state.radioUUID)
+				}
 				return
 			}
-			if (state.radioConnecting) {
+
+			// Do not create a new websocket if current websocket is connecting or radioUUID is not set
+			if (state.radioConnecting || !state.radioUUID) {
 				return
 			}
 
@@ -105,8 +112,8 @@ export default createStore({
 				console.log(event)
 				commit("SET_RADIO_CONNECTED", false)
 				setTimeout(() => {
-					dispatch("setRadioUUID", state.radioUUID)
-				}, 1000)
+					dispatch("refreshRadioWS")
+				}, 5000)
 			}
 
 			// Handle close

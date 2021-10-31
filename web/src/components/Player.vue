@@ -11,8 +11,9 @@
 					<option v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
 				</select>
 				<loading-button
-					v-if="radioUUID || radioConnected"
-					class="w-16 p-1 bg-gray-200 hover:bg-gray-300 rounded"
+					v-if="radioUUID"
+					class="w-16 p-1 rounded"
+					v-bind:class="{ 'bg-gray-200': radioConnected, 'bg-red-200': !radioConnected, 'bg-yellow-200': radioConnecting }"
 					:on-click="refreshRadio"
 				>Refresh</loading-button>
 			</div>
@@ -81,6 +82,7 @@ export default {
 			'radio',
 			'radioUUID',
 			'radioConnected',
+			'radioConnecting',
 			'radios',
 		]),
 		radioUUID: {

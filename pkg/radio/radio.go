@@ -57,6 +57,10 @@ func (rd *Radio) RefreshVolume(ctx context.Context) error {
 	return rd.updateVolume(vol)
 }
 
+func (rd *Radio) Renew() {
+	rd.Subscription.Renew()
+}
+
 func (rd *Radio) radioLoop() {
 	log.Println("Radio.radioLoop: started")
 

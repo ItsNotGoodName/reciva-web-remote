@@ -9,10 +9,11 @@ import (
 
 func ensureUUID(a *api.API) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		_, ok := c.Params.Get("UUID")
+		uuid, ok := c.Params.Get("uuid")
 		if !ok {
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
+		c.Set("uuid", uuid)
 	}
 }
 

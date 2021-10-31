@@ -2,6 +2,7 @@ package routes
 
 import (
 	"embed"
+	"log"
 	"net/http"
 	"path"
 
@@ -13,7 +14,7 @@ func AddWebRoutes(r *gin.Engine, dist *embed.FS) {
 
 	index, err := dist.ReadFile("web/dist/index.html")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	r.GET("/", func(c *gin.Context) {

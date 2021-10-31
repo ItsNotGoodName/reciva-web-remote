@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // Renew tells subscription to renew if it is not already renewing.
@@ -16,17 +15,13 @@ func (sub *Subscription) Renew() {
 	}
 }
 
-// getRenewDuration returns half the sub timeout as time.Duration.
-func (sub *Subscription) getRenewDuration() time.Duration {
-	return time.Duration(sub.timeout/2) * time.Second
-}
-
 // activeLoop handles active status of subscription.
 func (sub *Subscription) activeLoop(ctx context.Context) {
 	active := false
 	for {
 		select {
 		case <-ctx.Done():
+			close(sub.GetActiveChan)
 			return
 		case active = <-sub.setActiveChan:
 		case sub.GetActiveChan <- active:
@@ -103,4 +98,12 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 	sub.timeout = timeout
 
 	return nil
+}
+
+// setActive sets active status of subscription.
+func (sub *Subscription) setActive(ctx context.Context, active bool) {
+	select {
+	case <-ctx.Done():
+	case sub.setActiveChan <- active:
+	}
 }

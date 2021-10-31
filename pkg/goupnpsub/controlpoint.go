@@ -149,34 +149,33 @@ func (cp *ControlPoint) subscribe(ctx context.Context, sub *Subscription) error 
 	// Execute request
 	client := http.Client{}
 	res, err := client.Do(req)
-
-	// Lock map as soon as possible to prevent race condition with ServeHTTP
-	cp.sidMapRWMutex.Lock()
-
-	// Check request and get SID from request
 	if err != nil {
-		cp.sidMapRWMutex.Unlock()
 		return err
 	}
+	defer res.Body.Close()
+
+	// Check if request failed
 	if res.StatusCode != http.StatusOK {
-		cp.sidMapRWMutex.Unlock()
 		return errors.New("invalid status " + res.Status)
 	}
+
+	// Get SID
 	sid := res.Header.Get("sid")
 	if sid == "" {
-		cp.sidMapRWMutex.Unlock()
 		return errors.New("subscribe's response has no sid")
 	}
 
-	// Delete old SID of sub in map and update with new SID from request
+	cp.sidMapRWMutex.Lock()
+	defer cp.sidMapRWMutex.Unlock()
+
+	// Delete old SID to sub mapping
 	delete(cp.sidMap, sub.sid)
+
+	// Add new SID to sub mapping
 	sub.sid = sid
 	cp.sidMap[sid] = sub
 
-	// Unlock map
-	cp.sidMapRWMutex.Unlock()
-
-	// Update sub's timeout with request's SID
+	// Update sub's timeout
 	timeout, err := parseTimeout(res.Header.Get("timeout"))
 	if err != nil {
 		return err

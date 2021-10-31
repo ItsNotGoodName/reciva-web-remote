@@ -47,6 +47,7 @@ func (sub *Subscription) unsubscribe(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
 	// Check if request failed
 	if res.StatusCode != http.StatusOK {
@@ -75,6 +76,7 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
 	// Check if request failed
 	if res.StatusCode != http.StatusOK {
@@ -82,15 +84,15 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 	}
 
 	// Check request's SID header
-	resSid := res.Header.Get("SID")
-	if resSid == "" {
+	sid := res.Header.Get("SID")
+	if sid == "" {
 		return errors.New("resubscribe: response did not supply a sid")
 	}
-	if resSid != sub.sid {
-		return fmt.Errorf("resubscribe: response's sid does not match sub's sid, %s != %s", resSid, sub.sid)
+	if sid != sub.sid {
+		return fmt.Errorf("resubscribe: response's sid does not match sub's sid, %s != %s", sid, sub.sid)
 	}
 
-	// Update sub's timeout with request's SID
+	// Update sub's timeout
 	timeout, err := parseTimeout(res.Header.Get("timeout"))
 	if err != nil {
 		return err

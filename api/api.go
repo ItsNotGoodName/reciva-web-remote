@@ -96,7 +96,7 @@ func (a *API) DiscoverRadios() error {
 }
 
 func (a *API) HandleWS(conn *websocket.Conn, uuid string) {
-	newRadioWS(conn, a, uuid).start()
+	newRadioWS(conn, a).start(uuid)
 }
 
 func (a *API) discoverRadios() error {

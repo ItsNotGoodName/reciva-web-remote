@@ -12,26 +12,27 @@ import (
 )
 
 const (
-	DefaultPort    = 8058
-	DefaultTimeout = "Second-300"
-	ListenURI      = "/eventSub"
-	NT             = "upnp:event"
-	NTS            = "upnp:propchange"
+	DefaultPort    = 8058              // DefaultPort is the port that the HTTP server listens .
+	DefaultTimeout = 20 * time.Second  // DefaultTimeout is how long to wait for executing actions.
+	ListenURI      = "/eventSub"       // ListenURI is the default URI that the UPnP sends notify requests.
+	NT             = "upnp:event"      // NT is part of the UPnP header.
+	NTS            = "upnp:propchange" // NTS is part of the UPnP header.
+	Timeout        = "Second-300"      // Timeout is part of the UPnP header.
 )
 
 var timeoutReg = regexp.MustCompile(`(?i)second-([0-9]*)`)
 
-func parseEventXML(body []byte) (*eventXML, error) {
+func unmarshalEventXML(body []byte) (*eventXML, error) {
 	xmlEvent := &eventXML{}
 	return xmlEvent, xml.Unmarshal(body, xmlEvent)
 }
 
-// getRenewDuration returns half the sub timeout as a time.Duration.
+// getRenewDuration returns half the sub timeout.
 func getRenewDuration(sub *Subscription) time.Duration {
 	return time.Duration(sub.timeout/2) * time.Second
 }
 
-func parseProperties(xmlEvent *eventXML) []Property {
+func unmarshalProperties(xmlEvent *eventXML) []Property {
 	properties := make([]Property, len(xmlEvent.Properties))
 	for i := range xmlEvent.Properties {
 		properties[i].Name = xmlEvent.Properties[i].Property.XMLName.Local
@@ -40,8 +41,8 @@ func parseProperties(xmlEvent *eventXML) []Property {
 	return properties
 }
 
-func parseTimeout(timeoutPre string) (int, error) {
-	timeoutArr := timeoutReg.FindStringSubmatch(timeoutPre)
+func unmarshalTimeout(timeout string) (int, error) {
+	timeoutArr := timeoutReg.FindStringSubmatch(timeout)
 	if len(timeoutArr) != 2 {
 		return 0, errors.New("timeout not found")
 	}

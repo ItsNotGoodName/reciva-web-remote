@@ -78,7 +78,7 @@ func (rd *Radio) radioLoop() {
 				rd.state.Volume = &newVolume
 				rd.sendState(&State{Volume: &newVolume})
 			}
-		case newEvent := <-rd.Subscription.EventChan:
+		case newEvent := <-rd.Subscription.Event:
 			newState := State{}
 			changed := false
 

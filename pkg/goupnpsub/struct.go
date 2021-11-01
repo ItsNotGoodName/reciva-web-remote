@@ -7,26 +7,27 @@ import (
 
 // ControlPoint handles the HTTP notify server and keeps track of subscriptions.
 type ControlPoint struct {
-	listenURI     string                   // listenURI is the URI for consuming notify requests.
-	listenPort    string                   // listenPort is the HTTP server's port.
-	sidMap        map[string]*Subscription // sidMap hold all active subscriptions.
-	sidMapRWMutex sync.RWMutex             // sidMapRWMutex read-write mutex.
+	listenURI  string // listenURI is the URI for consuming notify requests.
+	listenPort string // listenPort is the HTTP server's port.
+
+	sidMapRWMu sync.RWMutex             // sidMapRWMu read-write mutex.
+	sidMap     map[string]*Subscription // sidMap hold all active subscriptions.
 }
 
 // Subscription represents the subscription to the UPnP publisher.
 type Subscription struct {
+	Active        chan bool   // Active represents the subscription status to publisher.
 	Done          chan bool   // Done is closed when subscriptionLoop is finished.
-	EventChan     chan *Event // EventChan is the UPnP events from publisher.
-	activeChan    chan bool   // activeChan represents the subscription status to publisher.
-	callbackURL   string      // callbackURL is the full URL that the publisher send's notify requests.
-	eventURL      string      // eventURL is the UPnP event url on the publisher.
+	Event         chan *Event // Event is the UPnP events from publisher.
+	callback      string      // callback is part of the UPnP header.
+	eventURL      string      // eventURL is the URL we are subscribed on the event publisher.
 	renewChan     chan bool   // renewChan forces a subscription renewal.
 	setActiveChan chan bool   // SetActiveChan sets the active status.
-	sid           string      // Do not read or write unless in subsciptionLoop.
-	timeout       int         // Do not read or write unless in subscriptionLoop.
+	sid           string      // sid the header set by the UPnP publisher.
+	timeout       int         // timeout is the timeout seconds received from UPnP publisher.
 }
 
-// Property are notify request's property.
+// Property is the notify request's property.
 type Property struct {
 	Name  string // Name of inner field from UPnP property.
 	Value string // Value of inner field from UPnP property.

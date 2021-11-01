@@ -24,10 +24,10 @@ func (sub *Subscription) activeLoop() {
 	for {
 		select {
 		case <-sub.Done:
-			close(sub.activeChan)
+			close(sub.Active)
 			return
 		case active = <-sub.setActiveChan:
-		case sub.activeChan <- active:
+		case sub.Active <- active:
 		}
 	}
 }
@@ -71,7 +71,7 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 
 	// Add headers to request
 	req.Header.Add("SID", sub.sid)
-	req.Header.Add("TIMEOUT", DefaultTimeout)
+	req.Header.Add("TIMEOUT", Timeout)
 
 	// Execute request
 	client := http.Client{}
@@ -96,7 +96,7 @@ func (sub *Subscription) resubscribe(ctx context.Context) error {
 	}
 
 	// Update sub's timeout
-	timeout, err := parseTimeout(res.Header.Get("timeout"))
+	timeout, err := unmarshalTimeout(res.Header.Get("timeout"))
 	if err != nil {
 		return err
 	}

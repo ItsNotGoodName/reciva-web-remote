@@ -87,16 +87,16 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 			return
 		}
 
-		// Set power if not nil
-		if radioPost.Power != nil {
-			if err := rd.SetPower(c, *radioPost.Power); err != nil {
-				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
-				return
+		// Set power if not nil and preset is nil
+		if radioPost.Preset == nil {
+			if radioPost.Power != nil {
+				if err := rd.SetPower(c, *radioPost.Power); err != nil {
+					c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+					return
+				}
 			}
-		}
-
-		// Play preset if not nil
-		if radioPost.Preset != nil {
+		} else {
+			// Play preset if not nil
 			if err := rd.PlayPreset(c, *radioPost.Preset); err != nil {
 				if err == radio.ErrInvalidPreset {
 					c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})

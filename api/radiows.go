@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
@@ -25,57 +24,83 @@ const (
 )
 
 type radioWS struct {
-	readChan  chan *radio.State
-	hubChan   *chan radio.State
-	a         *API
-	sendChan  chan *radio.State
-	conn      *websocket.Conn
-	uuid      string
-	uuidMutex sync.Mutex
+	a        *API
+	conn     *websocket.Conn
+	hubChan  *chan radio.State
+	readChan chan *radio.State
+	sendChan chan *radio.State
 }
 
-func newRadioWS(conn *websocket.Conn, a *API, uuid string) *radioWS {
-	hc := make(chan radio.State)
+func newRadioWS(conn *websocket.Conn, a *API) *radioWS {
+	hc := make(chan radio.State, 2)
 	return &radioWS{
-		readChan:  make(chan *radio.State),
-		hubChan:   &hc,
-		a:         a,
-		sendChan:  make(chan *radio.State),
-		conn:      conn,
-		uuid:      uuid,
-		uuidMutex: sync.Mutex{},
+		a:        a,
+		conn:     conn,
+		hubChan:  &hc,
+		readChan: make(chan *radio.State),
+		sendChan: make(chan *radio.State),
 	}
 }
 
-func (rs *radioWS) start() {
-	// Aggregate readChan and hubChan into sendChan
-	go func() {
-		for {
+func (rs *radioWS) start(uuid string) {
+	go rs.balancer(uuid)
+
+	// Register with hub
+	rs.a.h.AddClient(rs.hubChan)
+
+	// Start read handler
+	go rs.handleRead(uuid)
+
+	// Start write handler
+	go rs.handleWrite()
+}
+
+// balancer handles receiving state from radio.Hub and handleRead and sending it to handleWrite.
+// It exits when hub closes it's channel.
+func (rs *radioWS) balancer(uuid string) {
+	var toSend *radio.State
+
+	// hubChan sends incremental changes while readChan sends full state changes.
+	// readChan is used to change the uuid.
+	for {
+		if toSend == nil {
 			select {
 			case state, ok := <-*rs.hubChan:
 				if !ok {
 					close(rs.sendChan)
 					return
 				}
-				rs.sendChan <- &state
-			case state, ok := <-rs.readChan:
-				if !ok {
-					close(rs.sendChan)
-					return
+
+				if state.UUID != uuid {
+					continue
 				}
-				rs.sendChan <- state
+
+				toSend = &state
+			case state := <-rs.readChan:
+				uuid = state.UUID
+				toSend = state
 			}
 		}
-	}()
 
-	// Register with hub
-	rs.a.h.AddClient(rs.hubChan)
+		select {
+		case rs.sendChan <- toSend:
+			toSend = nil
+		case state, ok := <-*rs.hubChan:
+			if !ok {
+				close(rs.sendChan)
+				return
+			}
 
-	// Start read handler
-	go rs.handleRead()
+			if state.UUID != uuid {
+				continue
+			}
 
-	// Start write handler
-	go rs.handleWrite()
+			toSend.Merge(&state)
+		case state := <-rs.readChan:
+			uuid = state.UUID
+			toSend = state
+		}
+	}
 }
 
 func (rs *radioWS) handleWrite() {
@@ -97,14 +122,6 @@ func (rs *radioWS) handleWrite() {
 				return
 			}
 
-			// Check if UUID matches
-			rs.uuidMutex.Lock()
-			if state.UUID != rs.uuid {
-				rs.uuidMutex.Unlock()
-				continue
-			}
-			rs.uuidMutex.Unlock()
-
 			// Send state or end on error
 			if err := rs.conn.WriteJSON(state); err != nil {
 				log.Println("radioWS.handleWrite:", err)
@@ -119,7 +136,7 @@ func (rs *radioWS) handleWrite() {
 	}
 }
 
-func (rs *radioWS) handleRead() {
+func (rs *radioWS) handleRead(uuid string) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
@@ -129,15 +146,11 @@ func (rs *radioWS) handleRead() {
 	}()
 
 	// Send initial state if uuid is set
-	if rs.uuid != "" {
-		rs.uuidMutex.Lock()
-		uuid := rs.uuid
-		rs.uuidMutex.Unlock()
-
+	if uuid != "" {
 		state, ok := rs.a.GetRadioState(ctx, uuid)
 
 		if !ok {
-			log.Printf("radioWS.handleRead(ERROR): GetRadioState did not find state with radio uuid %s", uuid)
+			log.Println("radioWS.handleRead(ERROR): GetRadioState did not find state with radio uuid of", uuid)
 			return
 		}
 
@@ -165,11 +178,6 @@ func (rs *radioWS) handleRead() {
 		if !ok {
 			return
 		}
-
-		// Update current uuid
-		rs.uuidMutex.Lock()
-		rs.uuid = uuid
-		rs.uuidMutex.Unlock()
 
 		// Send state to client
 		rs.readChan <- state

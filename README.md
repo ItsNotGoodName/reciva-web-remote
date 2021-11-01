@@ -4,7 +4,7 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 
 ## Running
 
-Download and extract the zip file from [releases](https://github.com/ItsNotGoodName/reciva-web-remote/releases). Open the extracted folder and run the executable. On Windows you may need to press `Enter` after running the program.
+Download and extract the zip file from [releases](https://github.com/ItsNotGoodName/reciva-web-remote/releases). Open the extracted folder and run the executable. On Windows, you may need to press `Enter` after the terminal opens.
 
 ## Settings
 

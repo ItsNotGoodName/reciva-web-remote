@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
+	"github.com/ItsNotGoodName/goupnpsub"
 	"github.com/huin/goupnp"
 )
 

@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
+	"github.com/ItsNotGoodName/goupnpsub"
 )
 
 type Config struct {

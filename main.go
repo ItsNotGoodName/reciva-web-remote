@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/ItsNotGoodName/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
 )

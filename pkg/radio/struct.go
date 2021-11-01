@@ -3,7 +3,7 @@ package radio
 import (
 	"context"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/goupnpsub"
+	"github.com/ItsNotGoodName/goupnpsub"
 	"github.com/huin/goupnp"
 )
 

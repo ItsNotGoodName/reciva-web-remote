@@ -8,7 +8,7 @@ func NewState(uuid string) *State {
 		IsMuted:   &boolDefault,
 		Metadata:  &stringDefault,
 		Power:     &boolDefault,
-		PresetNum: -1,
+		Preset: -1,
 		UUID:      uuid,
 		Volume:    &intDefault,
 	}
@@ -33,8 +33,8 @@ func (s *State) Merge(ss *State) {
 	if len(ss.Presets) != 0 {
 		s.Presets = ss.Presets
 	}
-	if ss.PresetNum != 0 {
-		s.PresetNum = ss.PresetNum
+	if ss.Preset != 0 {
+		s.Preset = ss.Preset
 	}
 	if ss.State != "" {
 		s.State = ss.State

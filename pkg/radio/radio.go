@@ -115,15 +115,15 @@ func (rd *Radio) radioLoop() {
 						rd.state.Title = sXML.Title
 						newState.Title = sXML.Title
 
-						// PresetNum Change
-						newPresetNum := -1
+						// Preset Change
+						newPreset := -1
 						for i := range rd.state.Presets {
 							if rd.state.Presets[i].Name == sXML.Title {
-								newPresetNum = i + 1
+								newPreset = i + 1
 							}
 						}
-						rd.state.PresetNum = newPresetNum
-						newState.PresetNum = newPresetNum
+						rd.state.Preset = newPreset
+						newState.Preset = newPreset
 
 						changed = true
 					}

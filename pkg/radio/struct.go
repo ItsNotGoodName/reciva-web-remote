@@ -41,7 +41,7 @@ type State struct {
 	NumPresets int      `json:"numPresets,omitempty"` // NumPresets on the radio, it will not change after it is set.
 	Power      *bool    `json:"power,omitempty"`      // Power represents if the radio is not in standby.
 	Presets    []Preset `json:"presets,omitempty"`    // Presets on the radio, it will not change after it is set.
-	PresetNum  int      `json:"presetNum,omitempty"`  // PresetNum is the current preset that is playing, -1 means it is unknown.
+	Preset     int      `json:"preset,omitempty"`     // Preset is the current preset that is playing, -1 means it is unknown.
 	State      string   `json:"state,omitempty"`      // State is either playing, connecting, or stopped.
 	Title      string   `json:"title,omitempty"`      // Title of the preset.
 	UUID       string   `json:"uuid"`                 // UUID will not change once it has been set.

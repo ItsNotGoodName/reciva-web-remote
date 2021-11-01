@@ -17,3 +17,5 @@
 bin
 reciva-web-remote
 reciva-web-remote.json
+
+dist/

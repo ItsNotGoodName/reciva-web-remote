@@ -2,7 +2,11 @@
 
 Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via REST api or web browser.
 
-## Usage
+## Running
+
+Download and extract the zip file from [releases](https://github.com/ItsNotGoodName/reciva-web-remote/releases). Open the extracted folder and run the executable. On Windows you may need to press `Enter` after running the program.
+
+## Settings
 
 This program's web server listens on port `8080` by default. It can be changed by setting the `-port` flag.
 

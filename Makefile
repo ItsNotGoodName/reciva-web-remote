@@ -5,11 +5,14 @@ build: frontend backend
 
 release: frontend backend-linux backend-mac backend-windows 
 
+snapshot: 
+	goreleaser release --snapshot --rm-dist
+
 frontend:
 	npm run build --prefix web
 
 backend:
-	go build -tags=$(TAGS)
+	go build -tags=$(TAGS) -o bin/$(NAME)
 
 dev-frontend:
 	npm run dev --prefix web

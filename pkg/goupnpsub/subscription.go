@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -17,6 +18,8 @@ func (sub *Subscription) Renew() {
 
 // activeLoop handles active status of subscription.
 func (sub *Subscription) activeLoop() {
+	log.Println("Subscription.activeLoop: started")
+
 	active := false
 	for {
 		select {

@@ -1,7 +1,5 @@
 # Useful UPnP Actions
 
-The following actions will be useful to use.
-
 ```
 <Action 'GetCurrentServicePack'>
 <Action 'GetHardwareConfig'>
@@ -21,9 +19,7 @@ The following actions will be useful to use.
 <Action 'SetPowerState'>
 ```
 
-# Unknown Usage UPnP Actions
-
-The following actions are unknown on how they work.
+# Unknown UPnP Actions
 
 ```
 <Action 'SetSleepTimer'>

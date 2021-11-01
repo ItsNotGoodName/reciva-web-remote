@@ -126,6 +126,8 @@ func (a *API) discoverRadios() error {
 }
 
 func (a *API) apiLoop() {
+	log.Println("API.apiLoop: started")
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 

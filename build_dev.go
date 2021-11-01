@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func newRouter() *gin.Engine {
+func NewRouter() *gin.Engine {
 	r := gin.Default()
 
 	// Enable CORS on gin
@@ -19,7 +19,7 @@ func newRouter() *gin.Engine {
 	return r
 }
 
-func newUpgrader() *websocket.Upgrader {
+func NewUpgrader() *websocket.Upgrader {
 	// Ignore origin on websocket
 	return &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },

@@ -48,9 +48,9 @@ func (h *Hub) NewRadio(client goupnp.ServiceClient) (*Radio, error) {
 	}
 
 	// Create sub
-	dctx := context.Background()
-	dctx, cancel := context.WithCancel(dctx)
-	sub, err := h.cp.NewSubscription(dctx, &client.Service.EventSubURL.URL)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	sub, err := h.cp.NewSubscription(ctx, &client.Service.EventSubURL.URL)
 	if err != nil {
 		cancel()
 		return nil, err
@@ -63,7 +63,7 @@ func (h *Hub) NewRadio(client goupnp.ServiceClient) (*Radio, error) {
 		Subscription:      sub,
 		UUID:              uuid,
 		emitState:         h.EmitState,
-		dctx:              dctx,
+		ctx:               ctx,
 		getStateChan:      make(chan State),
 		state:             NewState(uuid),
 		updatePresetsChan: make(chan []Preset),

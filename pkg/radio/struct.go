@@ -19,7 +19,7 @@ type Radio struct {
 	Client            goupnp.ServiceClient    // Client is the SOAP client.
 	Subscription      *goupnpsub.Subscription // Subscription that belongs to this Radio.
 	UUID              string                  // UUID is unique and will not change after it has been set.
-	dctx              context.Context         // dctx is the context for radioLoop.
+	ctx               context.Context         // ctx is the context for radioLoop.
 	emitState         func(*State)            // emitState function that receives state changes.
 	getStateChan      chan State              // getStateChan returns a copy of the current State.
 	state             *State                  // state represents the current State of the Radio.

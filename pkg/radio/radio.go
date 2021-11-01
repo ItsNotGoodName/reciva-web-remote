@@ -12,8 +12,8 @@ func (rd *Radio) GetState(ctx context.Context) (*State, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	case <-rd.dctx.Done():
-		return nil, rd.dctx.Err()
+	case <-rd.ctx.Done():
+		return nil, rd.ctx.Err()
 	case state := <-rd.getStateChan:
 		return &state, nil
 	}
@@ -42,7 +42,7 @@ func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
 
 func (rd *Radio) SetVolume(volume int) error {
 	volume = NormalizeVolume(volume)
-	if err := rd.setVolume(rd.dctx, volume); err != nil {
+	if err := rd.setVolume(rd.ctx, volume); err != nil {
 		return err
 	}
 	return rd.updateVolume(volume)
@@ -68,8 +68,8 @@ func (rd *Radio) radioLoop() {
 
 	for {
 		select {
-		case <-rd.dctx.Done():
-			log.Println("Radio.radioLoop: dctx is done, exiting")
+		case <-rd.ctx.Done():
+			log.Println("Radio.radioLoop: ctx is done, exiting")
 			return
 		case rd.getStateChan <- *rd.state:
 		case newVolume := <-rd.updateVolumeChan:
@@ -161,8 +161,8 @@ func (rd *Radio) radioLoop() {
 
 func (rd *Radio) updateVolume(volume int) error {
 	select {
-	case <-rd.dctx.Done():
-		return rd.dctx.Err()
+	case <-rd.ctx.Done():
+		return rd.ctx.Err()
 	case rd.updateVolumeChan <- volume:
 		return nil
 	}
@@ -180,13 +180,13 @@ func (rd *Radio) initState() {
 	// Get number of presets
 	var numPresets int
 	if err := retry.Do(func() error {
-		if p, e := rd.getNumberOfPresets(rd.dctx); e != nil {
+		if p, e := rd.getNumberOfPresets(rd.ctx); e != nil {
 			return e
 		} else {
 			numPresets = p
 			return nil
 		}
-	}, retry.Context(rd.dctx)); err != nil {
+	}, retry.Context(rd.ctx)); err != nil {
 		log.Println("Radio.initState:", err)
 	} else {
 		numPresets = numPresets - 2
@@ -200,13 +200,13 @@ func (rd *Radio) initState() {
 	// Get volume
 	var volume int
 	if err := retry.Do(func() error {
-		if v, e := rd.getVolume(rd.dctx); e != nil {
+		if v, e := rd.getVolume(rd.ctx); e != nil {
 			return e
 		} else {
 			volume = v
 			return nil
 		}
-	}, retry.Context(rd.dctx)); err != nil {
+	}, retry.Context(rd.ctx)); err != nil {
 		log.Println("Radio.initState:", err)
 	} else {
 		rd.state.Volume = &volume
@@ -215,13 +215,13 @@ func (rd *Radio) initState() {
 	// Get presets
 	var presets []Preset
 	if err := retry.Do(func() error {
-		if p, e := rd.getPresets(rd.dctx); e != nil {
+		if p, e := rd.getPresets(rd.ctx); e != nil {
 			return e
 		} else {
 			presets = p
 			return nil
 		}
-	}, retry.Context(rd.dctx)); err != nil {
+	}, retry.Context(rd.ctx)); err != nil {
 		log.Println("Radio.initState:", err)
 	} else {
 		rd.state.Presets = presets

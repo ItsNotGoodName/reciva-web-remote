@@ -15,7 +15,7 @@ var (
 	dist embed.FS
 )
 
-func newRouter() *gin.Engine {
+func NewRouter() *gin.Engine {
 	// Set release mode
 	gin.SetMode(gin.ReleaseMode)
 
@@ -27,6 +27,6 @@ func newRouter() *gin.Engine {
 	return r
 }
 
-func newUpgrader() *websocket.Upgrader {
+func NewUpgrader() *websocket.Upgrader {
 	return &websocket.Upgrader{}
 }

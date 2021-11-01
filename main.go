@@ -26,10 +26,10 @@ func main() {
 	a := api.NewAPI(h)
 
 	// Create router
-	r := newRouter()
+	r := NewRouter()
 
 	// Create websocket upgrader
-	u := newUpgrader()
+	u := NewUpgrader()
 
 	// Add radio routes
 	routes.AddRadioRoutes(r.Group(cfg.APIURI), a, u)

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"embed"
+	"io/fs"
 	"log"
 	"net/http"
 	"path"
@@ -9,55 +10,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AddWebRoutes(r *gin.Engine, dist *embed.FS) {
-	httpfs := http.FS(dist)
+func addWebRoute(r *gin.Engine, httpFS http.FileSystem, httpPath, fsPath string) {
+	r.GET(httpPath, func(c *gin.Context) {
+		c.FileFromFS(fsPath, httpFS)
+	})
+}
 
-	index, err := dist.ReadFile("web/dist/index.html")
-	if err != nil {
+func AddWebRoutes(r *gin.Engine, dist *embed.FS) {
+	httpFS := http.FS(dist)
+
+	// Route for /index.html
+	if index, err := dist.ReadFile("web/dist/index.html"); err == nil {
+		r.GET("/", func(c *gin.Context) {
+			c.Writer.Write(index)
+		})
+	} else {
 		log.Fatal(err)
 	}
 
-	r.GET("/", func(c *gin.Context) {
-		c.Writer.Write(index)
-	})
+	// Route for /*
+	if files, err := fs.ReadDir(dist, "web/dist"); err == nil {
+		for _, f := range files {
+			name := f.Name()
+			if !f.IsDir() && name != "index.html" {
+				httpPath := "/" + name
+				fsPath := path.Join("web/dist", name)
+				addWebRoute(r, httpFS, httpPath, fsPath)
+			}
+		}
+	} else {
+		log.Fatal(err)
+	}
 
+	// Route for /assets/*
 	r.GET("/assets/*assets", func(c *gin.Context) {
-		c.FileFromFS(path.Join("web/dist", c.Request.URL.Path), httpfs)
-	})
-
-	r.GET("/apple-touch-icon.png", func(c *gin.Context) {
-		c.FileFromFS("web/dist/apple-touch-icon.png", httpfs)
-	})
-
-	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.FileFromFS("web/dist/favicon.ico", httpfs)
-	})
-
-	r.GET("/manifest.webmanifest", func(c *gin.Context) {
-		c.FileFromFS("web/dist/manifest.webmanifest", httpfs)
-	})
-
-	r.GET("/pwa-192x192.png", func(c *gin.Context) {
-		c.FileFromFS("web/dist/pwa-192x192.png", httpfs)
-	})
-
-	r.GET("/pwa-512x512.png", func(c *gin.Context) {
-		c.FileFromFS("web/dist/pwa-512x512.png", httpfs)
-	})
-
-	r.GET("/registerWS.js", func(c *gin.Context) {
-		c.FileFromFS("web/dist/registerWS.js", httpfs)
-	})
-
-	r.GET("/robots.txt", func(c *gin.Context) {
-		c.FileFromFS("web/dist/robots.txt", httpfs)
-	})
-
-	r.GET("/sw.js", func(c *gin.Context) {
-		c.FileFromFS("web/dist/sw.js", httpfs)
-	})
-
-	r.GET("/workbox-afb9f189.js", func(c *gin.Context) {
-		c.FileFromFS("web/dist/workbox-afb9f189.js", httpfs)
+		c.FileFromFS(path.Join("web/dist", c.Request.URL.Path), httpFS)
 	})
 }

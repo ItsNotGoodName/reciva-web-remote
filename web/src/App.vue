@@ -1,29 +1,26 @@
 <script>
-import { mapActions } from 'vuex';
+import Alerts from './components/Alerts.vue'
 import Player from './components/Player.vue'
 import Presets from './components/Presets.vue'
 
 export default {
 	name: "App",
 	components: {
+		Alerts,
 		Player,
-		Presets
+		Presets,
 	},
 	mounted() {
-		this.loadAll()
+		this.$store.dispatch("loadAll")
 	},
-	methods: {
-		...mapActions([
-			'loadAll'
-		])
-	}
 }
 </script>
 
 <template >
-	<div class="container mx-auto px-1">
+	<div class="container mx-auto px-1 h-screen">
 		<Player class="sticky top-0 mx-auto border-l-2 border-b-2 border-r-2 rounded-b-xl p-2 max-w-3xl" />
 		<Presets class="my-1" />
+		<Alerts />
 	</div>
 </template>
 

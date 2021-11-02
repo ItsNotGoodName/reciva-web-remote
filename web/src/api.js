@@ -8,17 +8,17 @@ const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : (() =
 	return "wss://" + window.location.host
 })();
 
+const ErrNetwork = "could not contact server"
+
 const jsonResponse = (req) => {
 	return new Promise((resolve, reject) => {
 		req
 			.then((res) => {
-				if (!res.ok) {
-					return reject(res.statusText)
-				}
-				return res.json();
+				res.json()
+					.then((data) => { res.ok ? resolve(data) : reject(data.err) })
+					.catch(() => reject(res.statusCode))
 			})
-			.then(data => resolve(data))
-			.catch(err => reject(err))
+			.catch(() => reject(ErrNetwork))
 	})
 }
 
@@ -26,12 +26,14 @@ const emptyResponse = (req) => {
 	return new Promise((resolve, reject) => {
 		req
 			.then((res) => {
-				if (!res.ok) {
-					return reject(res.statusText)
+				if (res.ok) {
+					return resolve()
 				}
-				resolve()
+				res.json()
+					.then((data) => reject(data.err))
+					.catch(() => reject(res.statusCode))
 			})
-			.catch(err => reject(err))
+			.catch(() => reject(ErrNetwork))
 	})
 }
 

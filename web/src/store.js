@@ -11,6 +11,8 @@ export default createStore({
 			radioConnecting: false,
 			radioWS: null,
 			radios: null,
+			notifications: {},
+			nextNotificationID: 0
 		}
 	},
 	mutations: {
@@ -48,6 +50,14 @@ export default createStore({
 			}
 			state.radios = rds;
 		},
+		ADD_NOTIFICATION(state, params) {
+			params.id = state.nextNotificationID
+			state.notifications[state.nextNotificationID] = (params)
+			state.nextNotificationID += 1
+		},
+		DELETE_NOTIFICATION(state, id) {
+			delete state.notifications[id]
+		}
 	},
 	actions: {
 		loadAll({ dispatch }) {
@@ -123,6 +133,6 @@ export default createStore({
 			ws.addEventListener("error", onEnd);
 
 			commit("SET_RADIO_WS", ws)
-		}
+		},
 	}
 })

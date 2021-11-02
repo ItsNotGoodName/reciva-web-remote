@@ -25,7 +25,10 @@ export default {
 			this.loading = true
 			this.onClick()
 				.then((() => this.loading = false))
-				.catch((() => this.loading = false))
+				.catch(((res) => {
+					this.$store.commit("ADD_NOTIFICATION", { type: "error", message: res, timeout: 5000 })
+					this.loading = false
+				}))
 		},
 	},
 }

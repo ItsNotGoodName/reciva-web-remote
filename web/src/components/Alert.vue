@@ -90,7 +90,6 @@ export default {
 		...mapMutations(['CLEAR_NOTIFICATION'])
 	},
 	props: {
-		shouldDelete: Boolean,
 		notification: {
 			type: Object
 		},

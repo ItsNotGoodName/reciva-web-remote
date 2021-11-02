@@ -5,8 +5,8 @@
 	>
 		<loading-button
 			:on-click="() => playPreset(preset.number)"
-			class="hover:bg-gray-300 rounded p-1"
-			v-bind:class="{ 'bg-gray-200': preset.number == radio.preset }"
+			class="hover:bg-blue-300 hover:text-white rounded p-1"
+			v-bind:class="{ 'bg-blue-500 text-white': preset.number == radio.preset }"
 			v-for="preset in radio.presets"
 			:key="preset.number"
 		>{{ preset.name }}</loading-button>

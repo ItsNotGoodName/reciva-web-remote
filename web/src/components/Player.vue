@@ -12,8 +12,7 @@
 				</select>
 				<loading-button
 					v-if="radioUUID"
-					class="w-16 p-1 rounded"
-					v-bind:class="{ 'bg-gray-200': radioConnected, 'bg-red-200': !radioConnected, 'bg-yellow-200': radioConnecting }"
+					class="w-16 p-1 rounded bg-gray-200 hover:bg-gray-300"
 					:on-click="refreshRadio"
 				>Refresh</loading-button>
 			</div>
@@ -21,7 +20,10 @@
 				<div class="flex gap-2 flex-grow">
 					<VolumeOffIcon v-if="radio.isMuted" class="w-8 h-8" />
 					<VolumeUpIcon v-else class="w-8 h-8" />
-					<button class="h-8 text-left flex-grow" @click="refreshRadioVolume">{{ radio.volume }}%</button>
+					<loading-button
+						class="w-10 h-8 sm:text-center text-left flex-grow"
+						:on-click="refreshRadioVolume"
+					>{{ radio.volume }}%</loading-button>
 				</div>
 				<loading-button class="w-16 hover:bg-gray-200 rounded" :on-click="decreaseRadioVolume">
 					<ChevronDownIcon class="w-16 h-8 border-2" />
@@ -42,13 +44,15 @@
 			</div>
 		</div>
 		<div class="flex space-x-2" v-if="radioConnected">
-			<PlayIcon v-if="radio.state == 'Playing'" class="w-8 h-8" />
-			<StopIcon v-else-if="radio.state == 'Stopped'" class="w-8 h-8" />
-			<RefreshIcon v-else class="w-8 h-8" />
-			<span class="my-auto truncate">
-				{{ radio.title }}
-				<span v-if="radio.metadata">| {{ radio.metadata }}</span>
-			</span>
+			<div class="w-8 h-8 flex-shrink-0">
+				<PlayIcon v-if="radio.state == 'Playing'" />
+				<StopIcon v-else-if="radio.state == 'Stopped'" />
+				<RefreshIcon v-else />
+			</div>
+			<div class="my-auto truncate space-x-2">
+				<span class="px-2 py-0.5 text-base rounded-full text-white bg-blue-500">{{ radio.title }}</span>
+				<span v-if="radio.metadata">{{ radio.metadata }}</span>
+			</div>
 		</div>
 	</div>
 </template>
@@ -122,4 +126,5 @@ export default {
 
 <style scoped>
 </style>
+
 

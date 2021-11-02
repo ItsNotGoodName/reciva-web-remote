@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import { mapActions, mapState } from 'vuex';
+import { mapState } from 'vuex';
 import Alert from './Alert.vue';
 
 export default {
@@ -17,11 +17,6 @@ export default {
 	computed: {
 		...mapState(['notifications'])
 	},
-	methods: {
-		...mapActions([
-			'loadAll'
-		])
-	}
 }
 </script>
 

@@ -8,14 +8,15 @@
 
 <script>
 import { mapState } from 'vuex';
+
 import Alert from './Alert.vue';
 
 export default {
 	components: {
-		Alert
+		Alert,
 	},
 	computed: {
-		...mapState(['notifications'])
+		...mapState(['notifications']),
 	},
 }
 </script>

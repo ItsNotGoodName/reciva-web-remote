@@ -1,3 +1,5 @@
+import { ErrNetwork } from "./constants"
+
 const API_URL = import.meta.env.VITE_API_URL
 	? import.meta.env.VITE_API_URL
 	: "";
@@ -7,8 +9,6 @@ const WS_URL = import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : (() =
 	}
 	return "wss://" + window.location.host
 })();
-
-const ErrNetwork = "could not contact server"
 
 const jsonResponse = (req) => {
 	return new Promise((resolve, reject) => {

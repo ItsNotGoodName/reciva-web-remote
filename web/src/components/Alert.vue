@@ -1,6 +1,6 @@
 <template>
 	<div
-		@click="CLEAR_NOTIFICATION(notification.id)"
+		@click="clearNotification(notification.id)"
 		class="flex w-full max-w-sm mx-auto overflow-hidden bg-white rounded-lg shadow-md dark:bg-gray-800 cursor-pointer"
 	>
 		<template v-if="notification.type == 'error'">
@@ -83,15 +83,15 @@
 </template>
 
 <script>
-import { mapMutations } from "vuex"
+import { mapActions } from "vuex"
 
 export default {
 	methods: {
-		...mapMutations(['CLEAR_NOTIFICATION'])
+		...mapActions(['clearNotification']),
 	},
 	props: {
 		notification: {
-			type: Object
+			type: Object,
 		},
 	},
 }

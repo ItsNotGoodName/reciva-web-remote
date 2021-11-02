@@ -12,9 +12,7 @@ export default {
 	},
 	mounted() {
 		this.$store.dispatch("init")
-			.catch((err) => {
-				this.$store.dispatch("addNotification", { "type": "error", "message": err })
-			})
+			.catch((err) => this.$store.dispatch("addNotification", { "type": "error", "message": err }))
 	},
 }
 </script>

@@ -10,12 +10,12 @@ export default {
 	props: {
 		onClick: {
 			type: Function,
-			default: () => Promise.resolve()
+			default: () => Promise.resolve(),
 		},
 	},
 	data() {
 		return {
-			loading: false
+			loading: false,
 		}
 	}, methods: {
 		handleClick() {
@@ -25,8 +25,8 @@ export default {
 			this.loading = true
 			this.onClick()
 				.then((() => this.loading = false))
-				.catch(((res) => {
-					this.$store.dispatch("addNotification", { type: "error", message: res, timeout: 3000 })
+				.catch(((message) => {
+					this.$store.dispatch("addNotification", { type: "error", message: message })
 					this.loading = false
 				}))
 		},

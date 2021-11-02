@@ -1,25 +1,27 @@
 import { createStore } from 'vuex'
+
 import api from './api'
+import { MsgRadioRefreshed, ErrRadioNotSelected, MsgDiscoveredRadiosFn, MsgConnected, MsgDisconnected, MsgConnecting, DefNotificationTimeout } from "./constants"
 
 export default createStore({
 	state() {
 		return {
 			config: null,
+			notificationID: 0,
+			notifications: {},
 			radio: {},
-			radioUUID: null,
 			radioConnected: false,
 			radioConnecting: false,
+			radioUUID: null,
 			radioWS: null,
 			radios: null,
-			notifications: {},
-			nextNotificationID: 0
 		}
 	},
 	mutations: {
 		SET_CONFIG(state, config) {
 			state.config = config
 		},
-		SET_RADIO(state, radio) {
+		UPDATE_RADIO(state, radio) {
 			for (let k in radio) {
 				state.radio[k] = radio[k]
 			}
@@ -51,17 +53,15 @@ export default createStore({
 			state.radios = rds;
 		},
 		ADD_NOTIFICATION(state, params) {
-			params.id = state.nextNotificationID
-			params.shouldDelete = false
-			state.notifications[state.nextNotificationID] = params
-			state.nextNotificationID += 1
+			params.id = state.notificationID
+
+			state.notifications[state.notificationID] = params
+			state.notificationID += 1
 
 			let keys = Object.keys(state.notifications)
 			if (keys.length > 3) {
 				delete state.notifications[keys[0]]
 			}
-
-			return state.nextNotificationID
 		},
 		CLEAR_NOTIFICATIONS(state) {
 			for (let k in state.notifications) {
@@ -73,13 +73,6 @@ export default createStore({
 		},
 	},
 	actions: {
-		addNotification({ commit, state }, params) {
-			let id = state.nextNotificationID
-			commit("ADD_NOTIFICATION", params)
-			params.timeout && setTimeout(() => {
-				commit("CLEAR_NOTIFICATION", id)
-			}, params.timeout);
-		},
 		init({ dispatch }) {
 			return dispatch('loadConfig')
 				.then(() => dispatch('loadRadios'))
@@ -97,38 +90,60 @@ export default createStore({
 				})
 		},
 		refreshRadio({ dispatch, state }) {
-			if (!state.radioUUID) {
-				return Promise.resolve()
-			}
-			dispatch("refreshRadioWS")
-			return api.renewRadio(state.radioUUID).then(() => {
-				dispatch("addNotification", { "type": "success", "message": "refreshed", "timeout": 3000 })
-			})
+			if (!state.radioUUID)
+				return Promise.reject(ErrRadioNotSelected);
+
+			return dispatch("refreshRadioWS")
+				.then(() => api.renewRadio(state.radioUUID))
+				.then(() => dispatch("addNotification", { "type": "success", "message": MsgRadioRefreshed }))
+		},
+		playRadioPreset({ state }, num) {
+			if (!state.radioUUID)
+				return Promise.reject(ErrRadioNotSelected);
+
+			return api.updateRadio(state.radioUUID, { preset: num })
+		},
+		toggleRadioPower({ state, commit }) {
+			if (!state.radioUUID)
+				return Promise.reject(ErrRadioNotSelected);
+
+			let newPower = !state.radio.power
+			return api.updateRadio(state.radioUUID, { power: newPower })
+				.then(() => commit("SET_RADIO_POWER", newPower))
+		},
+		refreshRadioVolume({ state }) {
+			if (!state.radioUUID)
+				return Promise.reject(ErrRadioNotSelected);
+
+			return api.refreshRadioVolume(state.radioUUID)
+		},
+		increaseRadioVolume({ state }) {
+			if (!state.radioUUID)
+				return Promise.reject(ErrRadioNotSelected);
+
+			return api.updateRadio(state.radioUUID, { volume: state.radio.volume + 5 })
+		},
+		decreaseRadioVolume({ state }) {
+			if (!state.radioUUID)
+				return Promise.reject(ErrRadioNotSelected);
+
+			return api.updateRadio(state.radioUUID, { volume: state.radio.volume - 5 })
 		},
 		setRadioUUID({ commit, state, dispatch }, uuid) {
-			if (uuid != state.radioUUID) {
-				commit("SET_RADIO_UUID", uuid)
-				dispatch("refreshRadioWS")
+			if (uuid == state.radioUUID) {
+				return Promise.resolve()
 			}
+			commit("SET_RADIO_UUID", uuid)
+			return dispatch("refreshRadioWS")
 		},
 		discoverRadios({ dispatch, commit, state }) {
 			commit("CLEAR_NOTIFICATIONS")
-			let notify = () => {
-				dispatch("addNotification", {
-					'type': 'success',
-					'message': "discovered " + Object.keys(state.radios).length + " radios",
-					timeout: 3000
-				})
-			}
 			return api.discoverRadios()
-				.then(() => {
-					if (!state.radios) {
-						return dispatch("loadRadios").then(() => {
-							notify()
-						})
-					}
-					notify()
-				})
+				.then(() => dispatch("loadRadios"))
+				.then(() => dispatch("addNotification", {
+					'type': 'success',
+					'message': MsgDiscoveredRadiosFn(Object.keys(state.radios).length),
+				}))
 		},
 		refreshRadioWS({ state, commit, dispatch }) {
 			// Full state update when radio websocket is connected
@@ -153,7 +168,7 @@ export default createStore({
 				function (event) {
 					let radio = JSON.parse(event.data);
 					if (radio.uuid != state.radioUUID) return;
-					commit("SET_RADIO", radio)
+					commit("UPDATE_RADIO", radio)
 					commit("SET_RADIO_CONNECTED", true)
 				}
 			);
@@ -161,7 +176,7 @@ export default createStore({
 			ws.addEventListener(
 				"open", () => {
 					commit("CLEAR_NOTIFICATIONS")
-					dispatch("addNotification", { type: "success", message: "connected", timeout: 3000 })
+					dispatch("addNotification", { type: "success", message: MsgConnected })
 				}
 			)
 
@@ -169,9 +184,9 @@ export default createStore({
 				console.log(event)
 				commit("SET_RADIO_CONNECTED", false)
 				commit("CLEAR_NOTIFICATIONS")
-				dispatch("addNotification", { type: "error", message: "lost connection" })
+				dispatch("addNotification", { type: "error", message: MsgDisconnected })
 				setTimeout(() => {
-					dispatch("addNotification", { type: "warning", message: "connecting..." })
+					dispatch("addNotification", { type: "warning", message: MsgConnecting })
 					dispatch("refreshRadioWS")
 				}, 3000)
 			}
@@ -181,5 +196,15 @@ export default createStore({
 
 			commit("SET_RADIO_WS", ws)
 		},
+		addNotification({ commit, state }, params) {
+			let id = state.notificationID
+			commit("ADD_NOTIFICATION", params)
+			params.timeout != 0 && setTimeout(() => {
+				commit("CLEAR_NOTIFICATION", id)
+			}, params.timeout ? params.timeout : DefNotificationTimeout);
+		},
+		clearNotification({ commit }, id) {
+			commit("CLEAR_NOTIFICATION", id)
+		}
 	}
 })

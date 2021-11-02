@@ -58,33 +58,32 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from 'vuex';
+import { mapState, mapActions, } from 'vuex';
 
+import ChevronDownIcon from "@heroicons/vue/solid/ChevronDownIcon"
+import ChevronUpIcon from "@heroicons/vue/solid/ChevronUpIcon"
 import PlayIcon from "@heroicons/vue/solid/PlayIcon"
-import StopIcon from "@heroicons/vue/solid/StopIcon"
 import RefreshIcon from "@heroicons/vue/solid/RefreshIcon"
+import StopIcon from "@heroicons/vue/solid/StopIcon"
 import VolumeOffIcon from "@heroicons/vue/solid/VolumeOffIcon"
 import VolumeUpIcon from "@heroicons/vue/solid/VolumeUpIcon"
-import ChevronUpIcon from "@heroicons/vue/solid/ChevronUpIcon"
-import ChevronDownIcon from "@heroicons/vue/solid/ChevronDownIcon"
+
 import LoadingButton from "./LoadingButton.vue"
-import api from '../api';
 
 export default {
 	components: {
+		ChevronDownIcon,
+		ChevronUpIcon,
 		PlayIcon,
-		StopIcon,
 		RefreshIcon,
+		StopIcon,
 		VolumeOffIcon,
 		VolumeUpIcon,
-		ChevronUpIcon,
-		ChevronDownIcon,
-		LoadingButton
+		LoadingButton,
 	},
 	computed: {
 		...mapState([
 			'radio',
-			'radioUUID',
 			'radioConnected',
 			'radioConnecting',
 			'radios',
@@ -100,26 +99,13 @@ export default {
 	},
 	methods: {
 		...mapActions([
+			'decreaseRadioVolume',
+			'discoverRadios',
+			'increaseRadioVolume',
 			'refreshRadio',
-			'discoverRadios'
+			'refreshRadioVolume',
+			'toggleRadioPower',
 		]),
-		...mapMutations([
-			'SET_RADIO_POWER',
-		]),
-		toggleRadioPower() {
-			let newPower = !this.radio.power
-			return api.updateRadio(this.radio.uuid, { power: newPower })
-				.then(() => this.SET_RADIO_POWER(newPower))
-		},
-		refreshRadioVolume() {
-			return api.refreshRadioVolume(this.radio.uuid)
-		},
-		increaseRadioVolume() {
-			return api.updateRadio(this.radio.uuid, { volume: this.radio.volume + 5 })
-		},
-		decreaseRadioVolume() {
-			return api.updateRadio(this.radio.uuid, { volume: this.radio.volume - 5 })
-		}
 	},
 }
 </script>

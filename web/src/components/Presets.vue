@@ -4,7 +4,7 @@
 		class="gap-1 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2"
 	>
 		<loading-button
-			:on-click="() => playPreset(preset.number)"
+			:on-click="() => playRadioPreset(preset.number)"
 			class="hover:bg-blue-300 hover:text-white rounded p-1"
 			v-bind:class="{ 'bg-blue-500 text-white': preset.number == radio.preset }"
 			v-for="preset in radio.presets"
@@ -14,9 +14,9 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
+
 import LoadingButton from './LoadingButton.vue'
-import api from '../api';
 
 export default {
 	components: {
@@ -25,17 +25,14 @@ export default {
 	computed: {
 		...mapState([
 			'radio',
-			'radioUUID',
-			'radioConnecting',
 			'radioConnected',
+			'radioConnecting',
+			'radioUUID',
 		])
 	},
 	methods: {
-		playPreset(num) {
-			return api.updateRadio(this.radio.uuid, { preset: num })
-		},
+		...mapActions(['playRadioPreset']),
 	},
-
 }
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-	<div class="fixed bottom-0 left-0 right-0 flex-grow mx-8 mb-8 space-y-2">
+	<div class="fixed bottom-0 right-0 w-64 mb-8 mr-8 space-y-2">
 		<TransitionGroup>
 			<Alert :key="k" :notification="v" v-for="v, k  in notifications" />
 		</TransitionGroup>

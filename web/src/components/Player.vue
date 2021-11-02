@@ -96,15 +96,12 @@ export default {
 	},
 	methods: {
 		...mapActions([
-			'loadRadios',
-			'refreshRadio'
+			'refreshRadio',
+			'discoverRadios'
 		]),
 		...mapMutations([
-			'SET_RADIO_POWER'
+			'SET_RADIO_POWER',
 		]),
-		discoverRadios() {
-			return api.discoverRadios().then(() => this.loadRadios)
-		},
 		toggleRadioPower() {
 			let newPower = !this.radio.power
 			return api.updateRadio(this.radio.uuid, { power: newPower })

@@ -11,7 +11,10 @@ export default {
 		Presets,
 	},
 	mounted() {
-		this.$store.dispatch("loadAll")
+		this.$store.dispatch("init")
+			.catch((err) => {
+				this.$store.dispatch("addNotification", { "type": "error", "message": err })
+			})
 	},
 }
 </script>

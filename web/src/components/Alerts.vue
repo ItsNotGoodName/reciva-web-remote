@@ -1,16 +1,18 @@
 <template>
 	<div class="fixed bottom-0 left-0 right-0 flex-grow mx-8 mb-8 space-y-2">
-		<ErrorAlert :error="v" v-for="v  in notifications" />
+		<TransitionGroup>
+			<Alert :key="k" :notification="v" v-for="v, k  in notifications" />
+		</TransitionGroup>
 	</div>
 </template>
 
 <script>
 import { mapActions, mapState } from 'vuex';
-import ErrorAlert from './ErrorAlert.vue';
+import Alert from './Alert.vue';
 
 export default {
 	components: {
-		ErrorAlert
+		Alert
 	},
 	computed: {
 		...mapState(['notifications'])
@@ -24,4 +26,19 @@ export default {
 </script>
 
 <style scoped>
+.v-enter-active,
+.v-leave-active {
+	@apply transition;
+	@apply transform;
+	@apply duration-300;
+}
+
+.v-enter-from {
+	@apply translate-y-full;
+}
+
+.v-leave-to {
+	@apply translate-x-full;
+	@apply opacity-0;
+}
 </style>

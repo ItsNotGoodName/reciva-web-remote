@@ -26,7 +26,7 @@ export default {
 			this.onClick()
 				.then((() => this.loading = false))
 				.catch(((res) => {
-					this.$store.commit("ADD_NOTIFICATION", { type: "error", message: res, timeout: 5000 })
+					this.$store.dispatch("addNotification", { type: "error", message: res, timeout: 3000 })
 					this.loading = false
 				}))
 		},

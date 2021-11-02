@@ -52,18 +52,37 @@ export default createStore({
 		},
 		ADD_NOTIFICATION(state, params) {
 			params.id = state.nextNotificationID
-			state.notifications[state.nextNotificationID] = (params)
+			params.shouldDelete = false
+			state.notifications[state.nextNotificationID] = params
 			state.nextNotificationID += 1
+
+			let keys = Object.keys(state.notifications)
+			if (keys.length > 3) {
+				delete state.notifications[keys[0]]
+			}
+
+			return state.nextNotificationID
 		},
-		DELETE_NOTIFICATION(state, id) {
+		CLEAR_NOTIFICATIONS(state) {
+			for (let k in state.notifications) {
+				delete state.notifications[k]
+			}
+		},
+		CLEAR_NOTIFICATION(state, id) {
 			delete state.notifications[id]
-		}
+		},
 	},
 	actions: {
-		loadAll({ dispatch }) {
-			return dispatch('loadConfig').then(() => {
-				dispatch('loadRadios')
-			})
+		addNotification({ commit, state }, params) {
+			let id = state.nextNotificationID
+			commit("ADD_NOTIFICATION", params)
+			params.timeout && setTimeout(() => {
+				commit("CLEAR_NOTIFICATION", id)
+			}, params.timeout);
+		},
+		init({ dispatch }) {
+			return dispatch('loadConfig')
+				.then(() => dispatch('loadRadios'))
 		},
 		loadConfig({ commit }) {
 			return api.getConfig()
@@ -82,13 +101,34 @@ export default createStore({
 				return Promise.resolve()
 			}
 			dispatch("refreshRadioWS")
-			return api.renewRadio(state.radioUUID)
+			return api.renewRadio(state.radioUUID).then(() => {
+				dispatch("addNotification", { "type": "success", "message": "refreshed", "timeout": 3000 })
+			})
 		},
 		setRadioUUID({ commit, state, dispatch }, uuid) {
 			if (uuid != state.radioUUID) {
 				commit("SET_RADIO_UUID", uuid)
 				dispatch("refreshRadioWS")
 			}
+		},
+		discoverRadios({ dispatch, commit, state }) {
+			commit("CLEAR_NOTIFICATIONS")
+			let notify = () => {
+				dispatch("addNotification", {
+					'type': 'success',
+					'message': "discovered " + Object.keys(state.radios).length + " radios",
+					timeout: 3000
+				})
+			}
+			return api.discoverRadios()
+				.then(() => {
+					if (!state.radios) {
+						return dispatch("loadRadios").then(() => {
+							notify()
+						})
+					}
+					notify()
+				})
 		},
 		refreshRadioWS({ state, commit, dispatch }) {
 			// Full state update when radio websocket is connected
@@ -118,19 +158,26 @@ export default createStore({
 				}
 			);
 
+			ws.addEventListener(
+				"open", () => {
+					commit("CLEAR_NOTIFICATIONS")
+					dispatch("addNotification", { type: "success", message: "connected", timeout: 3000 })
+				}
+			)
+
 			let onEnd = function (event) {
 				console.log(event)
 				commit("SET_RADIO_CONNECTED", false)
+				commit("CLEAR_NOTIFICATIONS")
+				dispatch("addNotification", { type: "error", message: "lost connection" })
 				setTimeout(() => {
+					dispatch("addNotification", { type: "warning", message: "connecting..." })
 					dispatch("refreshRadioWS")
-				}, 5000)
+				}, 3000)
 			}
 
 			// Handle close
 			ws.addEventListener("close", onEnd);
-
-			// Handle error
-			ws.addEventListener("error", onEnd);
 
 			commit("SET_RADIO_WS", ws)
 		},

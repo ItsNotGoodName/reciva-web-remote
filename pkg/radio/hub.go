@@ -5,11 +5,11 @@ import (
 	"errors"
 	"log"
 
-	"github.com/ItsNotGoodName/goupnpsub"
+	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/huin/goupnp"
 )
 
-func NewHub(cp *goupnpsub.ControlPoint) *Hub {
+func NewHub(cp *upnpsub.ControlPoint) *Hub {
 	h := Hub{
 		cp:  cp,
 		ops: make(chan func(map[*chan State]bool)),

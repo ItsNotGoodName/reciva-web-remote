@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 
-	"github.com/ItsNotGoodName/goupnpsub"
+	"github.com/ItsNotGoodName/go-upnpsub"
 )
 
 type Config struct {
@@ -23,7 +23,7 @@ const (
 func NewConfig(options ...func(*Config)) *Config {
 	c := &Config{
 		APIURI: APIURI,
-		CPort:  goupnpsub.DefaultPort,
+		CPort:  upnpsub.DefaultPort,
 		Port:   DefaultPort,
 	}
 	for _, option := range options {

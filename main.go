@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ItsNotGoodName/goupnpsub"
+	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
@@ -16,7 +16,7 @@ func main() {
 	cfg := config.NewConfig(config.WithFlag)
 
 	// Create and start controlpoint
-	cp := goupnpsub.NewControlPointWithPort(cfg.CPort)
+	cp := upnpsub.NewControlPointWithPort(cfg.CPort)
 	go cp.Start()
 
 	// Create radio hub

@@ -13,7 +13,7 @@ type Store struct {
 }
 
 func NewStore(cfg *config.Config) (*Store, error) {
-	db, err := sql.Open("sqlite3", cfg.DBPath)
+	db, err := sql.Open("sqlite3", cfg.DB)
 	if err != nil {
 		return nil, err
 	}

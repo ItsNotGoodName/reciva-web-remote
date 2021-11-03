@@ -11,8 +11,8 @@ import (
 
 func TestStore(t *testing.T) {
 	cfg := config.NewConfig()
-	cfg.DBPath = path.Join(os.TempDir(), "test.db")
-	os.Remove(cfg.DBPath)
+	cfg.DB = path.Join(os.TempDir(), "test.db")
+	os.Remove(cfg.DB)
 
 	s, err := NewStore(cfg)
 	if err != nil {
@@ -23,8 +23,8 @@ func TestStore(t *testing.T) {
 	}
 
 	cfg.URIS = []string{"/01.m3u", "/02.m3u"}
-	cfg.DBPath = path.Join(os.TempDir(), "test2.db")
-	os.Remove(cfg.DBPath)
+	cfg.DB = path.Join(os.TempDir(), "test2.db")
+	os.Remove(cfg.DB)
 	s, err = NewStore(cfg)
 	if err != nil {
 		t.Error(err)
@@ -46,8 +46,8 @@ func TestPreset(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
-	cfg.DBPath = path.Join(os.TempDir(), "test.db")
-	os.Remove(cfg.DBPath)
+	cfg.DB = path.Join(os.TempDir(), "test.db")
+	os.Remove(cfg.DB)
 
 	s, err := NewStore(cfg)
 	if err != nil {
@@ -154,8 +154,8 @@ func TestStream(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
-	cfg.DBPath = path.Join(os.TempDir(), "test.db")
-	os.Remove(cfg.DBPath)
+	cfg.DB = path.Join(os.TempDir(), "test.db")
+	os.Remove(cfg.DB)
 
 	s, err := NewStore(cfg)
 	if err != nil {

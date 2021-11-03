@@ -14,7 +14,7 @@ import (
 
 func main() {
 	// Create config
-	cfg := config.NewConfig(config.WithFlag)
+	cfg := config.NewConfig(config.WithFlag, config.WithFile)
 
 	// Create and start controlpoint
 	cp := upnpsub.NewControlPointWithPort(cfg.CPort)

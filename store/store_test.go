@@ -9,6 +9,37 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
 )
 
+func TestStore(t *testing.T) {
+	cfg := config.NewConfig()
+	cfg.DBPath = path.Join(os.TempDir(), "test.db")
+	os.Remove(cfg.DBPath)
+
+	s, err := NewStore(cfg)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(s.Presets) != 0 {
+		t.Error("Presets should be empty")
+	}
+
+	cfg.URIS = []string{"/01.m3u", "/02.m3u"}
+	cfg.DBPath = path.Join(os.TempDir(), "test2.db")
+	os.Remove(cfg.DBPath)
+	s, err = NewStore(cfg)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(s.Presets) != 2 {
+		t.Error("Presets should be empty")
+	}
+	if s.Presets["/01.m3u"].URI != "/01.m3u" {
+		t.Errorf("URI should be /01.m3u, got %s", s.Presets["/01.m3u"].URI)
+	}
+	if s.Presets["/02.m3u"].URI != "/02.m3u" {
+		t.Errorf("URI should be /02.m3u, got %s", s.Presets["/02.m3u"].URI)
+	}
+}
+
 func TestPreset(t *testing.T) {
 	testPreset := Preset{
 		URI: "/01.m3u",

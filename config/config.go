@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"strings"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 )
@@ -11,6 +12,7 @@ type Config struct {
 	CPort      int
 	CPortFlag  bool
 	ConfigPath string
+	URIS       []string
 	DBPath     string
 	Port       int
 	PortFlag   bool
@@ -37,12 +39,14 @@ func WithFlag(c *Config) {
 	cport := flag.Int("cport", c.CPort, "Listen port for UPnP notify server.")
 	port := flag.Int("port", c.Port, "Listen port for web server.")
 	config := flag.String("config", c.ConfigPath, "Path to config location.")
+	URIS := flag.String("presets", "", "List of preset URIs, ex. '/01.m3u'")
 
 	flag.Parse()
 
 	c.CPort = *cport
 	c.Port = *port
 	c.ConfigPath = *config
+	c.URIS = strings.Split(*URIS, ",")
 
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "port" {

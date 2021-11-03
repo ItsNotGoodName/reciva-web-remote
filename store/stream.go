@@ -3,9 +3,9 @@ package store
 import "context"
 
 type Stream struct {
-	ID      int    // ID is the unique ID of the stream.
-	Name    string // Name of the stream.
-	Content string // Content of the stream.
+	ID      int    `json:"id"`      // ID is the unique ID of the stream.
+	Name    string `json:"name"`    // Name of the stream.
+	Content string `json:"content"` // Content of the stream.
 }
 
 // AddStream adds stream to the store with context.

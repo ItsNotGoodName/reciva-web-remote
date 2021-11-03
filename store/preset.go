@@ -5,9 +5,9 @@ import (
 )
 
 type Preset struct {
-	ID  int    // ID is the unique ID of the preset.
-	URI string // URI is the URI of the preset, ex. '/01.m3u'.
-	SID int    // SID is the stream ID of the preset, 0 means there is no stream associated with it.
+	ID  int    `json:"id"`  // ID is the unique ID of the preset.
+	URI string `json:"uri"` // URI is the URI of the preset, ex. '/01.m3u'.
+	SID int    `json:"sid"` // SID is the stream ID of the preset, 0 means there is no stream associated with it.
 }
 
 // AddPreset adds preset with context.

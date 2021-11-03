@@ -9,6 +9,7 @@ import (
 
 func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/streams", func(c *gin.Context) {
+		// Get all streams
 		streams, err := p.GetStreams(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})

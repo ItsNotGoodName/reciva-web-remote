@@ -33,21 +33,10 @@ func (s *Store) GetStreams(ctx context.Context) ([]*Stream, error) {
 	return streams, nil
 }
 
-// GetStreamByID returns stream by ID with context.
-func (s *Store) GetStreamByID(ctx context.Context, id int) (*Stream, error) {
+// GetStream returns stream by ID with context.
+func (s *Store) GetStream(ctx context.Context, id int) (*Stream, error) {
 	var stream Stream
 	err := s.db.QueryRowContext(ctx, "SELECT id, name, content FROM stream WHERE id = $1", id).Scan(&stream.ID, &stream.Name, &stream.Content)
-	if err != nil {
-		return nil, err
-	}
-
-	return &stream, nil
-}
-
-// GetStreamByPreset returns stream by preset with context.
-func (s *Store) GetStreamByPreset(ctx context.Context, preset *Preset) (*Stream, error) {
-	var stream Stream
-	err := s.db.QueryRowContext(ctx, "SELECT id, name, content FROM stream WHERE id = $1", preset.SID).Scan(&stream.ID, &stream.Name, &stream.Content)
 	if err != nil {
 		return nil, err
 	}

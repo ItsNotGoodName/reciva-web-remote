@@ -3,17 +3,13 @@ package api
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
 	"github.com/mattn/go-sqlite3"
 )
 
-var ErrStreamNotFound = errors.New("stream not found")
-var ErrNameAlreadyExists = errors.New("name already exists")
-
 // GetStream returns a stream from store by id with context.
-func (a *API) GetStream(ctx context.Context, id int) (*store.Stream, error) {
+func (a *PresetAPI) GetStream(ctx context.Context, id int) (*store.Stream, error) {
 	stream, err := a.s.GetStreamByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -25,7 +21,7 @@ func (a *API) GetStream(ctx context.Context, id int) (*store.Stream, error) {
 }
 
 // GetStreams returns a list of streams from store with context.
-func (a *API) GetStreams(ctx context.Context) ([]*store.Stream, error) {
+func (a *PresetAPI) GetStreams(ctx context.Context) ([]*store.Stream, error) {
 	streams, err := a.s.GetStreams(ctx)
 	if err != nil {
 
@@ -44,7 +40,7 @@ type AddStreamRequest struct {
 }
 
 // AddStream adds a stream to store with context.
-func (a *API) AddStream(ctx context.Context, req *AddStreamRequest) (*store.Stream, error) {
+func (a *PresetAPI) AddStream(ctx context.Context, req *AddStreamRequest) (*store.Stream, error) {
 	stream := &store.Stream{
 		Name:    req.Name,
 		Content: req.Content,
@@ -69,7 +65,7 @@ type UpdateStreamRequest struct {
 }
 
 // UpdateStream updates a stream in store with context.
-func (a *API) UpdateStream(ctx context.Context, req *UpdateStreamRequest) (*store.Stream, error) {
+func (a *PresetAPI) UpdateStream(ctx context.Context, req *UpdateStreamRequest) (*store.Stream, error) {
 	stream := &store.Stream{
 		ID:      req.ID,
 		Name:    req.Name,
@@ -86,7 +82,7 @@ func (a *API) UpdateStream(ctx context.Context, req *UpdateStreamRequest) (*stor
 }
 
 // DeleteStream deletes a stream from store with context.
-func (a *API) DeleteStream(ctx context.Context, id int) error {
+func (a *PresetAPI) DeleteStream(ctx context.Context, id int) error {
 	ok, err := a.s.DeleteStream(ctx, &store.Stream{ID: id})
 	if err != nil {
 		return err

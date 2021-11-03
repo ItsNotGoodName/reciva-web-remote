@@ -7,10 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Add stream CRUD routes to gin router
-func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
+func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/streams", func(c *gin.Context) {
-		streams, err := a.GetStreams(c)
+		streams, err := p.GetStreams(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
@@ -20,13 +19,15 @@ func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
 	})
 
 	r.POST("/stream/new", func(c *gin.Context) {
+		// Parse the JSON in the body
 		addReq := &api.AddStreamRequest{}
 		if err := c.BindJSON(addReq); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
 
-		stream, err := a.AddStream(c, addReq)
+		// Add the stream
+		stream, err := p.AddStream(c, addReq)
 		if err != nil {
 			if err == api.ErrNameAlreadyExists {
 				c.JSON(http.StatusConflict, gin.H{"err": err.Error()})
@@ -42,7 +43,8 @@ func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
 	r.Use(ensureID)
 
 	r.GET("/stream/:id", func(c *gin.Context) {
-		stream, err := a.GetStream(c, c.GetInt("id"))
+		// Get the stream
+		stream, err := p.GetStream(c, c.GetInt("id"))
 		if err != nil {
 			if err == api.ErrStreamNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
@@ -56,6 +58,7 @@ func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
 	})
 
 	r.POST("/stream/:id", func(c *gin.Context) {
+		// Parse the JSON in the body
 		updateReq := &api.UpdateStreamRequest{}
 		if err := c.BindJSON(updateReq); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
@@ -63,7 +66,8 @@ func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
 		}
 		updateReq.ID = c.GetInt("id")
 
-		stream, err := a.UpdateStream(c, updateReq)
+		// Update the stream
+		stream, err := p.UpdateStream(c, updateReq)
 		if err != nil {
 			if err == api.ErrStreamNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
@@ -77,7 +81,8 @@ func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
 	})
 
 	r.DELETE("/stream/:id", func(c *gin.Context) {
-		err := a.DeleteStream(c, c.GetInt("id"))
+		// Delete the stream
+		err := p.DeleteStream(c, c.GetInt("id"))
 		if err != nil {
 			if err == api.ErrStreamNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
@@ -86,6 +91,7 @@ func AddStreamRoutes(r *gin.RouterGroup, a *api.API) {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
 		}
+
 		c.Status(http.StatusOK)
 	})
 }

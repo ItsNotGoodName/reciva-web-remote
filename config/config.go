@@ -8,14 +8,15 @@ import (
 )
 
 type Config struct {
-	APIURI     string
-	CPort      int
-	CPortFlag  bool
-	ConfigPath string
-	URIS       []string
-	DBPath     string
-	Port       int
-	PortFlag   bool
+	APIURI         string
+	CPort          int
+	CPortFlag      bool
+	ConfigPath     string
+	URIS           []string
+	DBPath         string
+	Port           int
+	PortFlag       bool
+	PresetsEnabled bool
 }
 
 const (
@@ -34,6 +35,9 @@ func NewConfig(options ...func(*Config)) *Config {
 	for _, option := range options {
 		option(c)
 	}
+	if len(c.URIS) > 0 {
+		c.PresetsEnabled = true
+	}
 	return c
 }
 
@@ -48,7 +52,11 @@ func WithFlag(c *Config) {
 	c.CPort = *cport
 	c.Port = *port
 	c.ConfigPath = *config
-	c.URIS = strings.Split(*URIS, ",")
+	if *URIS == "" {
+		c.URIS = make([]string, 0)
+	} else {
+		c.URIS = strings.Split(*URIS, ",")
+	}
 
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "port" {

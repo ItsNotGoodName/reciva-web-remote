@@ -23,14 +23,6 @@ const (
 	maxMessageSize = 512
 )
 
-type radioWS struct {
-	a        *API
-	conn     *websocket.Conn
-	hubChan  *chan radio.State
-	readChan chan *radio.State
-	sendChan chan *radio.State
-}
-
 func newRadioWS(conn *websocket.Conn, a *API) *radioWS {
 	hc := make(chan radio.State, 2)
 	return &radioWS{

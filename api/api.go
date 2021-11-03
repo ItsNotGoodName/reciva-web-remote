@@ -7,25 +7,15 @@ import (
 	"sync"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
-	"github.com/ItsNotGoodName/reciva-web-remote/store"
 	"github.com/gorilla/websocket"
 )
 
-type API struct {
-	discoverChan    chan chan error
-	h               *radio.Hub
-	radioMap        map[string]radio.Radio
-	radioMapRWMutex sync.RWMutex
-	s               *store.Store
-}
-
-func NewAPI(h *radio.Hub, s *store.Store) *API {
+func NewAPI(h *radio.Hub) *API {
 	a := API{
 		discoverChan:    make(chan chan error),
 		h:               h,
 		radioMap:        make(map[string]radio.Radio),
 		radioMapRWMutex: sync.RWMutex{},
-		s:               s,
 	}
 
 	log.Println("API.NewAPI: discovering radios...")

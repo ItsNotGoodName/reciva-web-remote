@@ -11,6 +11,7 @@ type Config struct {
 	CPort      int
 	CPortFlag  bool
 	ConfigPath string
+	DBPath     string
 	Port       int
 	PortFlag   bool
 }

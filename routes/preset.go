@@ -40,6 +40,28 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 		c.JSON(http.StatusOK, stream)
 	})
+
+	r.DELETE("/preset", func(c *gin.Context) {
+		// Parse the JSON in the body
+		clearReq := api.ClearPresetRequest{}
+		if err := c.BindJSON(&clearReq); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+
+		// Delete the preset
+		preset, err := p.ClearPreset(c, &clearReq)
+		if err != nil {
+			if err == api.ErrPresetNotFound {
+				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, preset)
+	})
 }
 
 func AddPresetRadioRoutes(r *gin.Engine, p *api.PresetAPI) {

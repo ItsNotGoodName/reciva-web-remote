@@ -79,3 +79,21 @@ func (p *PresetAPI) UpdatePreset(ctx context.Context, req *UpdatePresetRequest) 
 
 	return preset, nil
 }
+
+// ClearPresetRequest is request for ClearPreset.
+type ClearPresetRequest struct {
+	URI string `json:"uri"`
+}
+
+// ClearPreset clears preset's SID field.
+func (p *PresetAPI) ClearPreset(ctx context.Context, req *ClearPresetRequest) (*store.Preset, error) {
+	preset, err := p.GetPreset(ctx, req.URI)
+	if err != nil {
+		return nil, err
+	}
+	err = p.s.ClearPreset(ctx, preset)
+	if err != nil {
+		return nil, err
+	}
+	return preset, nil
+}

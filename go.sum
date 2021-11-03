@@ -1,5 +1,5 @@
-github.com/ItsNotGoodName/go-upnpsub v0.2.0 h1:uYFFyjzLRBf5nWLoWOIx8MJkNINrGxt13OPb0qZX724=
-github.com/ItsNotGoodName/go-upnpsub v0.2.0/go.mod h1:1ikeMyVArE73WBxMqpS5uZ1iFJqZtFaEuSX+GRMFesk=
+github.com/ItsNotGoodName/go-upnpsub v0.3.0 h1:DvmpKvoBoTLtDj8kKSQhq02kZahR5OqNpc9S5zI2X2c=
+github.com/ItsNotGoodName/go-upnpsub v0.3.0/go.mod h1:1ikeMyVArE73WBxMqpS5uZ1iFJqZtFaEuSX+GRMFesk=
 github.com/avast/retry-go v3.0.0+incompatible h1:4SOWQ7Qs+oroOTQOYnAHqelpCO0biHSxpiH9JdtuBj0=
 github.com/avast/retry-go v3.0.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=

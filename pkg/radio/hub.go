@@ -26,7 +26,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 	}
 
 	// Create radios array
-	radios := make([]Radio, len(clients))
+	var radios []Radio
 	for i := range clients {
 		radio, err := h.NewRadio(clients[i])
 		if err != nil {
@@ -34,7 +34,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 			continue
 		}
 
-		radios[i] = *radio
+		radios = append(radios, *radio)
 	}
 
 	return radios, nil

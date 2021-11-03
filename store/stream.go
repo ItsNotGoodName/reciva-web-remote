@@ -56,29 +56,47 @@ func (s *Store) GetStreamByPreset(ctx context.Context, preset *Preset) (*Stream,
 }
 
 // DeleteStream deletes stream with context.
-func (s *Store) DeleteStream(ctx context.Context, stream *Stream) error {
+func (s *Store) DeleteStream(ctx context.Context, stream *Stream) (bool, error) {
 	txn, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	defer txn.Rollback()
 
 	_, err = txn.ExecContext(ctx, "UPDATE preset SET sid = 0 WHERE sid = $1", stream.ID)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	_, err = txn.ExecContext(ctx, "DELETE FROM stream WHERE id = $1", stream.ID)
+	result, err := txn.ExecContext(ctx, "DELETE FROM stream WHERE id = $1", stream.ID)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return txn.Commit()
+	if txn.Commit() != nil {
+		return false, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
 }
 
 // UpdateStream updates stream with context.
-func (s *Store) UpdateStream(ctx context.Context, stream *Stream) error {
-	_, err := s.db.ExecContext(ctx, "UPDATE stream SET name = $1, content = $2 WHERE id = $3", stream.Name, stream.Content, stream.ID)
-	return err
+func (s *Store) UpdateStream(ctx context.Context, stream *Stream) (bool, error) {
+	result, err := s.db.ExecContext(ctx, "UPDATE stream SET name = $1, content = $2 WHERE id = $3", stream.Name, stream.Content, stream.ID)
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
 }

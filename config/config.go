@@ -20,6 +20,7 @@ type Config struct {
 
 const (
 	APIURI      = "/v1"
+	DBPath      = "reciva-web-remote.db"
 	DefaultPort = 8080
 )
 
@@ -27,6 +28,7 @@ func NewConfig(options ...func(*Config)) *Config {
 	c := &Config{
 		APIURI: APIURI,
 		CPort:  upnpsub.DefaultPort,
+		DBPath: DBPath,
 		Port:   DefaultPort,
 	}
 	for _, option := range options {

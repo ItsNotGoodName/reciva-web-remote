@@ -9,6 +9,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/routes"
+	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
 func main() {
@@ -22,8 +23,14 @@ func main() {
 	// Create radio hub
 	h := radio.NewHub(cp)
 
+	// Create store
+	s, err := store.NewStore(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Create api
-	a := api.NewAPI(h)
+	a := api.NewAPI(h, s)
 
 	// Create router
 	r := NewRouter()
@@ -36,6 +43,9 @@ func main() {
 
 	// Add config routes
 	routes.AddConfigRoutes(r.Group(cfg.APIURI), cfg)
+
+	// Add stream routes
+	routes.AddStreamRoutes(r.Group(cfg.APIURI), a)
 
 	// Listen and serve
 	log.Println("main: listening on port", cfg.Port)

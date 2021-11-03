@@ -276,9 +276,12 @@ func TestStream(t *testing.T) {
 	// Update stream test
 	testStream.Name = "test2"
 	testStream.Content = "test2"
-	err = s.UpdateStream(ctx, &testStream)
+	ok, err := s.UpdateStream(ctx, &testStream)
 	if err != nil {
 		t.Error(err)
+	}
+	if !ok {
+		t.Error("Update stream failed")
 	}
 	if testStream.ID != stream.ID {
 		t.Errorf("Got stream with ID %d, expected %d", testStream.ID, stream.ID)
@@ -291,9 +294,12 @@ func TestStream(t *testing.T) {
 	}
 
 	// Delete stream test
-	err = s.DeleteStream(ctx, &testStream)
+	ok, err = s.DeleteStream(ctx, &testStream)
 	if err != nil {
 		t.Error(err)
+	}
+	if !ok {
+		t.Error("Stream was not deleted")
 	}
 	stream, err = s.GetStreamByID(ctx, testStream.ID)
 	if err == nil {

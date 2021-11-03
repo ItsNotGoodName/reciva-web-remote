@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,22 @@ func ensureUUID(a *api.API) func(c *gin.Context) {
 		}
 		c.Set("uuid", uuid)
 	}
+}
+
+func ensureID(c *gin.Context) {
+	idStr, ok := c.Params.Get("id")
+	if !ok {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	c.Set("id", id)
 }
 
 func CORS() gin.HandlerFunc {

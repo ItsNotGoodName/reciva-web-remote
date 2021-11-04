@@ -120,14 +120,17 @@ func WithFile(c *Config) {
 	}
 
 	// Use config file if not using flags
-	if !c.CPortFlag {
+	if !c.CPortFlag && cj.CPort != 0 {
 		c.CPort = cj.CPort
 	}
-	if !c.DBFlag {
+	if !c.DBFlag && cj.DBPath != "" {
 		c.DB = cj.DBPath
 	}
-	if !c.PortFlag {
+	if !c.PortFlag && cj.Port != 0 {
 		c.Port = cj.Port
+	}
+	if !c.ConfigFileFlag && len(cj.URIS) > 0 {
+		c.URIS = cj.URIS
 	}
 }
 

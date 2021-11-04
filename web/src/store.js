@@ -18,7 +18,8 @@ export default createStore({
 			radioUUID: null,
 			radioWS: null,
 			radios: [],
-			streams: []
+			streams: [],
+			presets: [],
 		}
 	},
 	mutations: {
@@ -59,6 +60,12 @@ export default createStore({
 			}
 			state.radios = rds;
 		},
+		SET_PRESETS(state, presets) {
+			state.presets = presets
+		},
+		SET_STREAMS(state, streams) {
+			state.streams = streams
+		},
 		ADD_NOTIFICATION(state, params) {
 			params.id = state.notificationID
 
@@ -82,18 +89,37 @@ export default createStore({
 	actions: {
 		init({ dispatch }) {
 			return dispatch('loadConfig')
-				.then(() => dispatch('loadRadios'))
+				.then(() => {
+					if (this.state.config.presetsEnabled) {
+						return Promise.all([
+							dispatch('loadPresets'),
+							dispatch('loadStreams'),
+							dispatch('loadRadios'),
+						])
+					}
+					return dispatch('loadRadios')
+				})
 		},
 		loadConfig({ commit }) {
 			return api.getConfig()
-				.then((config) => {
-					commit("SET_CONFIG", config)
-				})
+				.then((config) => commit("SET_CONFIG", config))
 		},
 		loadRadios({ commit }) {
 			return api.getRadios()
 				.then((radios) => {
 					commit("SET_RADIOS", radios)
+				})
+		},
+		loadPresets({ commit }) {
+			return api.getPresets()
+				.then((presets) => {
+					commit("SET_PRESETS", presets)
+				})
+		},
+		loadStreams({ commit }) {
+			return api.getStreams()
+				.then((streams) => {
+					commit("SET_STREAMS", streams)
 				})
 		},
 		refreshRadio({ dispatch, state }) {

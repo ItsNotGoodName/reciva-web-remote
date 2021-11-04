@@ -54,17 +54,17 @@ export default {
 		return jsonResponse(fetch(API_URL + "/v1/streams")
 		)
 	},
-	getStream(sid) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + sid))
+	getStream(id) {
+		return jsonResponse(fetch(API_URL + "/v1/stream/" + id))
 	},
 	newStream(stream) {
 		return jsonResponse(fetch(API_URL + "/v1/stream/new", { method: "POST", body: JSON.stringify(stream) }))
 	},
 	updateStream(stream) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + stream.sid, { method: "POST", body: JSON.stringify(stream) }))
+		return jsonResponse(fetch(API_URL + "/v1/stream/" + stream.id, { method: "POST", body: JSON.stringify(stream) }))
 	},
-	deleteStream(stream) {
-		return emptyResponse(fetch(API_URL + "/v1/stream/" + stream.sid, { method: "DELETE" }))
+	deleteStream(id) {
+		return emptyResponse(fetch(API_URL + "/v1/stream/" + id, { method: "DELETE" }))
 	},
 	discoverRadios() {
 		return emptyResponse(fetch(API_URL + "/v1/radios", { method: "POST" }))

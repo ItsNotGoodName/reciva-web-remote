@@ -1,9 +1,9 @@
 <template>
   <button @click="handleClick">
     <div
-      :class="className"
       v-if="loading"
-      class="w-5 h-5 m-auto border-2 rounded-full loader"
+      :class="className"
+      class="w-5 h-5 m-auto border-2 rounded-full loader border-white"
     />
     <slot v-else></slot>
   </button>
@@ -18,7 +18,7 @@ export default {
     },
     className: {
       type: String,
-      default: "border-white",
+      default: "",
     },
   },
   data() {

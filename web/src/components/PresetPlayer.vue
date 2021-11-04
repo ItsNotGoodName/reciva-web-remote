@@ -7,14 +7,13 @@
       <loading-button
         v-if="preset.number == radio.preset"
         class="w-full h-10 rounded btn btn-primary"
-        :className="{ 'border-blue-600': preset.number != radio.preset }"
         :on-click="() => playRadioPreset(preset.number)"
         >{{ preset.name }}</loading-button
       >
       <loading-button
         v-else
         class="w-full h-10 rounded btn btn-white"
-        :className="{ 'border-blue-600': preset.number != radio.preset }"
+        className="border-blue-600"
         :on-click="() => playRadioPreset(preset.number)"
       >
         {{ preset.name }}

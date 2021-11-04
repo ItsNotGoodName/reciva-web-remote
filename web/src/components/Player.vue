@@ -48,7 +48,7 @@
     </div>
     <template v-if="radioConnected">
       <div class="flex gap-2 flex-1">
-        <VolumeOffIcon v-if="radioisMuted" class="h-8" />
+        <VolumeOffIcon v-if="radio.isMuted" class="h-8" />
         <VolumeUpIcon v-else class="h-8" />
         <loading-button
           className="ml-0 border-blue-600"

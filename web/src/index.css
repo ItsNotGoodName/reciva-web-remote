@@ -26,6 +26,10 @@ button {
   @apply bg-blue-500 text-white hover:bg-blue-400;
 }
 
+.bg-info {
+  @apply bg-blue-500 text-white;
+}
+
 .btn-warning {
   @apply bg-yellow-600 text-white hover:bg-yellow-700;
 }
@@ -42,6 +46,14 @@ button {
   @apply bg-gray-100 text-gray-800 hover:bg-gray-200;
 }
 
+.bg-light {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.border-gray {
+  @apply border-gray-100;
+}
+
 .btn-dark {
   @apply bg-gray-800 text-white;
 }
@@ -49,3 +61,8 @@ button {
 .btn-white {
   @apply bg-white text-gray-800 hover:bg-gray-200;
 }
+
+.btn-white-on {
+  @apply bg-white text-gray-800 bg-gray-200;
+}
+

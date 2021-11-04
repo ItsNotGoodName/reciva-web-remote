@@ -232,7 +232,7 @@ export default createStore({
 		addNotification({ commit, state }, params) {
 			let id = state.notificationID
 			commit("ADD_NOTIFICATION", params)
-			params.timeout != 0 && setTimeout(() => {
+			params.timeout != 0 && params.type != 'error' && setTimeout(() => {
 				commit("CLEAR_NOTIFICATION", id)
 			}, params.timeout ? params.timeout : DefNotificationTimeout);
 		},

@@ -7,8 +7,8 @@
 					:on-click="discoverRadios"
 				>Discover</loading-button>
 				<select class="flex-1 h-8 bg-gray-200 rounded" v-model="radioUUID">
-					<option :value="null" disabled value>Select Radio</option>
-					<option v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
+					<option :value="null" disabled>Select Radio</option>
+					<option :key="uuid" v-bind:value="uuid" v-for="name,uuid in radios">{{ name }}</option>
 				</select>
 				<loading-button
 					v-if="radioUUID"

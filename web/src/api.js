@@ -47,6 +47,9 @@ export default {
 	updatePreset(preset) {
 		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "POST", body: JSON.stringify(preset) }))
 	},
+	clearPreset(preset) {
+		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "DELETE", body: JSON.stringify({ "uri": preset.uri }) }))
+	},
 	getStreams() {
 		return jsonResponse(fetch(API_URL + "/v1/streams")
 		)

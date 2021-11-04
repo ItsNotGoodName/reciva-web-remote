@@ -2,6 +2,11 @@
 	<div class="bg-white space-y-2">
 		<div class="space-y-2 sm:space-y-0 sm:flex">
 			<div class="flex gap-2">
+				<button
+					v-if="config.presetsEnabled"
+					@click="toggleEdit"
+					class="w-10 p-1 rounded"
+				>{{ edit ? 'Edit' : 'Play' }}</button>
 				<loading-button
 					class="w-20 p-1 bg-yellow-200 hover:bg-yellow-300 rounded"
 					:on-click="discoverRadios"
@@ -83,6 +88,8 @@ export default {
 	},
 	computed: {
 		...mapState([
+			'config',
+			'edit',
 			'radio',
 			'radioConnected',
 			'radioConnecting',
@@ -99,6 +106,7 @@ export default {
 	},
 	methods: {
 		...mapActions([
+			'toggleEdit',
 			'decreaseRadioVolume',
 			'discoverRadios',
 			'increaseRadioVolume',

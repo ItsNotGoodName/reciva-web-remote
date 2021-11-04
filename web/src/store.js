@@ -6,7 +6,10 @@ import { MsgRadioRefreshed, ErrRadioNotSelected, MsgDiscoveredRadiosFn, MsgConne
 export default createStore({
 	state() {
 		return {
-			config: null,
+			config: {
+				presetsEnabled: false,
+			},
+			edit: false,
 			notificationID: 0,
 			notifications: {},
 			radio: {},
@@ -14,10 +17,14 @@ export default createStore({
 			radioConnecting: false,
 			radioUUID: null,
 			radioWS: null,
-			radios: null,
+			radios: [],
+			streams: []
 		}
 	},
 	mutations: {
+		SET_EDIT(state, edit) {
+			state.edit = edit
+		},
 		SET_CONFIG(state, config) {
 			state.config = config
 		},
@@ -205,6 +212,9 @@ export default createStore({
 		},
 		clearNotification({ commit }, id) {
 			commit("CLEAR_NOTIFICATION", id)
-		}
+		},
+		toggleEdit({ state, commit }) {
+			commit("SET_EDIT", !state.edit)
+		},
 	}
 })

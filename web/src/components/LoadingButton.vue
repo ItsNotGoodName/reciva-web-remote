@@ -1,6 +1,6 @@
 <template>
 	<button @click="handleClick">
-		<div v-if="loading" class="w-6 h-6 m-auto border-2 border-blue-600 rounded-full loader" />
+		<div v-if="loading" :class="className" class="w-6 h-6 m-auto border-2 rounded-full loader" />
 		<slot v-else></slot>
 	</button>
 </template>
@@ -11,6 +11,10 @@ export default {
 		onClick: {
 			type: Function,
 			default: () => Promise.resolve(),
+		},
+		className: {
+			type: String,
+			default: 'border-blue-600',
 		},
 	},
 	data() {

@@ -55,30 +55,6 @@
             placeholder="Stream Content"
           />
         </div>
-        <div class="mb-4">
-          <label
-            class="block text-gray-700 text-sm font-bold mb-2"
-            for="username"
-          >
-            Select Preset
-          </label>
-          <select
-            v-model="streamURI"
-            class="
-              appearance-none
-              border
-              rounded
-              w-full
-              py-2
-              px-3
-              text-gray-700
-              leading-tight
-            "
-            id="uri"
-          >
-            <option value="" selected>Select Preset</option>
-          </select>
-        </div>
       </form>
     </div>
     <div class="p-2 flex flex-row-reverse rounded-b bg-light">

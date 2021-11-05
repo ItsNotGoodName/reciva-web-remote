@@ -316,7 +316,7 @@ export default createStore({
     },
     updateStream({ dispatch, state, commit }) {
       commit("SET_STREAM_LOADING", true);
-      api.updateStream(state.stream)
+      return api.updateStream(state.stream)
         .then(() => dispatch("loadStreams"))
         .then(() => {
           dispatch("addNotification", {

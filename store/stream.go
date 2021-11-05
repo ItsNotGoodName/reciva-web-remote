@@ -8,6 +8,11 @@ type Stream struct {
 	Content string `json:"content"` // Content of the stream.
 }
 
+const (
+	StreamNameMaxLength    = 64
+	StreamContentMaxLength = 1024
+)
+
 // AddStream adds stream to the store with context.
 func (s *Store) AddStream(ctx context.Context, stream *Stream) error {
 	return s.db.QueryRowContext(ctx, "INSERT INTO stream (name, content) VALUES ($1, $2) RETURNING id", stream.Name, stream.Content).Scan(&stream.ID)

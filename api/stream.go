@@ -55,6 +55,16 @@ type AddStreamRequest struct {
 	Content string `json:"content"`
 }
 
+func (r *AddStreamRequest) Validate() error {
+	if r.Name == "" || len(r.Name) > store.StreamNameMaxLength {
+		return ErrStreamNameInvalid
+	}
+	if len(r.Content) > store.StreamContentMaxLength {
+		return ErrStreamContentInvalid
+	}
+	return nil
+}
+
 // AddStream adds a stream.
 func (p *PresetAPI) AddStream(ctx context.Context, req *AddStreamRequest) (*store.Stream, error) {
 	stream := &store.Stream{
@@ -78,6 +88,16 @@ type UpdateStreamRequest struct {
 	ID      int    `json:"id"`
 	Name    string `json:"name"`
 	Content string `json:"content"`
+}
+
+func (r *UpdateStreamRequest) Validate() error {
+	if r.Name == "" || len(r.Name) > store.StreamNameMaxLength {
+		return ErrStreamNameInvalid
+	}
+	if len(r.Content) > store.StreamContentMaxLength {
+		return ErrStreamContentInvalid
+	}
+	return nil
 }
 
 // UpdateStream updates a stream.

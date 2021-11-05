@@ -27,6 +27,12 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			return
 		}
 
+		// Validate the request
+		if err := addReq.Validate(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+
 		// Add the stream
 		stream, err := p.AddStream(c, addReq)
 		if err != nil {
@@ -66,6 +72,12 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			return
 		}
 		updateReq.ID = c.GetInt("id")
+
+		// Validate the request
+		if err := updateReq.Validate(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
 
 		// Update the stream
 		stream, err := p.UpdateStream(c, updateReq)

@@ -16,7 +16,7 @@ const jsonResponse = (req) => {
 			.then((res) => {
 				res.json()
 					.then((data) => { res.ok ? resolve(data) : reject(data.err) })
-					.catch(() => reject(res.statusCode))
+					.catch(() => reject(res.statusText))
 			})
 			.catch(() => reject(ErrNetwork))
 	})

@@ -152,7 +152,7 @@ export default createStore({
         commit("SET_PRESETS", presets);
       });
     },
-    loadStreams({ commit }) {
+    loadStreams({ dispatch, commit }) {
       return api.getStreams().then((streams) => {
         commit("SET_STREAMS", streams);
       });
@@ -276,7 +276,6 @@ export default createStore({
       let id = state.notificationID;
       commit("ADD_NOTIFICATION", params);
       params.timeout != 0 &&
-        params.type != "error" &&
         setTimeout(
           () => {
             commit("CLEAR_NOTIFICATION", id);
@@ -290,13 +289,17 @@ export default createStore({
     toggleEdit({ state, commit }) {
       commit("SET_EDIT", !state.edit);
     },
-    hideStream({ commit }) {
-      commit("SET_SHOW_STREAM", false);
-    },
-    addStream({ commit }) {
+    clearStream({ commit }) {
       commit("SET_STREAM", { name: "", content: "", uri: "" });
+    },
+    hideStream({ dispatch, commit }) {
+      commit("SET_SHOW_STREAM", false);
+      return dispatch("clearStream");
+    },
+    addStream({ dispatch, commit }) {
       commit("SET_IS_STREAM_EDIT", false)
       commit("SET_SHOW_STREAM", true);
+      return dispatch("clearStream");
     },
     newStream({ state, commit, dispatch }) {
       return api.newStream(state.stream).then((res) => {
@@ -313,7 +316,6 @@ export default createStore({
     },
     updateStream({ dispatch, state, commit }) {
       commit("SET_STREAM_LOADING", true);
-      console.log(state.stream)
       api.updateStream(state.stream)
         .then(() => dispatch("loadStreams"))
         .then(() => {
@@ -336,9 +338,9 @@ export default createStore({
       commit("SET_STREAM_LOADING", true);
       api.deleteStream(state.stream.id)
         .then(() => dispatch("loadStreams"))
+        .then(() => dispatch("hideStream"))
         .then(() => dispatch("addNotification", { type: "success", message: MsgStreamDeleted }))
         .finally(() => {
-          commit("SET_SHOW_STREAM", false);
           commit("SET_STREAM_LOADING", false)
         });
     }

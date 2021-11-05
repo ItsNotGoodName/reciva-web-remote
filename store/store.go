@@ -18,7 +18,12 @@ func NewStore(cfg *config.Config) (*Store, error) {
 		return nil, err
 	}
 
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS `preset` (`uri` TEXT PRIMARY KEY, `sid` INTEGER DEFAULT 0)")
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS preset (
+			uri TEXT PRIMARY KEY UNIQUE,
+			sid INTEGER DEFAULT 0,
+			FOREIGN KEY(sid) REFERENCES stream(id)
+		)`)
 	if err != nil {
 		return nil, err
 	}

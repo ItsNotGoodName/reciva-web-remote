@@ -17,7 +17,7 @@ func (s *Store) AddPreset(ctx context.Context, preset *Preset) error {
 
 // GetPresets returns all presets with context.
 func (s *Store) GetPresets(ctx context.Context) ([]*Preset, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT  uri, sid FROM preset")
+	rows, err := s.db.QueryContext(ctx, "SELECT uri, sid FROM preset")
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,8 @@ func (s *Store) ClearPreset(ctx context.Context, preset *Preset) error {
 
 // UpdatePreset updates preset's SID with context.
 func (s *Store) UpdatePreset(ctx context.Context, preset *Preset) (bool, error) {
-	result, err := s.db.ExecContext(ctx, "UPDATE preset SET sid = $1 WHERE uri = $2 AND (SELECT COUNT(*) FROM stream WHERE id = $1) > 0 ", preset.SID, preset.URI)
+	// Update preset's SID
+	result, err := s.db.ExecContext(ctx, "UPDATE preset SET sid = $1 WHERE URI = $2", preset.SID, preset.URI)
 	if err != nil {
 		return false, err
 	}
@@ -56,10 +57,10 @@ func (s *Store) UpdatePreset(ctx context.Context, preset *Preset) (bool, error) 
 	return rows > 0, nil
 }
 
-// GetPresetByURI returns preset by uri with context.
+// GetPreset returns preset by uri with context.
 func (s *Store) GetPreset(ctx context.Context, uri string) (*Preset, error) {
 	var preset Preset
-	err := s.db.QueryRowContext(ctx, "SELECT  uri, sid FROM preset WHERE uri = $1", uri).Scan(&preset.URI, &preset.SID)
+	err := s.db.QueryRowContext(ctx, "SELECT uri, sid FROM preset WHERE uri = $1", uri).Scan(&preset.URI, &preset.SID)
 	if err != nil {
 		return nil, err
 	}

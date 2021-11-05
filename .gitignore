@@ -17,4 +17,5 @@
 bin/
 dist/
 *.db
+*.db-journal
 *.json

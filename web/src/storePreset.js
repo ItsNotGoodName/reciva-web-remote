@@ -23,7 +23,7 @@ export default {
         },
         ADD_PRESET(state, preset) {
             for (let i = 0; i < state.presets.length; i++) {
-                if (state.presets[i].uri === preset.uri) {
+                if (state.presets[i].uri == preset.uri) {
                     state.presets[i] = preset;
                     return;
                 }
@@ -61,12 +61,12 @@ export default {
             delete state.streams[id];
         },
         ADD_STREAM(state, stream) {
-            state.streams[stream.id] = { id: stream.id, name: stream.name, };
+            state.streams[stream.id] = stream;
         },
         SET_STREAMS(state, streams) {
             let sts = {};
             for (let i = 0; i < streams.length; i++) {
-                sts[streams[i].id] = { name: streams[i].name, id: streams[i].id };
+                sts[streams[i].id] = streams[i];
             }
             state.streams = sts;
         },
@@ -81,6 +81,12 @@ export default {
         updatePreset({ commit }, preset) {
             return api.updatePreset(preset)
                 .then(() => {
+                    commit("ADD_PRESET", preset);
+                });
+        },
+        clearPreset({ commit }, uri) {
+            return api.clearPreset({ uri: uri })
+                .then((preset) => {
                     commit("ADD_PRESET", preset);
                 });
         },

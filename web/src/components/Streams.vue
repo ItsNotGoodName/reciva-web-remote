@@ -16,7 +16,7 @@
         >
           {{ s.name }}
         </loading-button>
-        <Dropdown :sid="s.id" />
+        <PresetDropdown :sid="s.id" />
       </div>
     </div>
     <div class="p-2 flex flex-row-reverse rounded-b bg-light">
@@ -35,10 +35,10 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import LoadingButton from "./LoadingButton.vue";
-import Dropdown from "./Dropdown.vue";
+import PresetDropdown from "./PresetDropdown.vue";
 
 export default {
-  components: { LoadingButton, Dropdown },
+  components: { LoadingButton, PresetDropdown },
   computed: {
     ...mapState({
       streams: (state) => state.p.streams,

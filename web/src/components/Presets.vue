@@ -3,7 +3,7 @@
     <div class="p-2 border-2 rounded-t border-gray-600 bg-gray-600 text-white">
       <strong class="px-2">My Presets</strong>
     </div>
-    <div class="rounded-b border-l-2 border-b-2 border-r-2">
+    <div class="border-l-2 border-b-2 border-r-2">
       <table class="w-full">
         <thead>
           <tr>
@@ -21,6 +21,13 @@
         </tbody>
       </table>
     </div>
+    <div class="p-2 flex flex-row-reverse rounded bg-light">
+      <loading-button
+        :on-click="readPresets"
+        class="h-10 rounded w-24 btn btn-warning"
+        >Refresh</loading-button
+      >
+    </div>
   </div>
 </template>
 
@@ -34,11 +41,10 @@ export default {
     ...mapState({
       streams: (state) => state.p.streams,
       presets: (state) => state.p.presets,
-      stream: (state) => state.p.stream,
     }),
   },
   methods: {
-    ...mapActions(["readStreams", "readStream", "addStream"]),
+    ...mapActions(["readPresets"]),
   },
 };
 </script>

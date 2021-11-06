@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ invisible: !streamShow }">
+  <div :class="{ hidden: !streamShow }">
     <div class="p-2 bg-info rounded-t">
       <span v-if="stream.id">
         <strong class="px-2">Stream Details</strong>
@@ -8,16 +8,16 @@
         <strong class="px-2">Add Stream</strong>
       </span>
     </div>
-    <div class="flex border-gray border-l-2 border-r-2">
+    <div class="flex border-l-2 border-r-2 b">
       <form class="w-full mx-auto bg-white rounded p-2">
         <div class="mb-4">
-          <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
+          <label class="block text-sm font-bold mb-2" for="name">
             Stream Name
           </label>
           <input
             v-model="streamName"
             :class="{ 'border-yellow-500': stream.nameChanged }"
-            class="border rounded w-full py-2 px-3 text-gray-700"
+            class="border rounded w-full py-2 px-3"
             :disabled="streamLoading"
             id="name"
             type="text"
@@ -25,16 +25,13 @@
           />
         </div>
         <div class="mb-4">
-          <label
-            class="block text-gray-700 text-sm font-bold mb-2"
-            for="content"
-          >
+          <label class="block text-sm font-bold mb-2" for="content">
             Stream Content
           </label>
           <input
             v-model="streamContent"
             :class="{ 'border-yellow-500': stream.contentChanged }"
-            class="border rounded w-full py-2 px-3 text-gray-700"
+            class="border rounded w-full py-2 px-3"
             :disabled="streamLoading"
             id="content"
             type="text"

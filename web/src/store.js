@@ -97,6 +97,7 @@ export default createStore({
           return Promise.all([
             dispatch("loadRadios"),
             dispatch("readStreams"),
+            dispatch("readPresets"),
           ]);
         }
         return dispatch("loadRadios");

@@ -5,17 +5,18 @@
     >
       <strong class="px-2">My Streams</strong>
     </div>
-    <div class="table border-gray border-l-2 border-r-2 w-full border-gray-100">
-      <div class="table-row-group" :key="id" v-for="(name, id) in streams">
+    <div class="border-gray border-l-2 border-r-2 w-full border-gray-100">
+      <div class="flex" :key="s.id" v-for="s in streams">
         <loading-button
-          :on-click="() => readStream(id)"
+          :on-click="() => readStream(s.id)"
           className="border-blue-600"
           class="h-10 w-full text-cell text-left btn"
-          :class="[id == stream.id ? 'btn-white-on' : 'btn-white']"
-          :title="name"
+          :class="[s.id == stream.id ? 'btn-white-on' : 'btn-white']"
+          :title="s.name"
         >
-          {{ name }}
+          {{ s.name }}
         </loading-button>
+        <Dropdown :sid="s.id" />
       </div>
     </div>
     <div class="p-2 flex flex-row-reverse rounded-b bg-light">
@@ -34,9 +35,10 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import LoadingButton from "./LoadingButton.vue";
+import Dropdown from "./Dropdown.vue";
 
 export default {
-  components: { LoadingButton },
+  components: { LoadingButton, Dropdown },
   computed: {
     ...mapState({
       streams: (state) => state.p.streams,

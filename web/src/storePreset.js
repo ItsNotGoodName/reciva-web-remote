@@ -21,6 +21,15 @@ export default {
         SET_PRESETS(state, presets) {
             state.presets = presets;
         },
+        ADD_PRESET(state, preset) {
+            for (let i = 0; i < state.presets.length; i++) {
+                if (state.presets[i].uri === preset.uri) {
+                    state.presets[i] = preset;
+                    return;
+                }
+            }
+            state.preset.push(preset);
+        },
         SET_STREAM(state, stream) {
             state.stream = stream;
             state.streamChanged = false;
@@ -52,17 +61,29 @@ export default {
             delete state.streams[id];
         },
         ADD_STREAM(state, stream) {
-            state.streams[stream.id] = stream.name;
+            state.streams[stream.id] = { id: stream.id, name: stream.name, };
         },
         SET_STREAMS(state, streams) {
             let sts = {};
             for (let i = 0; i < streams.length; i++) {
-                sts[streams[i].id] = streams[i].name;
+                sts[streams[i].id] = { name: streams[i].name, id: streams[i].id };
             }
             state.streams = sts;
         },
     },
     actions: {
+        readPresets({ commit }) {
+            return api.readPresets()
+                .then((presets) => {
+                    commit("SET_PRESETS", presets);
+                });
+        },
+        updatePreset({ commit }, preset) {
+            return api.updatePreset(preset)
+                .then(() => {
+                    commit("ADD_PRESET", preset);
+                });
+        },
         readStreams({ commit, dispatch, state }) {
             return api.readStreams()
                 .then((streams) => {
@@ -137,7 +158,7 @@ export default {
                 .then(() => dispatch("readStreams"))
                 .then(() => dispatch("addNotification", { type: "success", message: MsgStreamDeleted }))
                 .finally(() => commit("SET_STREAM_LOADING", false));
-        }
+        },
     },
     getters: {
 

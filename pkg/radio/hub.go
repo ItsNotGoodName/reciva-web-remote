@@ -13,6 +13,9 @@ import (
 
 func NewHub(cp *upnpsub.ControlPoint) *Hub {
 	h := Hub{
+		PresetMutator: func(p *Preset) {
+			p.Name = p.Title
+		},
 		cp:           cp,
 		discoverChan: make(chan chan error),
 		radios:       make(map[string]*Radio),
@@ -20,9 +23,17 @@ func NewHub(cp *upnpsub.ControlPoint) *Hub {
 		stateOPS:     make(chan func(map[*chan State]bool)),
 		stopChan:     make(chan chan error),
 	}
+	return &h
+}
+
+func (h *Hub) Start() error {
 	go h.discoverLoop()
 	go h.stateLoop()
-	return &h
+
+	// Discover radios
+	errChan := make(chan error)
+	h.discoverChan <- errChan
+	return <-errChan
 }
 
 func (h *Hub) NewRadios() ([]*Radio, error) {

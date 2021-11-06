@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
-func NewPresetAPI(s *store.Store) *PresetAPI {
+func NewPresetAPI(s *store.Store, h *radio.Hub) *PresetAPI {
+
 	return &PresetAPI{s: s}
 }
 

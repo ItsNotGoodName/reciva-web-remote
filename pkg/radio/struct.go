@@ -10,10 +10,11 @@ import (
 
 // Hub handles creating Radios and pushing State changes to HubClients.
 type Hub struct {
-	cp           *upnpsub.ControlPoint           // cp is used to create subscriptions.
-	discoverChan chan chan error                 // discoverChan is used to discover radios.
-	stateOPS     chan func(map[*chan State]bool) // stateOPS is used to push State changes to HubClients.
-	stopChan     chan chan error                 // buryChan is used to remove all radios.
+	cp            *upnpsub.ControlPoint           // cp is used to create subscriptions.
+	discoverChan  chan chan error                 // discoverChan is used to discover radios.
+	stateOPS      chan func(map[*chan State]bool) // stateOPS is used to push State changes to HubClients.
+	stopChan      chan chan error                 // buryChan is used to remove all radios.
+	PresetMutator func(*Preset)                   // PresetMutator is used to change presets.
 
 	radiosMu sync.RWMutex      // radiosMu is used to protect radios map.
 	radios   map[string]*Radio // radios is used to store all the Radios.
@@ -35,6 +36,7 @@ type Radio struct {
 type Preset struct {
 	Name   string `json:"name"`
 	Number int    `json:"number"`
+	Title  string `json:"-"`
 	URL    string `json:"url"`
 }
 

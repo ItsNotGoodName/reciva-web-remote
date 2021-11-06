@@ -40,7 +40,7 @@ func main() {
 		// Create store
 		if s, err := store.NewStore(cfg); err == nil {
 			// Create preset api
-			p := api.NewPresetAPI(s)
+			p := api.NewPresetAPI(s, h)
 			// Add stream routes
 			routes.AddStreamRoutes(r.Group(cfg.APIURI), p)
 			// Add preset routes
@@ -50,6 +50,11 @@ func main() {
 		} else {
 			log.Println("main:", err)
 		}
+	}
+
+	// Start hub
+	if err := h.Start(); err != nil {
+		log.Fatal("main:", err)
 	}
 
 	// Listen and serve

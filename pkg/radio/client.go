@@ -77,7 +77,7 @@ func (rd *Radio) getPreset(ctx context.Context, num int) (*Preset, error) {
 		return nil, err
 	}
 
-	return &Preset{Number: num, Name: response.RetPresetName, URL: response.RetPresetURL}, nil
+	return &Preset{Number: num, Title: response.RetPresetName, URL: response.RetPresetURL}, nil
 }
 
 func (rd *Radio) getPresets(ctx context.Context) ([]Preset, error) {

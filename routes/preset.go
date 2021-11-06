@@ -64,21 +64,26 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	})
 }
 
+func handlePreset(p *api.PresetAPI, uri string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		// Get the stream
+		stream, err := p.GetStreamByURI(c, uri)
+		if err != nil {
+			if err == api.ErrPresetNotFound || err == api.ErrStreamNotFound {
+				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		}
+
+		// TODO: sanitize the stream content to prevent XSS
+		c.Writer.WriteString(stream.Content)
+	}
+}
+
 func AddPresetRadioRoutes(r *gin.Engine, p *api.PresetAPI) {
 	uris := p.GetActiveURIS()
 	for _, uri := range uris {
-		r.GET(uri, func(c *gin.Context) {
-			// Get the stream
-			stream, err := p.GetStreamByURI(c, uri)
-			if err != nil {
-				if err == api.ErrPresetNotFound || err == api.ErrStreamNotFound {
-					c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-					return
-				}
-				c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-			}
-
-			c.Writer.WriteString(stream.Content)
-		})
+		r.GET(uri, handlePreset(p, uri))
 	}
 }

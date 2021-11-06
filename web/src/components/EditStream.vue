@@ -1,7 +1,7 @@
 <template>
-  <div :class="{ invisible: !showStream }">
+  <div :class="{ invisible: !streamShow }">
     <div class="p-2 bg-info rounded-t">
-      <span v-if="isStreamEdit">
+      <span v-if="stream.id">
         <strong class="px-2">Stream Details</strong>
       </span>
       <span v-else>
@@ -16,16 +16,9 @@
           </label>
           <input
             v-model="streamName"
-            class="
-              appearance-none
-              border
-              rounded
-              w-full
-              py-2
-              px-3
-              text-gray-700
-              leading-tight
-            "
+            :class="{ 'border-yellow-500': stream.nameChanged }"
+            class="border rounded w-full py-2 px-3 text-gray-700"
+            :disabled="streamLoading"
             id="name"
             type="text"
             placeholder="Stream Name"
@@ -40,16 +33,9 @@
           </label>
           <input
             v-model="streamContent"
-            class="
-              appearance-none
-              border
-              rounded
-              w-full
-              py-2
-              px-3
-              text-gray-700
-              leading-tight
-            "
+            :class="{ 'border-yellow-500': stream.contentChanged }"
+            class="border rounded w-full py-2 px-3 text-gray-700"
+            :disabled="streamLoading"
             id="content"
             type="text"
             placeholder="Stream Content"
@@ -58,26 +44,26 @@
       </form>
     </div>
     <div class="p-2 flex flex-row-reverse rounded-b bg-light">
-      <template v-if="isStreamEdit">
+      <template v-if="stream.id">
         <loading-button
           :on-click="deleteStream"
-          class="btn btn-danger rounded-r"
+          class="btn btn-danger rounded-r w-20"
           >Delete</loading-button
         >
-        <button @click="hideStream()" class="btn btn-secondary">Close</button>
+        <button @click="closeStream()" class="btn btn-secondary">Close</button>
         <loading-button
           :on-click="updateStream"
-          class="btn text-white btn-success rounded-l"
+          class="btn text-white btn-success rounded-l w-16"
         >
           Save
         </loading-button>
       </template>
       <template v-else>
-        <button @click="hideStream()" class="btn btn-secondary rounded-r w-18">
+        <button @click="closeStream()" class="btn btn-secondary rounded-r">
           Cancel
         </button>
         <loading-button
-          :on-click="newStream"
+          :on-click="createStream"
           class="btn text-white btn-success rounded-l w-16"
           >Add</loading-button
         >
@@ -96,10 +82,14 @@ export default {
     LoadingButton,
   },
   computed: {
-    ...mapState(["isStreamEdit", "showStream"]),
+    ...mapState({
+      streamShow: (state) => state.p.streamShow,
+      stream: (state) => state.p.stream,
+      streamLoading: (state) => state.p.streamLoading,
+    }),
     streamName: {
       get() {
-        return this.$store.state.stream.name;
+        return this.$store.state.p.stream.name;
       },
       set(name) {
         this.$store.commit("SET_STREAM_NAME", name);
@@ -107,27 +97,19 @@ export default {
     },
     streamContent: {
       get() {
-        return this.$store.state.stream.content;
+        return this.$store.state.p.stream.content;
       },
       set(content) {
         this.$store.commit("SET_STREAM_CONTENT", content);
-      },
-    },
-    streamURI: {
-      get() {
-        return this.$store.state.stream.uri;
-      },
-      set(uri) {
-        this.$store.commit("SET_STREAM_URI", uri);
       },
     },
   },
   methods: {
     ...mapActions([
       "loadStreams",
-      "hideStream",
+      "closeStream",
       "updateStream",
-      "newStream",
+      "createStream",
       "deleteStream",
     ]),
   },

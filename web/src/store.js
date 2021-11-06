@@ -7,12 +7,10 @@ import {
   MsgDiscoveredRadiosFn,
   MsgConnected,
   MsgDisconnected,
-  MsgStreamAdded,
-  MsgStreamDeleted,
-  MsgStreamUpdated,
   MsgConnecting,
   DefNotificationTimeout,
 } from "./constants";
+import p from "./storePreset"
 
 export default createStore({
   state() {
@@ -21,25 +19,18 @@ export default createStore({
         presetsEnabled: false,
       },
       edit: false,
-      isStreamEdit: false,
       notificationID: 0,
       notifications: {},
-      presets: [],
       radio: {},
       radioConnected: false,
       radioConnecting: false,
       radioUUID: null,
       radioWS: null,
       radios: [],
-      showStream: false,
-      streamLoading: false,
-      stream: {
-        name: "",
-        content: "",
-        uri: "",
-      },
-      streams: [],
     };
+  },
+  modules: {
+    p
   },
   mutations: {
     SET_EDIT(state, edit) {
@@ -79,12 +70,6 @@ export default createStore({
       }
       state.radios = rds;
     },
-    SET_PRESETS(state, presets) {
-      state.presets = presets;
-    },
-    SET_STREAMS(state, streams) {
-      state.streams = streams;
-    },
     ADD_NOTIFICATION(state, params) {
       params.id = state.notificationID;
 
@@ -104,36 +89,14 @@ export default createStore({
     CLEAR_NOTIFICATION(state, id) {
       delete state.notifications[id];
     },
-    SET_SHOW_STREAM(state, showStream) {
-      state.showStream = showStream;
-    },
-    SET_STREAM(state, stream) {
-      state.stream = stream;
-    },
-    SET_STREAM_NAME(state, name) {
-      state.stream.name = name;
-    },
-    SET_STREAM_CONTENT(state, content) {
-      state.stream.content = content;
-    },
-    SET_STREAM_URI(state, uri) {
-      state.stream.uri = uri;
-    },
-    SET_IS_STREAM_EDIT(state, isStreamEdit) {
-      state.isStreamEdit = isStreamEdit;
-    },
-    SET_STREAM_LOADING(state, streamLoading) {
-      state.streamLoading = streamLoading;
-    }
   },
   actions: {
     init({ dispatch }) {
       return dispatch("loadConfig").then(() => {
         if (this.state.config.presetsEnabled) {
           return Promise.all([
-            dispatch("loadPresets"),
-            dispatch("loadStreams"),
             dispatch("loadRadios"),
+            dispatch("readStreams"),
           ]);
         }
         return dispatch("loadRadios");
@@ -147,15 +110,8 @@ export default createStore({
         commit("SET_RADIOS", radios);
       });
     },
-    loadPresets({ commit }) {
-      return api.getPresets().then((presets) => {
-        commit("SET_PRESETS", presets);
-      });
-    },
-    loadStreams({ dispatch, commit }) {
-      return api.getStreams().then((streams) => {
-        commit("SET_STREAMS", streams);
-      });
+    toggleEdit({ commit, state }) {
+      commit("SET_EDIT", !state.edit);
     },
     refreshRadio({ dispatch, state }) {
       if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
@@ -286,63 +242,5 @@ export default createStore({
     clearNotification({ commit }, id) {
       commit("CLEAR_NOTIFICATION", id);
     },
-    toggleEdit({ state, commit }) {
-      commit("SET_EDIT", !state.edit);
-    },
-    clearStream({ commit }) {
-      commit("SET_STREAM", { name: "", content: "", uri: "" });
-    },
-    hideStream({ dispatch, commit }) {
-      commit("SET_SHOW_STREAM", false);
-      return dispatch("clearStream");
-    },
-    addStream({ dispatch, commit }) {
-      commit("SET_IS_STREAM_EDIT", false)
-      commit("SET_SHOW_STREAM", true);
-      return dispatch("clearStream");
-    },
-    newStream({ state, commit, dispatch }) {
-      return api.newStream(state.stream).then((res) => {
-        commit("SET_STREAM", res);
-        commit("SET_IS_STREAM_EDIT", true)
-        commit("SET_SHOW_STREAM", true);
-        return dispatch("loadStreams")
-      }).then(() => {
-        return dispatch("addNotification", {
-          type: "success",
-          message: MsgStreamAdded,
-        })
-      });
-    },
-    updateStream({ dispatch, state, commit }) {
-      commit("SET_STREAM_LOADING", true);
-      return api.updateStream(state.stream)
-        .then(() => dispatch("loadStreams"))
-        .then(() => {
-          dispatch("addNotification", {
-            type: "success",
-            message: MsgStreamUpdated,
-          })
-        })
-        .finally(() => commit("SET_STREAM_LOADING", false));
-    },
-    loadStream({ commit }, id) {
-      commit("SET_STREAM_LOADING", true);
-      return api.getStream(id).then((res) => {
-        commit("SET_STREAM", res);
-        commit("SET_IS_STREAM_EDIT", true)
-        commit("SET_SHOW_STREAM", true);
-      }).finally(() => commit("SET_STREAM_LOADING", false));
-    },
-    deleteStream({ dispatch, state, commit }) {
-      commit("SET_STREAM_LOADING", true);
-      api.deleteStream(state.stream.id)
-        .then(() => dispatch("loadStreams"))
-        .then(() => dispatch("hideStream"))
-        .then(() => dispatch("addNotification", { type: "success", message: MsgStreamDeleted }))
-        .finally(() => {
-          commit("SET_STREAM_LOADING", false)
-        });
-    }
   },
 });

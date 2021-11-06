@@ -1,6 +1,8 @@
 export const DefNotificationTimeout = 5000
 export const ErrNetwork = "could not contact server"
 export const ErrRadioNotSelected = "radio is not selected";
+export const ErrStreamChanged = "stream changed, please save or close stream";
+export const ErrStreamLoading = "stream is loading, please wait";
 export const MsgConnected = "connected"
 export const MsgConnecting = "connecting..."
 export const MsgDisconnected = "lost connection"

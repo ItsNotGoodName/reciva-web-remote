@@ -41,24 +41,23 @@ export default {
 	getConfig() {
 		return jsonResponse(fetch(API_URL + "/v1/config"))
 	},
-	getPresets() {
+	readPresets() {
 		return jsonResponse(fetch(API_URL + "/v1/presets"))
 	},
 	updatePreset(preset) {
 		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "POST", body: JSON.stringify(preset) }))
 	},
 	clearPreset(preset) {
-		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "DELETE", body: JSON.stringify({ "uri": preset.uri }) }))
+		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "DELETE", body: JSON.stringify(preset) }))
 	},
-	getStreams() {
-		return jsonResponse(fetch(API_URL + "/v1/streams")
-		)
-	},
-	getStream(id) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + id))
-	},
-	newStream(stream) {
+	createStream(stream) {
 		return jsonResponse(fetch(API_URL + "/v1/stream/new", { method: "POST", body: JSON.stringify(stream) }))
+	},
+	readStreams() {
+		return jsonResponse(fetch(API_URL + "/v1/streams"))
+	},
+	readStream(id) {
+		return jsonResponse(fetch(API_URL + "/v1/stream/" + id))
 	},
 	updateStream(stream) {
 		return jsonResponse(fetch(API_URL + "/v1/stream/" + stream.id, { method: "POST", body: JSON.stringify(stream) }))

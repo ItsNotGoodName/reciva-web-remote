@@ -32,7 +32,7 @@
         >Discover</loading-button
       >
     </div>
-    <div class="flex gap-2 flex-grow md:flex-auto">
+    <div class="flex gap-2 flex-1 md:flex-auto">
       <select class="flex-1 btn-sm btn-light rounded" v-model="radioUUID">
         <option :value="null" disabled>Select Radio</option>
         <option :key="uuid" v-bind:value="uuid" v-for="(name, uuid) in radios">
@@ -84,7 +84,7 @@
           >OFF</loading-button
         >
       </div>
-      <div class="flex gap-2 flex-grow">
+      <div class="flex gap-2 w-full">
         <div class="w-8 h-8 flex-shrink-0">
           <PlayIcon v-if="radio.state == 'Playing'" />
           <StopIcon v-else-if="radio.state == 'Stopped'" />

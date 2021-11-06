@@ -1,7 +1,7 @@
 <template >
   <div
     v-if="radioUUID && radioConnected"
-    class="gap-1 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2"
+    class="gap-2 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2"
   >
     <div v-for="preset in radio.presets" :key="preset.number">
       <loading-button

@@ -170,7 +170,7 @@ func (rd *Radio) updateVolume(volume int) error {
 
 func (rd *Radio) sendState(state *State) {
 	state.UUID = rd.state.UUID
-	rd.emitState(state)
+	rd.h.emitState(state)
 }
 
 func (rd *Radio) initState() {

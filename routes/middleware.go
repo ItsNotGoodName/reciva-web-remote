@@ -4,18 +4,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/gin-gonic/gin"
 )
 
-func ensureUUID(a *api.API) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		uuid, ok := c.Params.Get("uuid")
-		if !ok {
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-		c.Set("uuid", uuid)
+func ensureUUID(c *gin.Context) {
+	uuid, ok := c.Params.Get("uuid")
+	if !ok {
+		c.AbortWithStatus(http.StatusInternalServerError)
 	}
+	c.Set("uuid", uuid)
 }
 
 func ensureID(c *gin.Context) {

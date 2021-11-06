@@ -23,10 +23,10 @@ const (
 	maxMessageSize = 512
 )
 
-func newRadioWS(conn *websocket.Conn, a *API) *radioWS {
+func NewRadioWS(conn *websocket.Conn, h *radio.Hub) *radioWS {
 	hc := make(chan radio.State, 2)
 	return &radioWS{
-		a:        a,
+		h:        h,
 		conn:     conn,
 		hubChan:  &hc,
 		readChan: make(chan *radio.State),
@@ -34,11 +34,11 @@ func newRadioWS(conn *websocket.Conn, a *API) *radioWS {
 	}
 }
 
-func (rs *radioWS) start(uuid string) {
+func (rs *radioWS) Start(uuid string) {
 	go rs.balancer(uuid)
 
 	// Register with hub
-	rs.a.h.AddClient(rs.hubChan)
+	rs.h.AddClient(rs.hubChan)
 
 	// Start read handler
 	go rs.handleRead(uuid)
@@ -132,17 +132,17 @@ func (rs *radioWS) handleRead(uuid string) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
-		rs.a.h.RemoveClient(rs.hubChan)
+		rs.h.RemoveClient(rs.hubChan)
 		rs.conn.Close()
 		cancel()
 	}()
 
 	// Send initial state if uuid is set
 	if uuid != "" {
-		state, ok := rs.a.GetRadioState(ctx, uuid)
+		state, err := rs.h.GetRadioState(ctx, uuid)
 
-		if !ok {
-			log.Println("radioWS.handleRead(ERROR): GetRadioState did not find state with radio uuid of", uuid)
+		if err != nil {
+			log.Println("radioWS.handleRead(ERROR):", err)
 			return
 		}
 
@@ -163,11 +163,10 @@ func (rs *radioWS) handleRead(uuid string) {
 		}
 
 		// Parse uuid and get state from uuid
-		uuid := string(msg)
-		state, ok := rs.a.GetRadioState(ctx, uuid)
+		state, err := rs.h.GetRadioState(ctx, string(msg))
 
 		// End connection if unable to get state
-		if !ok {
+		if err != nil {
 			return
 		}
 

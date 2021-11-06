@@ -23,9 +23,6 @@ func main() {
 	// Create radio hub
 	h := radio.NewHub(cp)
 
-	// Create api
-	a := api.NewAPI(h)
-
 	// Create router
 	r := NewRouter()
 
@@ -33,7 +30,7 @@ func main() {
 	u := NewUpgrader()
 
 	// Add radio routes
-	routes.AddRadioRoutes(r.Group(cfg.APIURI), a, u)
+	routes.AddRadioRoutes(r.Group(cfg.APIURI), h, u)
 
 	// Add config routes
 	routes.AddConfigRoutes(r.Group(cfg.APIURI), cfg)

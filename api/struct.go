@@ -20,7 +20,7 @@ type PresetAPI struct {
 }
 
 type radioWS struct {
-	a        *API
+	h        *radio.Hub
 	conn     *websocket.Conn
 	hubChan  *chan radio.State
 	readChan chan *radio.State

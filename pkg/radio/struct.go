@@ -14,7 +14,7 @@ type Hub struct {
 	discoverChan  chan chan error                 // discoverChan is used to discover radios.
 	stateOPS      chan func(map[*chan State]bool) // stateOPS is used to push State changes to HubClients.
 	stopChan      chan chan error                 // buryChan is used to remove all radios.
-	PresetMutator func(*Preset)                   // PresetMutator is used to change presets.
+	PresetMutator func(context.Context, *Preset)  // PresetMutator is used to change presets.
 
 	radiosMu sync.RWMutex      // radiosMu is used to protect radios map.
 	radios   map[string]*Radio // radios is used to store all the Radios.

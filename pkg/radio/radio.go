@@ -120,6 +120,9 @@ func (rd *Radio) radioLoop() {
 						for i := range rd.state.Presets {
 							if rd.state.Presets[i].Title == sXML.Title {
 								newPreset = i + 1
+								rd.state.Title = rd.state.Presets[i].Name
+								newState.Title = rd.state.Presets[i].Name
+								break
 							}
 						}
 						rd.state.Preset = newPreset
@@ -225,7 +228,7 @@ func (rd *Radio) initState() {
 		log.Println("Radio.initState:", err)
 	} else {
 		for i := range presets {
-			rd.h.PresetMutator(&presets[i])
+			rd.h.PresetMutator(rd.ctx, &presets[i])
 		}
 		rd.state.Presets = presets
 	}

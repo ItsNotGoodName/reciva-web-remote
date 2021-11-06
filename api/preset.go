@@ -3,14 +3,30 @@ package api
 import (
 	"context"
 	"database/sql"
+	"net/url"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
 func NewPresetAPI(s *store.Store, h *radio.Hub) *PresetAPI {
+	p := PresetAPI{s: s}
+	h.PresetMutator = p.PresetMutator
+	return &p
+}
 
-	return &PresetAPI{s: s}
+func (p *PresetAPI) PresetMutator(ctx context.Context, preset *radio.Preset) {
+	uri, err := url.ParseRequestURI(preset.URL)
+	if err != nil {
+		preset.Name = preset.Title
+		return
+	}
+	stream, err := p.GetStreamByURI(ctx, uri.Path)
+	if err != nil {
+		preset.Name = preset.Title
+		return
+	}
+	preset.Name = stream.Name
 }
 
 // GetPresets returns all presets.

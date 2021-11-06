@@ -13,7 +13,7 @@ import (
 
 func NewHub(cp *upnpsub.ControlPoint) *Hub {
 	h := Hub{
-		PresetMutator: func(p *Preset) {
+		PresetMutator: func(ctx context.Context, p *Preset) {
 			p.Name = p.Title
 		},
 		cp:           cp,

@@ -24,9 +24,16 @@
     >
       <div :key="p.uri" v-for="p in presets">
         <button
-          v-if="p.sid != sid"
+          v-if="p.sid == 0"
           @click="updatePreset({ ...p, sid: sid })"
           class="btn w-full btn-white"
+        >
+          {{ p.uri }}
+        </button>
+        <button
+          v-else-if="p.sid != sid"
+          @click="updatePreset({ ...p, sid: sid })"
+          class="btn w-full btn-light"
         >
           {{ p.uri }}
         </button>

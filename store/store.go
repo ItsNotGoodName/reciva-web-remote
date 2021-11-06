@@ -8,7 +8,7 @@ import (
 )
 
 type Store struct {
-	Presets map[string]bool // Presets is a map of preset uri
+	Presets []string
 	db      *sql.DB
 }
 
@@ -33,7 +33,7 @@ func NewStore(cfg *config.Config) (*Store, error) {
 		return nil, err
 	}
 
-	pts := make(map[string]bool)
+	var pts []string
 	for _, uri := range cfg.URIS {
 		pt := Preset{URI: uri}
 		err = db.QueryRow("SELECT sid FROM preset WHERE uri = ?", uri).Scan(&pt.SID)
@@ -47,7 +47,7 @@ func NewStore(cfg *config.Config) (*Store, error) {
 				return nil, err
 			}
 		}
-		pts[pt.URI] = true
+		pts = append(pts, pt.URI)
 	}
 
 	return &Store{db: db, Presets: pts}, nil

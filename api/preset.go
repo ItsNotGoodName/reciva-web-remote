@@ -18,18 +18,14 @@ func (p *PresetAPI) GetPresets(ctx context.Context) ([]*store.Preset, error) {
 
 // GetActiveURIS returns active presets as an array of URIS.
 func (p *PresetAPI) GetActiveURIS() []string {
-	uris := make([]string, 0)
-	for uri, _ := range p.s.Presets {
-		uris = append(uris, uri)
-	}
-	return uris
+	return p.s.Presets
 }
 
 // GetActivePresets returns active presets.
 func (p *PresetAPI) GetActivePresets(ctx context.Context) ([]*store.Preset, error) {
-	pts := make([]*store.Preset, 0)
+	var pts []*store.Preset
 
-	for uri, _ := range p.s.Presets {
+	for _, uri := range p.s.Presets {
 		p, err := p.s.GetPreset(ctx, uri)
 		if err != nil {
 			return nil, err

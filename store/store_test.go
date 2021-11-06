@@ -32,11 +32,11 @@ func TestStore(t *testing.T) {
 	if len(s.Presets) != 2 {
 		t.Error("Presets should be empty")
 	}
-	if !s.Presets["/01.m3u"] {
-		t.Errorf("URI should be true, got %t", s.Presets["/01.m3u"])
+	if s.Presets[0] != "/01.m3u" {
+		t.Errorf("URI should be true, got %s", s.Presets[0])
 	}
-	if !s.Presets["/02.m3u"] {
-		t.Errorf("URI should be true, got %t", s.Presets["/02.m3u"])
+	if s.Presets[1] != "/02.m3u" {
+		t.Errorf("URI should be true, got %s", s.Presets[1])
 	}
 }
 

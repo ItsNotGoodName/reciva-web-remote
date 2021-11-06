@@ -44,7 +44,7 @@ export default {
     }),
   },
   methods: {
-    ...mapActions(["readPresets"]),
+    ...mapActions(["readPresets", "clearPreset"]),
   },
 };
 </script>

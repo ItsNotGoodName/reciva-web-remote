@@ -9,7 +9,7 @@ import (
 )
 
 func NewPresetAPI(s *store.Store, h *radio.Hub) *PresetAPI {
-	p := PresetAPI{s: s}
+	p := PresetAPI{s: s, h: h}
 	h.PresetMutator = p.PresetMutator
 	return &p
 }
@@ -84,7 +84,7 @@ func (p *PresetAPI) UpdatePreset(ctx context.Context, req *UpdatePresetRequest) 
 		}
 		return nil, ErrPresetNotFound
 	}
-
+	p.h.RefreshPresets()
 	return preset, nil
 }
 
@@ -103,5 +103,6 @@ func (p *PresetAPI) ClearPreset(ctx context.Context, req *ClearPresetRequest) (*
 	if err != nil {
 		return nil, err
 	}
+	p.h.RefreshPresets()
 	return preset, nil
 }

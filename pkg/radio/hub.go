@@ -85,6 +85,7 @@ func (h *Hub) NewRadio(client goupnp.ServiceClient) (*Radio, error) {
 		h:                h,
 		state:            NewState(uuid),
 		updateVolumeChan: make(chan int),
+		refreshPresets:   make(chan bool, 1),
 	}
 	go rd.radioLoop()
 
@@ -141,6 +142,17 @@ func (h *Hub) IsValidRadio(uuid string) bool {
 	_, ok := h.radios[uuid]
 	h.radiosMu.RUnlock()
 	return ok
+}
+
+func (h *Hub) RefreshPresets() {
+	h.radiosMu.RLock()
+	for _, r := range h.radios {
+		select {
+		case r.refreshPresets <- true:
+		default:
+		}
+	}
+	h.radiosMu.RUnlock()
 }
 
 func (h *Hub) Discover() error {

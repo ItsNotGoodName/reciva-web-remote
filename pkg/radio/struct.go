@@ -26,6 +26,7 @@ type Radio struct {
 	Client           goupnp.ServiceClient  // Client is the SOAP client.
 	Subscription     *upnpsub.Subscription // Subscription that belongs to this Radio.
 	UUID             string                // UUID is unique and will not change after it has been set.
+	refreshPresets   chan bool             // RefreshPresets is used to refresh presets.
 	ctx              context.Context       // ctx is the context for radioLoop.
 	getStateChan     chan State            // getStateChan returns a copy of the current State.
 	h                *Hub                  // h is the hub that this radio belongs to.

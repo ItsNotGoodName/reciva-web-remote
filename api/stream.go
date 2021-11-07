@@ -114,6 +114,7 @@ func (p *PresetAPI) UpdateStream(ctx context.Context, req *UpdateStreamRequest) 
 	if !ok {
 		return nil, ErrStreamNotFound
 	}
+	p.h.RefreshPresets()
 	return stream, nil
 }
 
@@ -126,5 +127,6 @@ func (p *PresetAPI) DeleteStream(ctx context.Context, id int) error {
 	if !ok {
 		return ErrStreamNotFound
 	}
+	p.h.RefreshPresets()
 	return nil
 }

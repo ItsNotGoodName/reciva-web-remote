@@ -87,6 +87,6 @@ func AddPresetRadioRoutes(r *gin.Engine, p *api.PresetAPI) {
 	for _, rawURL := range urls {
 		u, _ := url.Parse(rawURL)
 		uri := u.Path
-		r.GET(uri, handlePreset(p, uri))
+		r.GET(uri, handlePreset(p, rawURL))
 	}
 }

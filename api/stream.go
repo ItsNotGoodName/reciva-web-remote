@@ -7,9 +7,9 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
-// GetStream returns a stream by id.
-func (p *PresetAPI) GetStream(ctx context.Context, id int) (*store.Stream, error) {
-	stream, err := p.s.GetStream(ctx, id)
+// ReadStream returns a stream by id.
+func (p *PresetAPI) ReadStream(ctx context.Context, id int) (*store.Stream, error) {
+	stream, err := p.s.ReadStream(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrStreamNotFound
@@ -20,14 +20,14 @@ func (p *PresetAPI) GetStream(ctx context.Context, id int) (*store.Stream, error
 	return stream, nil
 }
 
-// GetStreamByURL returns a stream by URL.
-func (p *PresetAPI) GetStreamByURL(ctx context.Context, url string) (*store.Stream, error) {
-	preset, err := p.GetPreset(ctx, url)
+// ReadStreamByURL returns a stream by URL.
+func (p *PresetAPI) ReadStreamByURL(ctx context.Context, url string) (*store.Stream, error) {
+	preset, err := p.ReadPreset(ctx, url)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := p.GetStream(ctx, preset.SID)
+	stream, err := p.ReadStream(ctx, preset.SID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,9 +35,9 @@ func (p *PresetAPI) GetStreamByURL(ctx context.Context, url string) (*store.Stre
 	return stream, nil
 }
 
-// GetStreams returns a list of streams.
-func (p *PresetAPI) GetStreams(ctx context.Context) ([]*store.Stream, error) {
-	streams, err := p.s.GetStreams(ctx)
+// ReadStreams returns a list of streams.
+func (p *PresetAPI) ReadStreams(ctx context.Context) ([]*store.Stream, error) {
+	streams, err := p.s.ReadStreams(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -48,13 +48,13 @@ func (p *PresetAPI) GetStreams(ctx context.Context) ([]*store.Stream, error) {
 	return streams, nil
 }
 
-// AddStreamRequest is a request for AddStream.
-type AddStreamRequest struct {
+// CreateStreamRequest is a request for CreateStream.
+type CreateStreamRequest struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
-func (r *AddStreamRequest) Validate() error {
+func (r *CreateStreamRequest) Validate() error {
 	if r.Name == "" || len(r.Name) > store.StreamNameMaxLength {
 		return ErrStreamNameInvalid
 	}
@@ -64,13 +64,13 @@ func (r *AddStreamRequest) Validate() error {
 	return nil
 }
 
-// AddStream adds a stream.
-func (p *PresetAPI) AddStream(ctx context.Context, req *AddStreamRequest) (*store.Stream, error) {
+// CreateStream creates a stream.
+func (p *PresetAPI) CreateStream(ctx context.Context, req *CreateStreamRequest) (*store.Stream, error) {
 	stream := &store.Stream{
 		Name:    req.Name,
 		Content: req.Content,
 	}
-	err := p.s.AddStream(ctx, stream)
+	err := p.s.CreateStream(ctx, stream)
 	if err != nil {
 		return nil, ErrNameAlreadyExists
 	}

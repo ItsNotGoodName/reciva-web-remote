@@ -18,8 +18,8 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if len(s.Presets) != 0 {
-		t.Error("Presets should be empty")
+	if len(s.URLS) != 0 {
+		t.Error("URLS should be empty")
 	}
 
 	cfg.URLS = []string{"http://example.com/01.m3u", "http://example.com/02.m3u"}
@@ -29,14 +29,14 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if len(s.Presets) != 2 {
+	if len(s.URLS) != 2 {
 		t.Error("Presets should be empty")
 	}
-	if s.Presets[0] != "http://example.com/01.m3u" {
-		t.Errorf("URL should be true, got %s", s.Presets[0])
+	if s.URLS[0] != "http://example.com/01.m3u" {
+		t.Errorf("URL should be true, got %s", s.URLS[0])
 	}
-	if s.Presets[1] != "http://example.com/02.m3u" {
-		t.Errorf("URL should be true, got %s", s.Presets[1])
+	if s.URLS[1] != "http://example.com/02.m3u" {
+		t.Errorf("URL should be true, got %s", s.URLS[1])
 	}
 }
 
@@ -59,7 +59,7 @@ func TestPreset(t *testing.T) {
 	defer cancel()
 
 	// Get presets test
-	presets, err := s.GetPresets(ctx)
+	presets, err := s.ReadPresets(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -67,8 +67,8 @@ func TestPreset(t *testing.T) {
 		t.Errorf("Got %d presets, expected 0", len(presets))
 	}
 
-	// Add preset test
-	err = s.AddPreset(ctx, &testPreset)
+	// Create preset test
+	err = s.CreatePreset(ctx, &testPreset)
 	if err != nil {
 		t.Error(err)
 	}
@@ -80,7 +80,7 @@ func TestPreset(t *testing.T) {
 	}
 
 	// Get presets test
-	presets, err = s.GetPresets(ctx)
+	presets, err = s.ReadPresets(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -95,7 +95,7 @@ func TestPreset(t *testing.T) {
 	}
 
 	// Get preset by URL and check if it's the same
-	preset, err := s.GetPreset(ctx, testPreset.URL)
+	preset, err := s.ReadPreset(ctx, testPreset.URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -109,38 +109,16 @@ func TestPreset(t *testing.T) {
 	// Delete all preset test
 	preset2 := testPreset
 	preset2.URL = "http://example.com/02.m3u"
-	err = s.AddPreset(ctx, &preset2)
+	err = s.CreatePreset(ctx, &preset2)
 	if err != nil {
 		t.Error(err)
 	}
-	presets, err = s.GetPresets(ctx)
+	presets, err = s.ReadPresets(ctx)
 	if err != nil {
 		t.Error(err)
 	}
 	if len(presets) != 2 {
 		t.Errorf("Got %d presets, expected 2", len(presets))
-	}
-	err = s.DeleteAllPresets(ctx)
-	if err != nil {
-		t.Error(err)
-	}
-
-	// Get presets test
-	presets, err = s.GetPresets(ctx)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(presets) != 0 {
-		t.Error("Expected 0 presets, got ", len(presets))
-	}
-
-	// Get preset test
-	preset, err = s.GetPreset(ctx, testPreset.URL)
-	if err == nil {
-		t.Error("Expected error, got nil")
-	}
-	if preset != nil {
-		t.Errorf("Got preset with URL %s, expected nil", preset.URL)
 	}
 }
 
@@ -166,15 +144,15 @@ func TestStream(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Add preset test
+	// Create preset test
 	testPreset := TestPreset
-	err = s.AddPreset(ctx, &testPreset)
+	err = s.CreatePreset(ctx, &testPreset)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// Get streams test
-	streams, err := s.GetStreams(ctx)
+	streams, err := s.ReadStreams(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -182,9 +160,9 @@ func TestStream(t *testing.T) {
 		t.Errorf("Got %d streams, expected 0", len(streams))
 	}
 
-	// Add stream test
+	// Create stream test
 	testStream := TestStream
-	err = s.AddStream(ctx, &testStream)
+	err = s.CreateStream(ctx, &testStream)
 	if err != nil {
 		t.Error(err)
 	}
@@ -207,7 +185,7 @@ func TestStream(t *testing.T) {
 	if !ok {
 		t.Error("Update failed")
 	}
-	preset, err := s.GetPreset(ctx, testPreset.URL)
+	preset, err := s.ReadPreset(ctx, testPreset.URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -216,7 +194,7 @@ func TestStream(t *testing.T) {
 	}
 
 	// Get stream by preset test
-	stream, err := s.GetStream(ctx, testPreset.SID)
+	stream, err := s.ReadStream(ctx, testPreset.SID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -229,13 +207,13 @@ func TestStream(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	stream, err = s.GetStream(ctx, preset.SID)
+	stream, err = s.ReadStream(ctx, preset.SID)
 	if err == nil {
 		t.Errorf("Got stream with ID %d, expected nil", stream.ID)
 	}
 
 	// Get stream by id test
-	stream, err = s.GetStream(ctx, testStream.ID)
+	stream, err = s.ReadStream(ctx, testStream.ID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -250,7 +228,7 @@ func TestStream(t *testing.T) {
 	}
 
 	// Get streams test
-	streams, err = s.GetStreams(ctx)
+	streams, err = s.ReadStreams(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -295,13 +273,13 @@ func TestStream(t *testing.T) {
 	if !ok {
 		t.Error("Stream was not deleted")
 	}
-	stream, err = s.GetStream(ctx, testStream.ID)
+	stream, err = s.ReadStream(ctx, testStream.ID)
 	if err == nil {
 		t.Error("Got stream with ID ", stream.ID, ", expected error")
 	}
 
 	// Make sure preset's SID is 0
-	preset, err = s.GetPreset(ctx, testPreset.URL)
+	preset, err = s.ReadPreset(ctx, testPreset.URL)
 	if err != nil {
 		t.Error(err)
 	}

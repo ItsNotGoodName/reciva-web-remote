@@ -13,13 +13,13 @@ const (
 	StreamContentMaxLength = 1024
 )
 
-// AddStream adds stream to the store with context.
-func (s *Store) AddStream(ctx context.Context, stream *Stream) error {
+// CreateStream creates a stream.
+func (s *Store) CreateStream(ctx context.Context, stream *Stream) error {
 	return s.db.QueryRowContext(ctx, "INSERT INTO stream (name, content) VALUES ($1, $2) RETURNING id", stream.Name, stream.Content).Scan(&stream.ID)
 }
 
-// GetStreams returns all streams in the store with context.
-func (s *Store) GetStreams(ctx context.Context) ([]*Stream, error) {
+// ReadStreams returns all streams.
+func (s *Store) ReadStreams(ctx context.Context) ([]*Stream, error) {
 	rows, err := s.db.QueryContext(ctx, "SELECT id, name, content FROM stream")
 	if err != nil {
 		return nil, err
@@ -38,8 +38,8 @@ func (s *Store) GetStreams(ctx context.Context) ([]*Stream, error) {
 	return streams, nil
 }
 
-// GetStream returns stream by ID with context.
-func (s *Store) GetStream(ctx context.Context, id int) (*Stream, error) {
+// ReadStream returns a stream by ID.
+func (s *Store) ReadStream(ctx context.Context, id int) (*Stream, error) {
 	var stream Stream
 	err := s.db.QueryRowContext(ctx, "SELECT id, name, content FROM stream WHERE id = $1", id).Scan(&stream.ID, &stream.Name, &stream.Content)
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *Store) GetStream(ctx context.Context, id int) (*Stream, error) {
 	return &stream, nil
 }
 
-// DeleteStream deletes stream with context.
+// DeleteStream deletes a stream.
 func (s *Store) DeleteStream(ctx context.Context, stream *Stream) (bool, error) {
 	txn, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *Store) DeleteStream(ctx context.Context, stream *Stream) (bool, error) 
 	return rows > 0, nil
 }
 
-// UpdateStream updates stream with context.
+// UpdateStream updates a stream.
 func (s *Store) UpdateStream(ctx context.Context, stream *Stream) (bool, error) {
 	result, err := s.db.ExecContext(ctx, "UPDATE stream SET name = $1, content = $2 WHERE id = $3", stream.Name, stream.Content, stream.ID)
 	if err != nil {

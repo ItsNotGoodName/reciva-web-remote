@@ -10,8 +10,8 @@ import (
 
 func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/presets", func(c *gin.Context) {
-		// Get active presets
-		presets, err := p.GetActivePresets(c)
+		// Read active presets
+		presets, err := p.ReadActivePresets(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
@@ -65,10 +65,10 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	})
 }
 
-func handlePreset(p *api.PresetAPI, url string) func(c *gin.Context) {
+func newPresetStreamHandler(p *api.PresetAPI, url string) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		// Get the stream
-		stream, err := p.GetStreamByURL(c, url)
+		// Read the stream
+		stream, err := p.ReadStreamByURL(c, url)
 		if err != nil {
 			if err == api.ErrPresetNotFound || err == api.ErrStreamNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
@@ -82,11 +82,11 @@ func handlePreset(p *api.PresetAPI, url string) func(c *gin.Context) {
 	}
 }
 
-func AddPresetRadioRoutes(r *gin.Engine, p *api.PresetAPI) {
-	urls := p.GetActiveURLS()
+func AddPresetStreamRoutes(r *gin.Engine, p *api.PresetAPI) {
+	urls := p.ReadActiveURLS()
 	for _, rawURL := range urls {
 		u, _ := url.Parse(rawURL)
 		uri := u.Path
-		r.GET(uri, handlePreset(p, rawURL))
+		r.GET(uri, newPresetStreamHandler(p, rawURL))
 	}
 }

@@ -8,8 +8,8 @@ import (
 )
 
 type Store struct {
-	Presets []string
-	db      *sql.DB
+	URLS []string
+	db   *sql.DB
 }
 
 func NewStore(cfg *config.Config) (*Store, error) {
@@ -28,12 +28,17 @@ func NewStore(cfg *config.Config) (*Store, error) {
 		return nil, err
 	}
 
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS `stream` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT UNIQUE, `content` TEXT)")
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS stream (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT UNIQUE,
+			content TEXT
+		)`)
 	if err != nil {
 		return nil, err
 	}
 
-	var pts []string
+	// Create presets from config in db if they do not exist
 	for _, url := range cfg.URLS {
 		pt := Preset{URL: url}
 		err = db.QueryRow("SELECT sid FROM preset WHERE url = ?", url).Scan(&pt.SID)
@@ -47,8 +52,7 @@ func NewStore(cfg *config.Config) (*Store, error) {
 				return nil, err
 			}
 		}
-		pts = append(pts, pt.URL)
 	}
 
-	return &Store{db: db, Presets: pts}, nil
+	return &Store{db: db, URLS: cfg.URLS}, nil
 }

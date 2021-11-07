@@ -9,8 +9,8 @@ import (
 
 func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/streams", func(c *gin.Context) {
-		// Get all streams
-		streams, err := p.GetStreams(c)
+		// Read all streams
+		streams, err := p.ReadStreams(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
@@ -21,20 +21,20 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 	r.POST("/stream/new", func(c *gin.Context) {
 		// Parse the JSON in the body
-		addReq := &api.AddStreamRequest{}
-		if err := c.BindJSON(addReq); err != nil {
+		createReq := &api.CreateStreamRequest{}
+		if err := c.BindJSON(createReq); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
 
 		// Validate the request
-		if err := addReq.Validate(); err != nil {
+		if err := createReq.Validate(); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
 
-		// Add the stream
-		stream, err := p.AddStream(c, addReq)
+		// Create the stream
+		stream, err := p.CreateStream(c, createReq)
 		if err != nil {
 			if err == api.ErrNameAlreadyExists {
 				c.JSON(http.StatusConflict, gin.H{"err": err.Error()})
@@ -50,8 +50,8 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.Use(ensureID)
 
 	r.GET("/stream/:id", func(c *gin.Context) {
-		// Get the stream
-		stream, err := p.GetStream(c, c.GetInt("id"))
+		// Read the stream
+		stream, err := p.ReadStream(c, c.GetInt("id"))
 		if err != nil {
 			if err == api.ErrStreamNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})

@@ -45,8 +45,8 @@ func main() {
 			routes.AddStreamRoutes(r.Group(cfg.APIURI), p)
 			// Add preset routes
 			routes.AddPresetRoutes(r.Group(cfg.APIURI), p)
-			// Add preset radio routes
-			routes.AddPresetRadioRoutes(r, p)
+			// Add preset stream routes
+			routes.AddPresetStreamRoutes(r, p)
 		} else {
 			log.Println("main:", err)
 		}

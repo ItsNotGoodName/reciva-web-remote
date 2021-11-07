@@ -87,7 +87,7 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		var radioPost RadioPost
 		err := c.BindJSON(&radioPost)
 		if err != nil {
-			c.Status(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
 

@@ -27,20 +27,17 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			return
 		}
 
-		// Validate the request
-		if err := createReq.Validate(); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-			return
-		}
-
 		// Create the stream
 		stream, err := p.CreateStream(c, createReq)
 		if err != nil {
-			if err == api.ErrNameAlreadyExists {
-				c.JSON(http.StatusConflict, gin.H{"err": err.Error()})
-				return
+			code := http.StatusInternalServerError
+			if err == api.ErrStreamNameInvalid || err == api.ErrStreamContentInvalid {
+				code = http.StatusBadRequest
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			if err == api.ErrStreamNotFound {
+				code = http.StatusNotFound
+			}
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -53,11 +50,11 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		// Read the stream
 		stream, err := p.ReadStream(c, c.GetInt("id"))
 		if err != nil {
+			code := http.StatusInternalServerError
 			if err == api.ErrStreamNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-				return
+				code = http.StatusNotFound
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -73,20 +70,17 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		}
 		updateReq.ID = c.GetInt("id")
 
-		// Validate the request
-		if err := updateReq.Validate(); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-			return
-		}
-
 		// Update the stream
 		stream, err := p.UpdateStream(c, updateReq)
 		if err != nil {
-			if err == api.ErrStreamNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-				return
+			code := http.StatusInternalServerError
+			if err == api.ErrStreamNameInvalid || err == api.ErrStreamContentInvalid {
+				code = http.StatusBadRequest
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			if err == api.ErrStreamNotFound {
+				code = http.StatusNotFound
+			}
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -97,11 +91,11 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		// Delete the stream
 		err := p.DeleteStream(c, c.GetInt("id"))
 		if err != nil {
+			code := http.StatusInternalServerError
 			if err == api.ErrStreamNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-				return
+				code = http.StatusNotFound
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 

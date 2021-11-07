@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
@@ -52,7 +51,7 @@ func (p *PresetAPI) ReadActivePresets(ctx context.Context) ([]*store.Preset, err
 func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*store.Preset, error) {
 	preset, err := p.s.ReadPreset(ctx, url)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == store.ErrNotFound {
 			return nil, ErrPresetNotFound
 		}
 		return nil, err

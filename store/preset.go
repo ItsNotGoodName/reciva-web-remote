@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Preset struct {
@@ -62,6 +63,9 @@ func (s *Store) ReadPreset(ctx context.Context, url string) (*Preset, error) {
 	var preset Preset
 	err := s.db.QueryRowContext(ctx, "SELECT url, sid FROM preset WHERE url = $1", url).Scan(&preset.URL, &preset.SID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 	return &preset, nil

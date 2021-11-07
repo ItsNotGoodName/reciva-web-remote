@@ -1,6 +1,9 @@
 package store
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type Stream struct {
 	ID      int    `json:"id"`      // ID is the unique ID of the stream.
@@ -43,6 +46,9 @@ func (s *Store) ReadStream(ctx context.Context, id int) (*Stream, error) {
 	var stream Stream
 	err := s.db.QueryRowContext(ctx, "SELECT id, name, content FROM stream WHERE id = $1", id).Scan(&stream.ID, &stream.Name, &stream.Content)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 

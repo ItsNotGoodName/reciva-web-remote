@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
@@ -11,7 +10,7 @@ import (
 func (p *PresetAPI) ReadStream(ctx context.Context, id int) (*store.Stream, error) {
 	stream, err := p.s.ReadStream(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == store.ErrNotFound {
 			return nil, ErrStreamNotFound
 		}
 		return nil, err
@@ -54,18 +53,17 @@ type CreateStreamRequest struct {
 	Content string `json:"content"`
 }
 
-func (r *CreateStreamRequest) Validate() error {
-	if r.Name == "" || len(r.Name) > store.StreamNameMaxLength {
-		return ErrStreamNameInvalid
-	}
-	if len(r.Content) > store.StreamContentMaxLength {
-		return ErrStreamContentInvalid
-	}
-	return nil
-}
-
 // CreateStream creates a stream.
 func (p *PresetAPI) CreateStream(ctx context.Context, req *CreateStreamRequest) (*store.Stream, error) {
+	// Validate request
+	if req.Name == "" || len(req.Name) > store.StreamNameMaxLength {
+		return nil, ErrStreamNameInvalid
+	}
+	if len(req.Content) > store.StreamContentMaxLength {
+		return nil, ErrStreamContentInvalid
+	}
+
+	// Create stream
 	stream := &store.Stream{
 		Name:    req.Name,
 		Content: req.Content,
@@ -74,6 +72,7 @@ func (p *PresetAPI) CreateStream(ctx context.Context, req *CreateStreamRequest) 
 	if err != nil {
 		return nil, ErrNameAlreadyExists
 	}
+
 	return stream, nil
 }
 
@@ -84,18 +83,17 @@ type UpdateStreamRequest struct {
 	Content string `json:"content"`
 }
 
-func (r *UpdateStreamRequest) Validate() error {
-	if r.Name == "" || len(r.Name) > store.StreamNameMaxLength {
-		return ErrStreamNameInvalid
-	}
-	if len(r.Content) > store.StreamContentMaxLength {
-		return ErrStreamContentInvalid
-	}
-	return nil
-}
-
 // UpdateStream updates a stream.
 func (p *PresetAPI) UpdateStream(ctx context.Context, req *UpdateStreamRequest) (*store.Stream, error) {
+	// Validate request
+	if req.Name == "" || len(req.Name) > store.StreamNameMaxLength {
+		return nil, ErrStreamNameInvalid
+	}
+	if len(req.Content) > store.StreamContentMaxLength {
+		return nil, ErrStreamContentInvalid
+	}
+
+	// Update stream
 	stream := &store.Stream{
 		ID:      req.ID,
 		Name:    req.Name,
@@ -108,7 +106,9 @@ func (p *PresetAPI) UpdateStream(ctx context.Context, req *UpdateStreamRequest) 
 	if !ok {
 		return nil, ErrStreamNotFound
 	}
+
 	p.h.RefreshPresets()
+
 	return stream, nil
 }
 

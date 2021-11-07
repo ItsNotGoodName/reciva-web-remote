@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type Store struct {
@@ -13,7 +13,7 @@ type Store struct {
 }
 
 func NewStore(cfg *config.Config) (*Store, error) {
-	db, err := sql.Open("sqlite3", cfg.DB)
+	db, err := sql.Open("sqlite", cfg.DB)
 	if err != nil {
 		return nil, err
 	}

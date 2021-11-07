@@ -14,8 +14,24 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
     flags:
       - -tags=prod
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
 archives:
   - format: zip
 checksum:

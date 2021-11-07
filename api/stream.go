@@ -5,7 +5,6 @@ import (
 	"database/sql"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
-	"github.com/mattn/go-sqlite3"
 )
 
 // GetStream returns a stream by id.
@@ -73,12 +72,7 @@ func (p *PresetAPI) AddStream(ctx context.Context, req *AddStreamRequest) (*stor
 	}
 	err := p.s.AddStream(ctx, stream)
 	if err != nil {
-		if sqlErr, ok := err.(sqlite3.Error); ok {
-			if sqlErr.Code == sqlite3.ErrConstraint {
-				return nil, ErrNameAlreadyExists
-			}
-		}
-		return nil, err
+		return nil, ErrNameAlreadyExists
 	}
 	return stream, nil
 }

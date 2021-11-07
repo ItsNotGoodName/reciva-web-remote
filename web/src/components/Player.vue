@@ -49,8 +49,8 @@
     </div>
     <template v-if="radioConnected">
       <div class="flex gap-2 flex-1">
-        <VolumeOffIcon v-if="radio.isMuted" class="h-8" />
-        <VolumeUpIcon v-else class="h-8" />
+        <VolumeOffIcon v-if="radio.isMuted" class="h-8 flex-shrink-0" />
+        <VolumeUpIcon v-else class="h-8 flex-shrink-0" />
         <loading-button
           className="ml-0 border-blue-600"
           class="text-left flex-grow w-10"
@@ -58,14 +58,14 @@
           >{{ radio.volume }}%</loading-button
         >
         <loading-button
-          class="w-16 btn-light"
+          class="w-16 btn-light flex-shrink-0"
           className="border-blue-600"
           :on-click="decreaseRadioVolume"
         >
           <ChevronDownIcon class="h-8 rounded w-full" />
         </loading-button>
         <loading-button
-          class="w-16 btn-light"
+          class="w-16 btn-light flex-shrink-0"
           className="border-blue-600"
           :on-click="increaseRadioVolume"
         >

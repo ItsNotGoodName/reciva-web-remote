@@ -35,7 +35,7 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		if ok {
 			// Return 404 if radio does not exist
 			if !h.IsValidRadio(uuid) {
-				c.Status(http.StatusNotFound)
+				c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 				return
 			}
 		}
@@ -60,11 +60,11 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		// Get Radio or return 404
 		state, err := h.GetRadioState(c, uuid)
 		if err != nil {
+			code := http.StatusInternalServerError
 			if err == radio.ErrRadioNotFound {
-				c.Status(http.StatusNotFound)
-				return
+				code = http.StatusNotFound
 			}
-			c.Status(http.StatusInternalServerError)
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -79,7 +79,7 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		// Get Radio or return 404
 		rd, ok := h.GetRadio(uuid)
 		if !ok {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 			return
 		}
 
@@ -102,11 +102,11 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		} else {
 			// Play preset if not nil
 			if err := rd.PlayPreset(c, *radioPost.Preset); err != nil {
+				code := http.StatusServiceUnavailable
 				if err == radio.ErrInvalidPreset {
-					c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-					return
+					code = http.StatusBadRequest
 				}
-				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+				c.JSON(code, gin.H{"err": err.Error()})
 				return
 			}
 		}
@@ -114,7 +114,7 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		// Set volume if not nil
 		if radioPost.Volume != nil {
 			if err := rd.SetVolume(*radioPost.Volume); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 				return
 			}
 		}
@@ -127,7 +127,7 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		// Return 404 if radio does not exist
 		rd, ok := h.GetRadio(uuid)
 		if !ok {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 			return
 		}
 
@@ -142,13 +142,13 @@ func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrad
 		// Return 404 if radio does not exist
 		rd, ok := h.GetRadio(uuid)
 		if !ok {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 			return
 		}
 
 		// Refresh volume
 		if err := rd.RefreshVolume(c); err != nil {
-			c.Status(http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 			return
 		}
 	})

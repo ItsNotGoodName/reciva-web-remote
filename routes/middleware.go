@@ -10,7 +10,7 @@ import (
 func ensureUUID(c *gin.Context) {
 	uuid, ok := c.Params.Get("uuid")
 	if !ok {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "uuid not found"})
 	}
 	c.Set("uuid", uuid)
 }
@@ -18,7 +18,7 @@ func ensureUUID(c *gin.Context) {
 func ensureID(c *gin.Context) {
 	idStr, ok := c.Params.Get("id")
 	if !ok {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "id not found"})
 		return
 	}
 

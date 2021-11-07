@@ -98,7 +98,5 @@ func AddStreamRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
-
-		c.Status(http.StatusOK)
 	})
 }

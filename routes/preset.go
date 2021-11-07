@@ -31,11 +31,11 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		// Update the preset
 		stream, err := p.UpdatePreset(c, &updateReq)
 		if err != nil {
+			code := http.StatusInternalServerError
 			if err == api.ErrPresetNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-				return
+				code = http.StatusNotFound
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -53,11 +53,11 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 		// Delete the preset
 		preset, err := p.ClearPreset(c, &clearReq)
 		if err != nil {
+			code := http.StatusInternalServerError
 			if err == api.ErrPresetNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-				return
+				code = http.StatusNotFound
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -70,11 +70,12 @@ func newPresetStreamHandler(p *api.PresetAPI, url string) func(c *gin.Context) {
 		// Read the stream
 		stream, err := p.ReadStreamByURL(c, url)
 		if err != nil {
+			code := http.StatusInternalServerError
 			if err == api.ErrPresetNotFound || err == api.ErrStreamNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-				return
+				code = http.StatusNotFound
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			c.JSON(code, gin.H{"err": err.Error()})
+			return
 		}
 
 		// TODO: sanitize the stream content to prevent XSS

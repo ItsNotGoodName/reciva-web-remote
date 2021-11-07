@@ -21,9 +21,9 @@ func (p *PresetAPI) GetStream(ctx context.Context, id int) (*store.Stream, error
 	return stream, nil
 }
 
-// GetStreamByURI returns a stream by URI.
-func (p *PresetAPI) GetStreamByURI(ctx context.Context, uri string) (*store.Stream, error) {
-	preset, err := p.GetPreset(ctx, uri)
+// GetStreamByURL returns a stream by URL.
+func (p *PresetAPI) GetStreamByURL(ctx context.Context, url string) (*store.Stream, error) {
+	preset, err := p.GetPreset(ctx, url)
 	if err != nil {
 		return nil, err
 	}

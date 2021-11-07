@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"net/url"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
@@ -16,12 +15,7 @@ func NewPresetAPI(s *store.Store, h *radio.Hub) *PresetAPI {
 }
 
 func (p *PresetAPI) PresetMutator(ctx context.Context, preset *radio.Preset) {
-	uri, err := url.ParseRequestURI(preset.URL)
-	if err != nil {
-		preset.Name = preset.Title
-		return
-	}
-	stream, err := p.GetStreamByURI(ctx, uri.Path)
+	stream, err := p.GetStreamByURL(ctx, preset.URL)
 	if err != nil {
 		preset.Name = preset.Title
 		return
@@ -34,8 +28,8 @@ func (p *PresetAPI) GetPresets(ctx context.Context) ([]*store.Preset, error) {
 	return p.s.GetPresets(ctx)
 }
 
-// GetActiveURIS returns active presets as an array of URIS.
-func (p *PresetAPI) GetActiveURIS() []string {
+// GetActiveURLS returns active presets as an array of URLS.
+func (p *PresetAPI) GetActiveURLS() []string {
 	return p.s.Presets
 }
 
@@ -43,8 +37,8 @@ func (p *PresetAPI) GetActiveURIS() []string {
 func (p *PresetAPI) GetActivePresets(ctx context.Context) ([]*store.Preset, error) {
 	var pts []*store.Preset
 
-	for _, uri := range p.s.Presets {
-		p, err := p.s.GetPreset(ctx, uri)
+	for _, url := range p.s.Presets {
+		p, err := p.s.GetPreset(ctx, url)
 		if err != nil {
 			return nil, err
 		}
@@ -54,9 +48,9 @@ func (p *PresetAPI) GetActivePresets(ctx context.Context) ([]*store.Preset, erro
 	return pts, nil
 }
 
-// GetPreset returns preset by uri.
-func (p *PresetAPI) GetPreset(ctx context.Context, uri string) (*store.Preset, error) {
-	preset, err := p.s.GetPreset(ctx, uri)
+// GetPreset returns preset by url.
+func (p *PresetAPI) GetPreset(ctx context.Context, url string) (*store.Preset, error) {
+	preset, err := p.s.GetPreset(ctx, url)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrPresetNotFound
@@ -70,13 +64,13 @@ func (p *PresetAPI) GetPreset(ctx context.Context, uri string) (*store.Preset, e
 // UpdatePresetRequest is request for UpdatePreset.
 type UpdatePresetRequest struct {
 	SID int    `json:"sid"`
-	URI string `json:"uri"`
+	URL string `json:"url"`
 }
 
 // UpdatePreset updates preset.
 func (p *PresetAPI) UpdatePreset(ctx context.Context, req *UpdatePresetRequest) (*store.Preset, error) {
 	preset := &store.Preset{
-		URI: req.URI,
+		URL: req.URL,
 		SID: req.SID,
 	}
 	ok, err := p.s.UpdatePreset(ctx, preset)
@@ -96,12 +90,12 @@ func (p *PresetAPI) UpdatePreset(ctx context.Context, req *UpdatePresetRequest) 
 
 // ClearPresetRequest is request for ClearPreset.
 type ClearPresetRequest struct {
-	URI string `json:"uri"`
+	URL string `json:"url"`
 }
 
 // ClearPreset clears preset's SID field.
 func (p *PresetAPI) ClearPreset(ctx context.Context, req *ClearPresetRequest) (*store.Preset, error) {
-	preset, err := p.GetPreset(ctx, req.URI)
+	preset, err := p.GetPreset(ctx, req.URL)
 	if err != nil {
 		return nil, err
 	}

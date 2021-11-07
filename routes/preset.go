@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/gin-gonic/gin"
@@ -64,10 +65,10 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	})
 }
 
-func handlePreset(p *api.PresetAPI, uri string) func(c *gin.Context) {
+func handlePreset(p *api.PresetAPI, url string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get the stream
-		stream, err := p.GetStreamByURI(c, uri)
+		stream, err := p.GetStreamByURL(c, url)
 		if err != nil {
 			if err == api.ErrPresetNotFound || err == api.ErrStreamNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
@@ -82,8 +83,10 @@ func handlePreset(p *api.PresetAPI, uri string) func(c *gin.Context) {
 }
 
 func AddPresetRadioRoutes(r *gin.Engine, p *api.PresetAPI) {
-	uris := p.GetActiveURIS()
-	for _, uri := range uris {
+	urls := p.GetActiveURLS()
+	for _, rawURL := range urls {
+		u, _ := url.Parse(rawURL)
+		uri := u.Path
 		r.GET(uri, handlePreset(p, uri))
 	}
 }

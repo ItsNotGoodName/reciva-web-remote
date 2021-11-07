@@ -14,7 +14,6 @@
         top-0
         right-0
         mr-14
-        w-48
         bg-white
         rounded
         overflow-hidden
@@ -22,27 +21,27 @@
         z-20
       "
     >
-      <div :key="p.uri" v-for="p in presets">
+      <div :key="p.url" v-for="p in presets">
         <button
           v-if="p.sid == 0"
           @click="updatePreset({ ...p, sid: sid })"
           class="btn w-full btn-white"
         >
-          {{ p.uri }}
+          {{ p.url }}
         </button>
         <button
           v-else-if="p.sid != sid"
           @click="updatePreset({ ...p, sid: sid })"
           class="btn w-full btn-light"
         >
-          {{ p.uri }}
+          {{ p.url }}
         </button>
         <button
           v-else
-          @click="clearPreset(p.uri)"
+          @click="clearPreset(p.url)"
           class="btn w-full btn-primary"
         >
-          {{ p.uri }}
+          {{ p.url }}
         </button>
       </div>
     </div>

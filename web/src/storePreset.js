@@ -23,7 +23,7 @@ export default {
         },
         ADD_PRESET(state, preset) {
             for (let i = 0; i < state.presets.length; i++) {
-                if (state.presets[i].uri == preset.uri) {
+                if (state.presets[i].url == preset.url) {
                     state.presets[i] = preset;
                     return;
                 }
@@ -84,8 +84,8 @@ export default {
                     commit("ADD_PRESET", preset);
                 });
         },
-        clearPreset({ commit }, uri) {
-            return api.clearPreset({ uri: uri })
+        clearPreset({ commit }, url) {
+            return api.clearPreset({ url: url })
                 .then((preset) => {
                     commit("ADD_PRESET", preset);
                 });

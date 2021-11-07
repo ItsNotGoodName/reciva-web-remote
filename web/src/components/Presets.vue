@@ -7,14 +7,14 @@
       <table class="w-full">
         <thead>
           <tr>
-            <th>URI</th>
+            <th>URL</th>
             <th>Stream Name</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="hover:bg-gray-100" :key="p.uri" v-for="p in presets">
+          <tr class="hover:bg-gray-100" :key="p.url" v-for="p in presets">
             <td class="p-2">
-              {{ p.uri }}
+              {{ p.url }}
             </td>
             <td class="p-2">{{ streams[p.sid] && streams[p.sid].name }}</td>
           </tr>

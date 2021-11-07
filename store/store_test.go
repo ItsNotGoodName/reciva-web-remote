@@ -22,7 +22,7 @@ func TestStore(t *testing.T) {
 		t.Error("Presets should be empty")
 	}
 
-	cfg.URIS = []string{"/01.m3u", "/02.m3u"}
+	cfg.URLS = []string{"http://example.com/01.m3u", "http://example.com/02.m3u"}
 	cfg.DB = path.Join(os.TempDir(), "test2.db")
 	os.Remove(cfg.DB)
 	s, err = NewStore(cfg)
@@ -32,17 +32,17 @@ func TestStore(t *testing.T) {
 	if len(s.Presets) != 2 {
 		t.Error("Presets should be empty")
 	}
-	if s.Presets[0] != "/01.m3u" {
-		t.Errorf("URI should be true, got %s", s.Presets[0])
+	if s.Presets[0] != "http://example.com/01.m3u" {
+		t.Errorf("URL should be true, got %s", s.Presets[0])
 	}
-	if s.Presets[1] != "/02.m3u" {
-		t.Errorf("URI should be true, got %s", s.Presets[1])
+	if s.Presets[1] != "http://example.com/02.m3u" {
+		t.Errorf("URL should be true, got %s", s.Presets[1])
 	}
 }
 
 func TestPreset(t *testing.T) {
 	testPreset := Preset{
-		URI: "/01.m3u",
+		URL: "http://example.com/01.m3u",
 	}
 
 	cfg := config.NewConfig()
@@ -72,8 +72,8 @@ func TestPreset(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if testPreset.URI != "/01.m3u" {
-		t.Errorf("URI is was changed, got %s expected %s", testPreset.URI, "/01.m3u")
+	if testPreset.URL != "http://example.com/01.m3u" {
+		t.Errorf("URL is was changed, got %s expected %s", testPreset.URL, "http://example.com/01.m3u")
 	}
 	if testPreset.SID != 0 {
 		t.Errorf("SID is not set, got %d", testPreset.SID)
@@ -87,20 +87,20 @@ func TestPreset(t *testing.T) {
 	if len(presets) != 1 {
 		t.Errorf("Got %d presets, expected 1", len(presets))
 	}
-	if presets[0].URI != testPreset.URI {
-		t.Errorf("Got preset with URI %s, expected %s", presets[0].URI, testPreset.URI)
+	if presets[0].URL != testPreset.URL {
+		t.Errorf("Got preset with URL %s, expected %s", presets[0].URL, testPreset.URL)
 	}
 	if presets[0].SID != 0 {
 		t.Errorf("Got preset with SID %d, expected 0", presets[0].SID)
 	}
 
-	// Get preset by URI and check if it's the same
-	preset, err := s.GetPreset(ctx, testPreset.URI)
+	// Get preset by URL and check if it's the same
+	preset, err := s.GetPreset(ctx, testPreset.URL)
 	if err != nil {
 		t.Error(err)
 	}
-	if preset.URI != testPreset.URI {
-		t.Errorf("Got preset with URI %s, expected %s", preset.URI, testPreset.URI)
+	if preset.URL != testPreset.URL {
+		t.Errorf("Got preset with URL %s, expected %s", preset.URL, testPreset.URL)
 	}
 	if preset.SID != 0 {
 		t.Errorf("Got preset with SID %d, expected 0", preset.SID)
@@ -108,7 +108,7 @@ func TestPreset(t *testing.T) {
 
 	// Delete all preset test
 	preset2 := testPreset
-	preset2.URI = "/02.m3u"
+	preset2.URL = "http://example.com/02.m3u"
 	err = s.AddPreset(ctx, &preset2)
 	if err != nil {
 		t.Error(err)
@@ -135,18 +135,18 @@ func TestPreset(t *testing.T) {
 	}
 
 	// Get preset test
-	preset, err = s.GetPreset(ctx, testPreset.URI)
+	preset, err = s.GetPreset(ctx, testPreset.URL)
 	if err == nil {
 		t.Error("Expected error, got nil")
 	}
 	if preset != nil {
-		t.Errorf("Got preset with URI %s, expected nil", preset.URI)
+		t.Errorf("Got preset with URL %s, expected nil", preset.URL)
 	}
 }
 
 func TestStream(t *testing.T) {
 	TestPreset := Preset{
-		URI: "/01.m3u",
+		URL: "http://example.com/01.m3u",
 	}
 	TestStream := Stream{
 		Name:    "test",
@@ -207,7 +207,7 @@ func TestStream(t *testing.T) {
 	if !ok {
 		t.Error("Update failed")
 	}
-	preset, err := s.GetPreset(ctx, testPreset.URI)
+	preset, err := s.GetPreset(ctx, testPreset.URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -301,7 +301,7 @@ func TestStream(t *testing.T) {
 	}
 
 	// Make sure preset's SID is 0
-	preset, err = s.GetPreset(ctx, testPreset.URI)
+	preset, err = s.GetPreset(ctx, testPreset.URL)
 	if err != nil {
 		t.Error(err)
 	}

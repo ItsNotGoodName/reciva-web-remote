@@ -18,7 +18,7 @@ type Config struct {
 	CPortFlag      bool
 	ConfigFile     string
 	ConfigFileFlag bool
-	URIS           []string
+	URLS           []string
 	DB             string
 	DBFlag         bool
 	Port           int
@@ -26,11 +26,16 @@ type Config struct {
 	PresetsEnabled bool
 }
 
+type Preset struct {
+	URL string
+	URI string
+}
+
 type ConfigJSON struct {
 	DBPath string   `json:"db"`
 	Port   int      `json:"port"`
 	CPort  int      `json:"cport"`
-	URIS   []string `json:"presets"`
+	URLS   []string `json:"presets"`
 }
 
 const (
@@ -51,18 +56,13 @@ func NewConfig(options ...func(*Config)) *Config {
 	for _, option := range options {
 		option(c)
 	}
-	if len(c.URIS) > 0 {
-		c.PresetsEnabled = true
-		if err := ValidURIS(c.URIS); err != nil {
-			log.Fatal(err)
-		}
-	}
+	c.PresetsEnabled = len(c.URLS) > 0
 	return c
 }
 
 func WithFlag(c *Config) {
 	// Add flags
-	URIS := flag.String("presets", "", "List of preset URI, ex. '/01.m3u,/02.m3u,/02.m3u'.")
+	URLS := flag.String("presets", "", "List of preset URLs, ex. 'http://example.com//01.m3u,http://example.com/02.m3u'.")
 	config := flag.String("config", c.ConfigFile, "Path to config.")
 	cport := flag.Int("cport", c.CPort, "Listen port for UPnP notify server.")
 	db := flag.String("db", c.DB, "Path to database.")
@@ -75,10 +75,15 @@ func WithFlag(c *Config) {
 	c.ConfigFile = *config
 	c.DB = *db
 	c.Port = *port
-	if *URIS == "" {
-		c.URIS = make([]string, 0)
+	if *URLS == "" {
+		c.URLS = []string{}
 	} else {
-		c.URIS = strings.Split(*URIS, ",")
+		URLS := strings.Split(*URLS, ",")
+		err := ValidateURLS(URLS)
+		if err != nil {
+			log.Fatal("Config.WithFlag:", err)
+		}
+		c.URLS = URLS
 	}
 
 	// Set flags in config
@@ -129,15 +134,19 @@ func WithFile(c *Config) {
 	if !c.PortFlag && cj.Port != 0 {
 		c.Port = cj.Port
 	}
-	if !c.ConfigFileFlag && len(cj.URIS) > 0 {
-		c.URIS = cj.URIS
+	if !c.ConfigFileFlag && len(cj.URLS) > 0 {
+		err := ValidateURLS(cj.URLS)
+		if err != nil {
+			log.Fatal("Config.WithFile:", err)
+		}
+		c.URLS = cj.URLS
 	}
 }
 
-// ValidURIS checks if URIs are valid.
-func ValidURIS(uris []string) error {
-	for _, uri := range uris {
-		_, err := url.ParseRequestURI(uri)
+// ValidateURLS validates a list of preset URLs.
+func ValidateURLS(urls []string) error {
+	for _, u := range urls {
+		_, err := url.Parse(u)
 		if err != nil {
 			return err
 		}

@@ -20,7 +20,7 @@ func NewStore(cfg *config.Config) (*Store, error) {
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS preset (
-			uri TEXT PRIMARY KEY UNIQUE,
+			url TEXT PRIMARY KEY UNIQUE,
 			sid INTEGER DEFAULT 0,
 			FOREIGN KEY(sid) REFERENCES stream(id)
 		)`)
@@ -34,20 +34,20 @@ func NewStore(cfg *config.Config) (*Store, error) {
 	}
 
 	var pts []string
-	for _, uri := range cfg.URIS {
-		pt := Preset{URI: uri}
-		err = db.QueryRow("SELECT sid FROM preset WHERE uri = ?", uri).Scan(&pt.SID)
+	for _, url := range cfg.URLS {
+		pt := Preset{URL: url}
+		err = db.QueryRow("SELECT sid FROM preset WHERE url = ?", url).Scan(&pt.SID)
 		if err != nil {
-			_, err = db.Exec("INSERT INTO preset (uri) VALUES (?)", uri)
+			_, err = db.Exec("INSERT INTO preset (url) VALUES (?)", url)
 			if err != nil {
 				return nil, err
 			}
-			err = db.QueryRow("SELECT sid FROM preset WHERE uri = ?", uri).Scan(&pt.SID)
+			err = db.QueryRow("SELECT sid FROM preset WHERE url = ?", url).Scan(&pt.SID)
 			if err != nil {
 				return nil, err
 			}
 		}
-		pts = append(pts, pt.URI)
+		pts = append(pts, pt.URL)
 	}
 
 	return &Store{db: db, Presets: pts}, nil

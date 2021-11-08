@@ -23,9 +23,9 @@ const (
 	maxMessageSize = 512
 )
 
-func NewRadioWS(conn *websocket.Conn, h *radio.Hub) *radioWS {
+func NewRadioWS(conn *websocket.Conn, h *radio.Hub) *RadioWS {
 	hc := make(chan radio.State, 2)
-	return &radioWS{
+	return &RadioWS{
 		h:        h,
 		conn:     conn,
 		hubChan:  &hc,
@@ -34,7 +34,7 @@ func NewRadioWS(conn *websocket.Conn, h *radio.Hub) *radioWS {
 	}
 }
 
-func (rs *radioWS) Start(uuid string) {
+func (rs *RadioWS) Start(uuid string) {
 	go rs.balancer(uuid)
 
 	// Register with hub
@@ -49,7 +49,7 @@ func (rs *radioWS) Start(uuid string) {
 
 // balancer handles receiving state from radio.Hub and handleRead and sending it to handleWrite.
 // It exits when hub closes it's channel.
-func (rs *radioWS) balancer(uuid string) {
+func (rs *RadioWS) balancer(uuid string) {
 	var toSend *radio.State
 
 	// hubChan sends incremental changes while readChan sends full state changes.
@@ -95,7 +95,7 @@ func (rs *radioWS) balancer(uuid string) {
 	}
 }
 
-func (rs *radioWS) handleWrite() {
+func (rs *RadioWS) handleWrite() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -128,7 +128,7 @@ func (rs *radioWS) handleWrite() {
 	}
 }
 
-func (rs *radioWS) handleRead(uuid string) {
+func (rs *RadioWS) handleRead(uuid string) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {

@@ -26,11 +26,6 @@ type Config struct {
 	PresetsEnabled bool
 }
 
-type Preset struct {
-	URL string
-	URI string
-}
-
 type ConfigJSON struct {
 	DBPath string   `json:"db"`
 	Port   int      `json:"port"`

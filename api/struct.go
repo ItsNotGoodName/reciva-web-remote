@@ -11,7 +11,7 @@ type PresetAPI struct {
 	h *radio.Hub
 }
 
-type radioWS struct {
+type RadioWS struct {
 	h        *radio.Hub
 	conn     *websocket.Conn
 	hubChan  *chan radio.State

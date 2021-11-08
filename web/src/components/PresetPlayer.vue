@@ -11,19 +11,37 @@
           h-10
           rounded
           btn btn-primary
-          border-2 border-blue-500
+          border-blue-500
           hover:border-blue-600
+          border-2
         "
         :on-click="() => playRadioPreset(preset.number)"
-        >{{ preset.name }}</loading-button
+        :title="preset.name"
       >
+        <div class="flex">
+          <div class="rounded-full bg-white px-2 text-black mr-2">
+            {{ preset.number }}
+          </div>
+          <div class="flex-grow truncate">
+            {{ preset.name }}
+          </div>
+        </div>
+      </loading-button>
       <loading-button
         v-else
         class="w-full h-10 rounded btn btn-white border-2"
         className="border-blue-600"
         :on-click="() => playRadioPreset(preset.number)"
+        :title="preset.name"
       >
-        {{ preset.name }}
+        <div class="flex">
+          <div class="rounded-full bg-black text-white px-2 mr-2">
+            {{ preset.number }}
+          </div>
+          <div class="flex-grow truncate">
+            {{ preset.name }}
+          </div>
+        </div>
       </loading-button>
     </div>
   </div>

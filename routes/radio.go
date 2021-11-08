@@ -16,13 +16,13 @@ type RadioPost struct {
 	Volume *int  `json:"volume,omitempty"`
 }
 
-func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader) {
+func AddRadioRoutes(r *gin.RouterGroup, h *radio.Hub, upgrader *websocket.Upgrader) {
 	r.GET("/radios", func(c *gin.Context) {
-		c.JSON(http.StatusOK, a.GetRadioStates(c))
+		c.JSON(http.StatusOK, h.GetRadioStates(c))
 	})
 
 	r.POST("/radios", func(c *gin.Context) {
-		err := a.DiscoverRadios()
+		err := h.Discover()
 		if err != nil {
 			c.JSON(http.StatusConflict, gin.H{"err": err.Error()})
 			return
@@ -34,8 +34,8 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		uuid, ok := c.GetQuery("uuid")
 		if ok {
 			// Return 404 if radio does not exist
-			if !a.IsValidRadio(uuid) {
-				c.Status(http.StatusNotFound)
+			if !h.IsValidRadio(uuid) {
+				c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 				return
 			}
 		}
@@ -48,19 +48,23 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		}
 
 		// Handle websocket
-		a.HandleWS(conn, uuid)
+		api.NewRadioWS(conn, h).Start(uuid)
 	})
 
-	r.Use(ensureUUID(a))
+	r.Use(ensureUUID)
 
 	r.GET("/radio/:uuid", func(c *gin.Context) {
 		// Get uuid
 		uuid := c.GetString("uuid")
 
 		// Get Radio or return 404
-		state, ok := a.GetRadioState(c, uuid)
-		if !ok {
-			c.Status(http.StatusNotFound)
+		state, err := h.GetRadioState(c, uuid)
+		if err != nil {
+			code := http.StatusInternalServerError
+			if err == radio.ErrRadioNotFound {
+				code = http.StatusNotFound
+			}
+			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -73,9 +77,9 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		uuid := c.GetString("uuid")
 
 		// Get Radio or return 404
-		rd, ok := a.GetRadio(uuid)
+		rd, ok := h.GetRadio(uuid)
 		if !ok {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 			return
 		}
 
@@ -83,7 +87,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		var radioPost RadioPost
 		err := c.BindJSON(&radioPost)
 		if err != nil {
-			c.Status(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -98,11 +102,11 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		} else {
 			// Play preset if not nil
 			if err := rd.PlayPreset(c, *radioPost.Preset); err != nil {
+				code := http.StatusServiceUnavailable
 				if err == radio.ErrInvalidPreset {
-					c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-					return
+					code = http.StatusBadRequest
 				}
-				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+				c.JSON(code, gin.H{"err": err.Error()})
 				return
 			}
 		}
@@ -110,7 +114,7 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		// Set volume if not nil
 		if radioPost.Volume != nil {
 			if err := rd.SetVolume(*radioPost.Volume); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 				return
 			}
 		}
@@ -121,9 +125,9 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		uuid := c.GetString("uuid")
 
 		// Return 404 if radio does not exist
-		rd, ok := a.GetRadio(uuid)
+		rd, ok := h.GetRadio(uuid)
 		if !ok {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 			return
 		}
 
@@ -136,15 +140,15 @@ func AddRadioRoutes(r *gin.RouterGroup, a *api.API, upgrader *websocket.Upgrader
 		uuid := c.GetString("uuid")
 
 		// Return 404 if radio does not exist
-		rd, ok := a.GetRadio(uuid)
+		rd, ok := h.GetRadio(uuid)
 		if !ok {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
 			return
 		}
 
 		// Refresh volume
 		if err := rd.RefreshVolume(c); err != nil {
-			c.Status(http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 			return
 		}
 	})

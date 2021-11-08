@@ -10,10 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func addWebRoute(r *gin.Engine, httpFS http.FileSystem, httpPath, fsPath string) {
+func newWebRouteHandler(r *gin.Engine, httpFS http.FileSystem, httpPath, fsPath string) {
 	r.GET(httpPath, func(c *gin.Context) {
 		c.FileFromFS(fsPath, httpFS)
 	})
+}
+
+func newWebIndexHandler(index []byte) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		c.Writer.Write(index)
+	}
 }
 
 func AddWebRoutes(r *gin.Engine, dist *embed.FS) {
@@ -21,9 +27,7 @@ func AddWebRoutes(r *gin.Engine, dist *embed.FS) {
 
 	// Route for /index.html
 	if index, err := dist.ReadFile("web/dist/index.html"); err == nil {
-		r.GET("/", func(c *gin.Context) {
-			c.Writer.Write(index)
-		})
+		r.GET("/", newWebIndexHandler(index))
 	} else {
 		log.Fatal(err)
 	}
@@ -35,7 +39,7 @@ func AddWebRoutes(r *gin.Engine, dist *embed.FS) {
 			if !f.IsDir() && name != "index.html" {
 				httpPath := "/" + name
 				fsPath := path.Join("web/dist", name)
-				addWebRoute(r, httpFS, httpPath, fsPath)
+				newWebRouteHandler(r, httpFS, httpPath, fsPath)
 			}
 		}
 	} else {

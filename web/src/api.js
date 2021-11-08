@@ -16,7 +16,7 @@ const jsonResponse = (req) => {
 			.then((res) => {
 				res.json()
 					.then((data) => { res.ok ? resolve(data) : reject(data.err) })
-					.catch(() => reject(res.statusCode))
+					.catch(() => reject(res.statusText))
 			})
 			.catch(() => reject(ErrNetwork))
 	})
@@ -41,27 +41,29 @@ export default {
 	getConfig() {
 		return jsonResponse(fetch(API_URL + "/v1/config"))
 	},
-	getPresets() {
+	readPresets() {
 		return jsonResponse(fetch(API_URL + "/v1/presets"))
 	},
 	updatePreset(preset) {
 		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "POST", body: JSON.stringify(preset) }))
 	},
-	getStreams() {
-		return jsonResponse(fetch(API_URL + "/v1/streams")
-		)
+	clearPreset(preset) {
+		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "DELETE", body: JSON.stringify(preset) }))
 	},
-	getStream(sid) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + sid))
-	},
-	newStream(stream) {
+	createStream(stream) {
 		return jsonResponse(fetch(API_URL + "/v1/stream/new", { method: "POST", body: JSON.stringify(stream) }))
 	},
-	updateStream(stream) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + stream.sid, { method: "POST", body: JSON.stringify(stream) }))
+	readStreams() {
+		return jsonResponse(fetch(API_URL + "/v1/streams"))
 	},
-	deleteStream(stream) {
-		return emptyResponse(fetch(API_URL + "/v1/stream/" + stream.sid, { method: "DELETE" }))
+	readStream(id) {
+		return jsonResponse(fetch(API_URL + "/v1/stream/" + id))
+	},
+	updateStream(stream) {
+		return jsonResponse(fetch(API_URL + "/v1/stream/" + stream.id, { method: "POST", body: JSON.stringify(stream) }))
+	},
+	deleteStream(id) {
+		return emptyResponse(fetch(API_URL + "/v1/stream/" + id, { method: "DELETE" }))
 	},
 	discoverRadios() {
 		return emptyResponse(fetch(API_URL + "/v1/radios", { method: "POST" }))

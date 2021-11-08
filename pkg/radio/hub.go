@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"log"
+	"sync"
+	"time"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/huin/goupnp"
@@ -11,14 +13,30 @@ import (
 
 func NewHub(cp *upnpsub.ControlPoint) *Hub {
 	h := Hub{
-		cp:  cp,
-		ops: make(chan func(map[*chan State]bool)),
+		PresetMutator: func(ctx context.Context, p *Preset) {
+			p.Name = p.Title
+		},
+		cp:           cp,
+		discoverChan: make(chan chan error),
+		radios:       make(map[string]*Radio),
+		radiosMu:     sync.RWMutex{},
+		stateOPS:     make(chan func(map[*chan State]bool)),
+		stopChan:     make(chan chan error),
 	}
-	go h.hubLoop()
 	return &h
 }
 
-func (h *Hub) NewRadios() ([]Radio, error) {
+func (h *Hub) Start() error {
+	go h.discoverLoop()
+	go h.stateLoop()
+
+	// Discover radios
+	errChan := make(chan error)
+	h.discoverChan <- errChan
+	return <-errChan
+}
+
+func (h *Hub) NewRadios() ([]*Radio, error) {
 	// Discover clients
 	clients, _, err := goupnp.NewServiceClients(radioServiceType)
 	if err != nil {
@@ -26,7 +44,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 	}
 
 	// Create radios array
-	var radios []Radio
+	var radios []*Radio
 	for i := range clients {
 		radio, err := h.NewRadio(clients[i])
 		if err != nil {
@@ -34,7 +52,7 @@ func (h *Hub) NewRadios() ([]Radio, error) {
 			continue
 		}
 
-		radios = append(radios, *radio)
+		radios = append(radios, radio)
 	}
 
 	return radios, nil
@@ -58,57 +76,163 @@ func (h *Hub) NewRadio(client goupnp.ServiceClient) (*Radio, error) {
 
 	// Create rd and start radioLoop
 	rd := Radio{
-		Cancel:            cancel,
-		Client:            client,
-		Subscription:      sub,
-		UUID:              uuid,
-		emitState:         h.EmitState,
-		ctx:               ctx,
-		getStateChan:      make(chan State),
-		state:             NewState(uuid),
-		updatePresetsChan: make(chan []Preset),
-		updateVolumeChan:  make(chan int),
+		Cancel:           cancel,
+		Client:           client,
+		Subscription:     sub,
+		UUID:             uuid,
+		ctx:              ctx,
+		getStateChan:     make(chan State),
+		h:                h,
+		state:            NewState(uuid),
+		updateVolumeChan: make(chan int),
+		refreshPresets:   make(chan bool, 1),
 	}
 	go rd.radioLoop()
 
 	return &rd, nil
 }
 
-func (h *Hub) EmitState(state *State) {
-	h.ops <- func(m map[*chan State]bool) {
-		for client := range m {
-			select {
-			case *client <- *state:
-			default:
-				delete(m, client)
-				close(*client)
-				log.Println("Hub.hubLoop: client deleted")
+func (h *Hub) GetRadios() []*Radio {
+	h.radiosMu.RLock()
+	var radios []*Radio
+	for _, r := range h.radios {
+		radios = append(radios, r)
+	}
+	h.radiosMu.RUnlock()
+
+	return radios
+}
+
+func (h *Hub) GetRadio(uuid string) (*Radio, bool) {
+	h.radiosMu.RLock()
+	r, ok := h.radios[uuid]
+	h.radiosMu.RUnlock()
+	return r, ok
+}
+
+func (h *Hub) GetRadioState(ctx context.Context, uuid string) (*State, error) {
+	h.radiosMu.RLock()
+	radio, ok := h.radios[uuid]
+	h.radiosMu.RUnlock()
+	if !ok {
+		return nil, ErrRadioNotFound
+	}
+
+	return radio.GetState(ctx)
+}
+
+func (h *Hub) GetRadioStates(ctx context.Context) []State {
+	states := make([]State, 0, len(h.radios))
+
+	h.radiosMu.RLock()
+	for _, v := range h.radios {
+		state, err := v.GetState(ctx)
+		if err != nil {
+			continue
+		}
+		states = append(states, *state)
+	}
+	h.radiosMu.RUnlock()
+
+	return states
+}
+
+func (h *Hub) IsValidRadio(uuid string) bool {
+	h.radiosMu.RLock()
+	_, ok := h.radios[uuid]
+	h.radiosMu.RUnlock()
+	return ok
+}
+
+func (h *Hub) RefreshPresets() {
+	h.radiosMu.RLock()
+	for _, r := range h.radios {
+		select {
+		case r.refreshPresets <- true:
+		default:
+		}
+	}
+	h.radiosMu.RUnlock()
+}
+
+func (h *Hub) Discover() error {
+	errChan := make(chan error)
+	select {
+	case h.discoverChan <- errChan:
+		return <-errChan
+	default:
+		return ErrDiscovering
+	}
+}
+
+// Stop closes radios and makes further discovery not possible.
+func (h *Hub) Stop() error {
+	errChan := make(chan error)
+	h.stopChan <- errChan
+	return <-errChan
+}
+
+func (h *Hub) discoverLoop() {
+	stopped := false
+	firstDiscover := true
+	for {
+		select {
+		case d := <-h.discoverChan:
+			if stopped {
+				d <- errors.New("discoverLoop is stopped")
+				continue
 			}
+
+			// Discover radios
+			radios, err := h.NewRadios()
+			if err != nil {
+				d <- err
+			}
+
+			// Create new radios map
+			newRadioMap := make(map[string]*Radio)
+			for _, v := range radios {
+				newRadioMap[v.UUID] = v
+			}
+			numRadios := len(newRadioMap)
+
+			// Wait for radios to update their state and also rate limit discovery
+			if !firstDiscover {
+				<-time.After(time.Second * 5)
+			} else {
+				firstDiscover = false
+			}
+
+			// Swap old and new radios map
+			h.radiosMu.Lock()
+			oldRadioMap := h.radios
+			h.radios = newRadioMap
+			h.radiosMu.Unlock()
+
+			// Close old radios
+			for _, v := range oldRadioMap {
+				v.Cancel()
+			}
+
+			log.Printf("Hub.discoverLoop: discovered %d radios", numRadios)
+			d <- nil
+		case s := <-h.stopChan:
+			newRadioMap := make(map[string]*Radio)
+
+			h.radiosMu.Lock()
+			oldRadioMap := h.radios
+			h.radios = newRadioMap
+			h.radiosMu.Unlock()
+
+			for _, v := range oldRadioMap {
+				v.Cancel()
+			}
+			for _, v := range oldRadioMap {
+				<-v.Subscription.Done
+			}
+			stopped = true
+
+			s <- nil
 		}
-	}
-}
-
-func (h *Hub) AddClient(client *chan State) {
-	h.ops <- func(m map[*chan State]bool) {
-		m[client] = true
-		log.Println("Hub.hubLoop: client registered")
-	}
-}
-
-func (h *Hub) RemoveClient(client *chan State) {
-	h.ops <- func(m map[*chan State]bool) {
-		if _, ok := m[client]; ok {
-			delete(m, client)
-			close(*client)
-			log.Println("Hub.hubLoop: client unregistered")
-		}
-	}
-}
-
-func (h *Hub) hubLoop() {
-	log.Println("Hub.hubLoop: started")
-	m := make(map[*chan State]bool)
-	for op := range h.ops {
-		op(m)
 	}
 }

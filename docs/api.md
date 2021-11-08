@@ -1,3 +1,4 @@
+## Radio API
 ### Discover radios
 
 ```
@@ -18,7 +19,7 @@ GET http://localhost:8080/v1/radio/:uuid
 
 ### Get radio state via websocket
 
-The uuid GET parameter is optional. Only differential state updates are sent.
+Client must send `uuid` after they connect or specify it in the `GET` parameter in order to receive state. The first message sent to client is always the full state. After that, only state changes are sent to the client. The `uuid` is always sent to the client. The connection will terminate if the client sends an invalid `uuid`.
 
 ```
 GET ws://localhost:8080/v1/radio/ws?uuid=:uuid
@@ -26,7 +27,7 @@ GET ws://localhost:8080/v1/radio/ws?uuid=:uuid
 
 ### Modify radio state
 
-Not all JSON parameters have to be sent. Only what you want changed on the radio.
+Send only what you want changed on the radio.
 
 ```
 PATCH http://localhost:8080/v1/radio/:uuid
@@ -41,13 +42,13 @@ content-type: application/json
 
 ### Refresh radio volume
 
-Retrieves volume from radio and update radio state.
+Gets volume from radio and updates radio state.
 
 ```
 POST http://localhost:8080/v1/radio/:uuid/volume
 ```
 
-### Renew UPnP subscription to radio event publisher
+### Renew UPnP subscription to radio's UPnP event publisher
 
 ```
 POST http://localhost:8080/v1/radio/:uuid/renew

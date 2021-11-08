@@ -1,16 +1,18 @@
 package radio
 
+import "log"
+
 func NewState(uuid string) *State {
 	boolDefault := false
 	stringDefault := ""
 	intDefault := 0
 	return &State{
-		IsMuted:   &boolDefault,
-		Metadata:  &stringDefault,
-		Power:     &boolDefault,
-		Preset: -1,
-		UUID:      uuid,
-		Volume:    &intDefault,
+		IsMuted:  &boolDefault,
+		Metadata: &stringDefault,
+		Power:    &boolDefault,
+		Preset:   -1,
+		UUID:     uuid,
+		Volume:   &intDefault,
 	}
 }
 
@@ -47,5 +49,44 @@ func (s *State) Merge(ss *State) {
 	}
 	if ss.Volume != nil {
 		s.Volume = ss.Volume
+	}
+}
+
+func (h *Hub) AddClient(client *chan State) {
+	h.stateOPS <- func(m map[*chan State]bool) {
+		m[client] = true
+		log.Println("Hub.stateLoop: client registered")
+	}
+}
+
+func (h *Hub) RemoveClient(client *chan State) {
+	h.stateOPS <- func(m map[*chan State]bool) {
+		if _, ok := m[client]; ok {
+			delete(m, client)
+			close(*client)
+			log.Println("Hub.stateLoop: client unregistered")
+		}
+	}
+}
+
+func (h *Hub) emitState(state *State) {
+	h.stateOPS <- func(m map[*chan State]bool) {
+		for client := range m {
+			select {
+			case *client <- *state:
+			default:
+				delete(m, client)
+				close(*client)
+				log.Println("Hub.stateLoop: client deleted")
+			}
+		}
+	}
+}
+
+func (h *Hub) stateLoop() {
+	log.Println("Hub.stateLoop: started")
+	m := make(map[*chan State]bool)
+	for op := range h.stateOPS {
+		op(m)
 	}
 }

@@ -1,39 +1,52 @@
-<template >
-	<div
-		v-if="radioUUID && radioConnected"
-		class="gap-1 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2"
-	>
-		<loading-button
-			:on-click="() => playRadioPreset(preset.number)"
-			class="hover:bg-blue-300 hover:text-white rounded p-1"
-			v-bind:class="{ 'bg-blue-500 text-white': preset.number == radio.preset }"
-			v-for="preset in radio.presets"
-			:key="preset.number"
-		>{{ preset.name }}</loading-button>
-	</div>
+<template>
+  <div>
+    <div class="p-2 border-2 rounded-t border-gray-600 bg-gray-600 text-white">
+      <strong class="px-2">My Presets</strong>
+    </div>
+    <div class="border-l-2 border-b-2 border-r-2">
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Stream Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="hover:bg-gray-100" :key="p.url" v-for="p in presets">
+            <td class="p-2">
+              {{ p.url }}
+            </td>
+            <td class="p-2">{{ streams[p.sid] && streams[p.sid].name }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="p-2 flex flex-row-reverse rounded bg-light">
+      <loading-button
+        :on-click="readPresets"
+        class="h-10 rounded w-24 btn btn-warning"
+        >Refresh</loading-button
+      >
+    </div>
+  </div>
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
-
-import LoadingButton from './LoadingButton.vue'
+import { mapActions, mapState } from "vuex";
+import LoadingButton from "./LoadingButton.vue";
 
 export default {
-	components: {
-		LoadingButton
-	},
-	computed: {
-		...mapState([
-			'radio',
-			'radioConnected',
-			'radioConnecting',
-			'radioUUID',
-		])
-	},
-	methods: {
-		...mapActions(['playRadioPreset']),
-	},
-}
+  components: { LoadingButton },
+  computed: {
+    ...mapState({
+      streams: (state) => state.p.streams,
+      presets: (state) => state.p.presets,
+    }),
+  },
+  methods: {
+    ...mapActions(["readPresets", "clearPreset"]),
+  },
+};
 </script>
 
 <style scoped>

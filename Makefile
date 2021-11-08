@@ -24,6 +24,7 @@ npm:
 	npm i --prefix web
 
 backend-linux:
+	GOOS=linux GOARCH=386 go build -o bin/$(NAME)-linux-386 -tags=$(TAGS)
 	GOOS=linux GOARCH=amd64 go build -o bin/$(NAME)-linux-amd64 -tags=$(TAGS)
 	GOOS=linux GOARCH=arm go build -o bin/$(NAME)-linux-arm -tags=$(TAGS)
 	GOOS=linux GOARCH=arm64 go build -o bin/$(NAME)-linux-arm64 -tags=$(TAGS)

@@ -78,6 +78,14 @@ func (rd *Radio) radioLoop() {
 				rd.state.Volume = &newVolume
 				rd.sendState(&State{Volume: &newVolume})
 			}
+		case <-rd.refreshPresets:
+			for i := range rd.state.Presets {
+				rd.h.PresetMutator(rd.ctx, &rd.state.Presets[i])
+				if rd.state.Preset == rd.state.Presets[i].Number {
+					rd.state.Title = rd.state.Presets[i].Name
+				}
+			}
+			rd.sendState(&State{Presets: rd.state.Presets, Title: rd.state.Title})
 		case newEvent := <-rd.Subscription.Event:
 			newState := State{}
 			changed := false
@@ -118,8 +126,11 @@ func (rd *Radio) radioLoop() {
 						// Preset Change
 						newPreset := -1
 						for i := range rd.state.Presets {
-							if rd.state.Presets[i].Name == sXML.Title {
+							if rd.state.Presets[i].Title == sXML.Title {
 								newPreset = i + 1
+								rd.state.Title = rd.state.Presets[i].Name
+								newState.Title = rd.state.Presets[i].Name
+								break
 							}
 						}
 						rd.state.Preset = newPreset
@@ -170,7 +181,7 @@ func (rd *Radio) updateVolume(volume int) error {
 
 func (rd *Radio) sendState(state *State) {
 	state.UUID = rd.state.UUID
-	rd.emitState(state)
+	rd.h.emitState(state)
 }
 
 func (rd *Radio) initState() {
@@ -224,6 +235,9 @@ func (rd *Radio) initState() {
 	}, retry.Context(rd.ctx)); err != nil {
 		log.Println("Radio.initState:", err)
 	} else {
+		for i := range presets {
+			rd.h.PresetMutator(rd.ctx, &presets[i])
+		}
 		rd.state.Presets = presets
 	}
 }

@@ -15,6 +15,7 @@
       space-y-2
       gap-2
       sm:space-y-0
+      z-40
     "
   >
     <div class="flex gap-2">
@@ -22,9 +23,9 @@
         v-if="config.presetsEnabled"
         @click="toggleEdit"
         class="w-16 flex-1 sm:flex-inital btn-sm rounded"
-        :class="{ 'btn-primary': !edit, 'btn-warning': edit }"
+        :class="{ 'btn-white': !edit, 'btn-warning': edit }"
       >
-        {{ edit ? "Edit" : "Play" }}
+        Edit
       </button>
       <loading-button
         class="w-24 flex-1 sm:flex-initial btn-sm btn-success rounded"

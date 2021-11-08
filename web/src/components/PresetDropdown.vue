@@ -16,7 +16,8 @@
         mr-14
         bg-white
         rounded
-        overflow-hidden
+        h-72
+        overflow-auto
         shadow-xl
         z-20
       "

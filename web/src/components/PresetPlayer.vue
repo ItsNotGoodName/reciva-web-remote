@@ -6,13 +6,20 @@
     <div v-for="preset in radio.presets" :key="preset.number">
       <loading-button
         v-if="preset.number == radio.preset"
-        class="w-full h-10 rounded btn btn-primary"
+        class="
+          w-full
+          h-10
+          rounded
+          btn btn-primary
+          border-2 border-blue-500
+          hover:border-blue-600
+        "
         :on-click="() => playRadioPreset(preset.number)"
         >{{ preset.name }}</loading-button
       >
       <loading-button
         v-else
-        class="w-full h-10 rounded btn btn-white"
+        class="w-full h-10 rounded btn btn-white border-2"
         className="border-blue-600"
         :on-click="() => playRadioPreset(preset.number)"
       >

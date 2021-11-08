@@ -165,6 +165,7 @@ export default {
                     return dispatch("closeStream")
                 })
                 .then(() => dispatch("readStreams"))
+                .then(() => dispatch("readPresets"))
                 .then(() => dispatch("addNotification", { type: "success", message: MsgStreamDeleted }))
                 .finally(() => commit("SET_STREAM_LOADING", false));
         },

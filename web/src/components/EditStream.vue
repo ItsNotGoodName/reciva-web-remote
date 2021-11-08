@@ -42,18 +42,33 @@
     </div>
     <div class="p-2 flex flex-row-reverse rounded-b bg-light">
       <template v-if="stream.id">
-        <loading-button
-          :on-click="deleteStream"
-          class="btn btn-danger rounded-r w-20"
-          >Delete</loading-button
-        >
-        <button @click="closeStream()" class="btn btn-secondary">Close</button>
-        <loading-button
-          :on-click="updateStream"
-          class="btn text-white btn-success rounded-l w-16"
-        >
-          Save
-        </loading-button>
+        <template v-if="stream.deleteConfirm">
+          <button @click="TOGGLE_DELETE_CONFIRM" class="btn btn-secondary">
+            Cancel
+          </button>
+          <loading-button
+            :on-click="deleteStream"
+            class="btn btn-danger rounded-r w-26"
+            >Confirm Delete</loading-button
+          >
+        </template>
+        <template v-else>
+          <button
+            @click="TOGGLE_DELETE_CONFIRM"
+            class="btn btn-danger rounded-r"
+          >
+            Delete
+          </button>
+          <button @click="closeStream()" class="btn btn-secondary">
+            Close
+          </button>
+          <loading-button
+            :on-click="updateStream"
+            class="btn text-white btn-success rounded-l w-16"
+          >
+            Save
+          </loading-button>
+        </template>
       </template>
       <template v-else>
         <button @click="closeStream()" class="btn btn-secondary rounded-r">
@@ -70,7 +85,7 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
+import { mapMutations, mapActions, mapState } from "vuex";
 
 import LoadingButton from "./LoadingButton.vue";
 
@@ -102,6 +117,7 @@ export default {
     },
   },
   methods: {
+    ...mapMutations(["TOGGLE_DELETE_CONFIRM"]),
     ...mapActions([
       "loadStreams",
       "closeStream",

@@ -70,6 +70,9 @@ export default {
             }
             state.streams = sts;
         },
+        TOGGLE_DELETE_CONFIRM(state) {
+            state.stream.deleteConfirm = !state.stream.deleteConfirm
+        },
     },
     actions: {
         readPresets({ commit }) {

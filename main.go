@@ -1,8 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
@@ -48,16 +50,26 @@ func main() {
 			// Add preset stream routes
 			routes.AddPresetStreamRoutes(r, p)
 		} else {
-			log.Println("main:", err)
+			log.Println("main: presets could not be enabled:", err)
 		}
 	}
 
-	// Start hub
+	// Start hub and interrupt handler
 	if err := h.Start(); err != nil {
 		log.Fatal("main:", err)
 	}
 
-	// Listen and serve
-	log.Println("main: listening on port", cfg.Port)
-	log.Fatal(r.Run(":" + fmt.Sprint(cfg.Port)))
+	// Start router
+	go routes.Start(cfg, r)
+
+	// Listen for interrupt
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+	log.Println("main: stopping")
+
+	// Shutdown hub
+	if err := h.Stop(); err != nil {
+		log.Fatal("main:", err)
+	}
 }

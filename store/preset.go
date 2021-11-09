@@ -8,8 +8,8 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
 )
 
-// ReadPresetByURL returns a preset by its URL.
-func (s *Store) ReadPresetByURL(ctx context.Context, url string) (*config.Preset, error) {
+// ReadPreset returns a preset by its URL.
+func (s *Store) ReadPreset(ctx context.Context, url string) (*config.Preset, error) {
 	pChan := make(chan config.Preset)
 	errChan := make(chan error)
 
@@ -64,7 +64,7 @@ func (s *Store) ReadPresets(ctx context.Context) ([]config.Preset, error) {
 }
 
 // UpdatePreset updates a preset.
-func (s *Store) UpdatePreset(ctx context.Context, preset config.Preset) error {
+func (s *Store) UpdatePreset(ctx context.Context, preset *config.Preset) error {
 	errChan := make(chan error)
 
 	s.op <- func(m map[string]config.Preset) {
@@ -77,9 +77,10 @@ func (s *Store) UpdatePreset(ctx context.Context, preset config.Preset) error {
 			}
 			return
 		}
-		m[preset.URL] = preset
+		m[preset.URL] = *preset
+		err := s.saveConfig(m)
 		select {
-		case errChan <- nil:
+		case errChan <- err:
 		case <-ctx.Done():
 			errChan <- ctx.Err()
 		}

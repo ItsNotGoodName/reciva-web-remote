@@ -15,7 +15,7 @@ func NewPresetAPI(s *store.Store, h *radio.Hub) *PresetAPI {
 }
 
 func (p *PresetAPI) PresetMutator(ctx context.Context, preset *radio.Preset) {
-	stream, err := p.s.ReadPresetByURL(ctx, preset.URL)
+	stream, err := p.s.ReadPreset(ctx, preset.URL)
 	if err != nil {
 		preset.Name = preset.Title
 		return
@@ -28,7 +28,18 @@ func (p *PresetAPI) ReadPresets(ctx context.Context) ([]config.Preset, error) {
 	return p.s.ReadPresets(ctx)
 }
 
-// ReadPresetByURL returns a preset by its URL.
-func (p *PresetAPI) ReadPresetByURL(ctx context.Context, url string) (*config.Preset, error) {
-	return p.s.ReadPresetByURL(ctx, url)
+// ReadPreset returns a preset by its URL.
+func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*config.Preset, error) {
+	return p.s.ReadPreset(ctx, url)
+}
+
+// UpdatePreset updates a preset.
+func (p *PresetAPI) UpdatePreset(ctx context.Context, preset *config.Preset) error {
+	err := p.s.UpdatePreset(ctx, preset)
+
+	if err == store.ErrNotFound {
+		return ErrPresetNotFound
+	}
+	p.h.RefreshPresets()
+	return err
 }

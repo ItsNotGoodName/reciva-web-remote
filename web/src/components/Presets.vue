@@ -7,16 +7,23 @@
       <table class="w-full">
         <thead>
           <tr>
+            <th>New Name</th>
             <th>URL</th>
-            <th>Stream Name</th>
+            <th>New URL</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="hover:bg-gray-100" :key="p.url" v-for="p in presets">
+          <tr
+            class="hover:bg-gray-100"
+            @click="openPreset(p.url)"
+            :key="p.url"
+            v-for="p in presets"
+          >
+            <td class="p-2">{{ p.newName }}</td>
             <td class="p-2">
               {{ p.url }}
             </td>
-            <td class="p-2">{{ streams[p.sid] && streams[p.sid].name }}</td>
+            <td class="p-2">{{ p.newUrl }}</td>
           </tr>
         </tbody>
       </table>
@@ -39,12 +46,11 @@ export default {
   components: { LoadingButton },
   computed: {
     ...mapState({
-      streams: (state) => state.p.streams,
       presets: (state) => state.p.presets,
     }),
   },
   methods: {
-    ...mapActions(["readPresets", "clearPreset"]),
+    ...mapActions(["openPreset", "readPresets", "clearPreset"]),
   },
 };
 </script>

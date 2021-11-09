@@ -96,7 +96,6 @@ export default createStore({
         if (this.state.config.presetsEnabled) {
           return Promise.all([
             dispatch("loadRadios"),
-            dispatch("readStreams"),
             dispatch("readPresets"),
           ]);
         }

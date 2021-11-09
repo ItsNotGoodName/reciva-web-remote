@@ -31,8 +31,8 @@ type ConfigJSON struct {
 
 type Preset struct {
 	URL     string `json:"url"`
-	NewName string `json:"new_name"`
-	NewURL  string `json:"new_url"`
+	NewName string `json:"newName"`
+	NewURL  string `json:"newUrl"`
 }
 
 const (

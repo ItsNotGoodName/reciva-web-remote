@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
+	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,15 +21,50 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 		c.JSON(http.StatusOK, presets)
 	})
+
+	r.GET("/preset", func(c *gin.Context) {
+		url := c.Query("url")
+
+		// Get preset
+		preset, err := p.ReadPreset(c, url)
+		if err != nil {
+			code := http.StatusInternalServerError
+			if err == api.ErrPresetNotFound {
+				code = http.StatusNotFound
+			}
+			c.JSON(code, gin.H{"err": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, preset)
+	})
+
+	r.POST("/preset", func(c *gin.Context) {
+		var preset config.Preset
+		if err := c.BindJSON(&preset); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+
+		if err := p.UpdatePreset(c, &preset); err != nil {
+			code := http.StatusInternalServerError
+			if err == api.ErrPresetNotFound {
+				code = http.StatusNotFound
+			}
+			c.JSON(code, gin.H{"err": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, preset)
+	})
 }
 
 func newPresetURIHandler(p *api.PresetAPI, url string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Read the stream
-		stream, err := p.ReadPresetByURL(c, url)
+		stream, err := p.ReadPreset(c, url)
 		if err != nil {
-			code := http.StatusInternalServerError
-			c.JSON(code, gin.H{"err": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -47,9 +83,6 @@ func AddPresetURIRoutes(r *gin.Engine, p *api.PresetAPI) {
 	}
 
 	for _, preset := range presets {
-		if preset.NewURL == "" {
-			continue
-		}
 		u, _ := url.Parse(preset.URL)
 		r.GET(u.Path, newPresetURIHandler(p, preset.URL))
 	}

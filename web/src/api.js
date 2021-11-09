@@ -44,26 +44,11 @@ export default {
 	readPresets() {
 		return jsonResponse(fetch(API_URL + "/v1/presets"))
 	},
+	readPreset(url) {
+		return jsonResponse(fetch(API_URL + "/v1/preset?url=" + url))
+	},
 	updatePreset(preset) {
 		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "POST", body: JSON.stringify(preset) }))
-	},
-	clearPreset(preset) {
-		return jsonResponse(fetch(API_URL + "/v1/preset", { method: "DELETE", body: JSON.stringify(preset) }))
-	},
-	createStream(stream) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/new", { method: "POST", body: JSON.stringify(stream) }))
-	},
-	readStreams() {
-		return jsonResponse(fetch(API_URL + "/v1/streams"))
-	},
-	readStream(id) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + id))
-	},
-	updateStream(stream) {
-		return jsonResponse(fetch(API_URL + "/v1/stream/" + stream.id, { method: "POST", body: JSON.stringify(stream) }))
-	},
-	deleteStream(id) {
-		return emptyResponse(fetch(API_URL + "/v1/stream/" + id, { method: "DELETE" }))
 	},
 	discoverRadios() {
 		return emptyResponse(fetch(API_URL + "/v1/radios", { method: "POST" }))

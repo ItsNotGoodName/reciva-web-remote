@@ -34,11 +34,17 @@ func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*store.Preset, 
 
 // UpdatePreset updates a preset.
 func (p *PresetAPI) UpdatePreset(ctx context.Context, preset *store.Preset) error {
-	err := p.s.UpdatePreset(ctx, preset)
+	// Validate the preset
+	if preset.NewName == "" {
+		return ErrPresetNewNameInvalid
+	}
 
+	// Update the preset
+	err := p.s.UpdatePreset(ctx, preset)
 	if err == store.ErrNotFound {
 		return ErrPresetNotFound
 	}
 	p.h.RefreshPresets()
+
 	return err
 }

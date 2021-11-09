@@ -13,15 +13,13 @@ import (
 
 func NewHub(cp *upnpsub.ControlPoint) *Hub {
 	h := Hub{
-		PresetMutator: func(ctx context.Context, p *Preset) {
-			p.Name = p.Title
-		},
-		cp:           cp,
-		discoverChan: make(chan chan error),
-		radios:       make(map[string]*Radio),
-		radiosMu:     sync.RWMutex{},
-		stateOPS:     make(chan func(map[*chan State]bool)),
-		stopChan:     make(chan chan error),
+		PresetMutator: presetMutator,
+		cp:            cp,
+		discoverChan:  make(chan chan error),
+		radios:        make(map[string]*Radio),
+		radiosMu:      sync.RWMutex{},
+		stateOPS:      make(chan func(map[*chan State]bool)),
+		stopChan:      make(chan chan error),
 	}
 	return &h
 }

@@ -26,11 +26,15 @@ func readConfig(path string) (map[string]Preset, error) {
 		return nil, err
 	}
 
+	if len(config.Presets) == 0 {
+		return nil, ErrEmptyPresets
+	}
+
 	// Create map from config
 	presets := make(map[string]Preset, len(config.Presets))
 	for _, p := range config.Presets {
 		if err := validateURL(p.URL); err != nil {
-			log.Fatal("Store.readConfig:", err)
+			log.Fatal("store.readConfig:", err)
 		}
 		presets[p.URL] = p
 	}

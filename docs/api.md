@@ -53,3 +53,29 @@ POST http://localhost:8080/v1/radio/:uuid/volume
 ```
 POST http://localhost:8080/v1/radio/:uuid/renew
 ```
+## Preset API
+
+### Get presets
+
+```
+GET http://localhost:8080/v1/presets
+```
+
+### Get preset by url
+
+```
+GET http://localhost:8080/v1/preset?url=:url
+```
+
+### Update preset
+
+```
+POST http://localhost:8080/v1/preset
+content-type: application/json
+
+{
+	"url: "http://example.com/01.m3u"
+	"newName": "Good Music"
+	"newUrl" : "http://differentm3u.example.com/08.m3u"
+}
+```

@@ -1,6 +1,7 @@
 package radio
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/huin/goupnp"
@@ -24,4 +25,8 @@ func getServiceClientUUID(c *goupnp.ServiceClient) (string, bool) {
 		return uuid, false
 	}
 	return uuid, true
+}
+
+func presetMutator(ctx context.Context, p *Preset) {
+	p.Name = p.Title
 }

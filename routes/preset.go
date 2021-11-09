@@ -51,6 +51,9 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 			if err == api.ErrPresetNotFound {
 				code = http.StatusNotFound
 			}
+			if err == api.ErrPresetNewNameInvalid {
+				code = http.StatusBadRequest
+			}
 			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}

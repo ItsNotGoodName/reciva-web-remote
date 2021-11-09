@@ -9,6 +9,7 @@
     />
     <Slider
       v-model="radioVolume"
+      @click="setRadioVolume"
       class="my-auto w-full"
       @slideend="setRadioVolume"
     />

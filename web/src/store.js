@@ -8,17 +8,12 @@ import {
   MsgConnected,
   MsgDisconnected,
   MsgConnecting,
-  DefNotificationTimeout,
 } from "./constants";
 import p from "./storePreset"
 
 export default createStore({
   state() {
     return {
-      edit: false,
-      notificationID: 0,
-      notifications: {},
-      presetEnable: false,
       radio: {},
       radioConnected: false,
       radioConnecting: false,
@@ -31,12 +26,6 @@ export default createStore({
     p
   },
   mutations: {
-    SET_EDIT(state, edit) {
-      state.edit = edit;
-    },
-    SET_PRESET_ENABLE(state, presetEnable) {
-      state.presetEnable = presetEnable
-    },
     UPDATE_RADIO(state, radio) {
       for (let k in radio) {
         state.radio[k] = radio[k];
@@ -68,31 +57,23 @@ export default createStore({
       }
       state.radios = rds;
     },
-    ADD_NOTIFICATION(state, params) {
-      params.id = state.notificationID;
+    ADD_MESSAGE(state, params) {
+      params.id = state.messageID;
 
-      state.notifications[state.notificationID] = params;
-      state.notificationID += 1;
+      state.messages[state.messageID] = params;
+      state.messageID += 1;
 
-      let keys = Object.keys(state.notifications);
+      let keys = Object.keys(state.messages);
       if (keys.length > 3) {
-        delete state.notifications[keys[0]];
+        delete state.messages[keys[0]];
       }
-    },
-    CLEAR_NOTIFICATIONS(state) {
-      for (let k in state.notifications) {
-        delete state.notifications[k];
-      }
-    },
-    CLEAR_NOTIFICATION(state, id) {
-      delete state.notifications[id];
     },
   },
   actions: {
-    init({ dispatch, commit }) {
+    init({ dispatch }) {
       return Promise.all([
         dispatch("loadRadios"),
-        dispatch("readPresets").then(() => commit("SET_PRESET_ENABLE", true)).catch(() => commit("SET_PRESET_ENABLE", false)),
+        dispatch("readPresets")
       ]);
     },
     loadRadios({ commit }) {
@@ -100,18 +81,15 @@ export default createStore({
         commit("SET_RADIOS", radios);
       });
     },
-    toggleEdit({ commit, state }) {
-      commit("SET_EDIT", !state.edit);
-    },
     refreshRadio({ dispatch, state }) {
       if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
 
       return dispatch("refreshRadioWS")
         .then(() => api.renewRadio(state.radioUUID))
         .then(() =>
-          dispatch("addNotification", {
-            type: "success",
-            message: MsgRadioRefreshed,
+          this.$toast.add({
+            severity: "success",
+            summary: MsgRadioRefreshed,
           })
         );
     },
@@ -155,14 +133,14 @@ export default createStore({
       return dispatch("refreshRadioWS");
     },
     discoverRadios({ dispatch, commit, state }) {
-      commit("CLEAR_NOTIFICATIONS");
+      commit("CLEAR_MESSAGES");
       return api
         .discoverRadios()
         .then(() => dispatch("loadRadios"))
         .then(() =>
-          dispatch("addNotification", {
-            type: "success",
-            message: MsgDiscoveredRadiosFn(Object.keys(state.radios).length),
+          this.$toast.add({
+            severity: "success",
+            summary: MsgDiscoveredRadiosFn(Object.keys(state.radios).length),
           })
         );
     },
@@ -192,45 +170,31 @@ export default createStore({
       });
 
       ws.addEventListener("open", () => {
-        commit("CLEAR_NOTIFICATIONS");
-        dispatch("addNotification", { type: "success", message: MsgConnected });
+        commit("CLEAR_MESSAGES");
+        this.$toast.add({ severity: "success", summary: MsgConnected });
       });
 
-      let onEnd = function (event) {
+      let onDisconnect = function (event) {
         console.log(event);
         commit("SET_RADIO_CONNECTED", false);
-        commit("CLEAR_NOTIFICATIONS");
-        dispatch("addNotification", {
-          type: "error",
-          message: MsgDisconnected,
+        commit("CLEAR_MESSAGES");
+        this.$toast({
+          severity: "error",
+          summary: MsgDisconnected,
         });
         setTimeout(() => {
-          dispatch("addNotification", {
-            type: "warning",
-            message: MsgConnecting,
+          this.$toast({
+            severity: "warn",
+            summary: MsgConnecting,
           });
           dispatch("refreshRadioWS");
         }, 3000);
       };
 
       // Handle close
-      ws.addEventListener("close", onEnd);
+      ws.addEventListener("close", onDisconnect);
 
       commit("SET_RADIO_WS", ws);
-    },
-    addNotification({ commit, state }, params) {
-      let id = state.notificationID;
-      commit("ADD_NOTIFICATION", params);
-      params.timeout != 0 &&
-        setTimeout(
-          () => {
-            commit("CLEAR_NOTIFICATION", id);
-          },
-          params.timeout ? params.timeout : DefNotificationTimeout
-        );
-    },
-    clearNotification({ commit }, id) {
-      commit("CLEAR_NOTIFICATION", id);
     },
   },
 });

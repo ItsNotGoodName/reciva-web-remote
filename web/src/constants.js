@@ -1,4 +1,3 @@
-export const DefNotificationTimeout = 5000
 export const ErrNetwork = "could not contact server"
 export const ErrRadioNotSelected = "radio is not selected";
 export const MsgConnected = "connected"

@@ -1,10 +1,31 @@
-<script setup>
-import Button from "primevue/button";
+<script>
+import { mapActions, mapState } from "vuex";
+import Toast from "primevue/toast";
+
+export default {
+  components: {
+    Toast,
+  },
+  mounted() {
+    this.$toast.add({
+      severity: "success",
+      summary: "Success Message",
+      detail: "Order submitted",
+      life: 3000,
+    });
+  },
+  methods: {
+    ...mapActions(["clearMessage"]),
+  },
+  computed: {
+    ...mapState({}),
+  },
+};
 </script>
 
 <template>
-  <div class="flex">
-    <Button class="mx-auto">Hello World</Button>
+  <div>
+    <Toast position="bottom-right" />
   </div>
 </template>
 

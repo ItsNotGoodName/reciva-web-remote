@@ -1,18 +1,19 @@
 <template>
-  <Button :loading="loading" v-bind="$props" @click="handleClick" />
+  <Button
+    icon="pi pi-refresh"
+    label="Discover"
+    :loading="loading"
+    @click="discoverRadios"
+    class="p-button-success"
+  />
 </template>
 
 <script>
 import Button from "primevue/button";
+
 export default {
   components: {
     Button,
-  },
-  props: {
-    lClick: {
-      type: Function,
-      default: () => Promise.resolve(),
-    },
   },
   data() {
     return {
@@ -20,14 +21,21 @@ export default {
     };
   },
   methods: {
-    handleClick() {
+    discoverRadios() {
       if (this.loading) {
         return;
       }
       this.loading = true;
-      this.lClick()
+      this.$store
+        .dispatch("discoverRadios")
         .then(() => {
           this.loading = false;
+          this.$toast.add({
+            severity: "success",
+            summary:
+              "Discovered " + this.$store.state.radios.length + " radios",
+            life: 3000,
+          });
         })
         .catch((err) => {
           this.loading = false;
@@ -42,5 +50,5 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 </style>

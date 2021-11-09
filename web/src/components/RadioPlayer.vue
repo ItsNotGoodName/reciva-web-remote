@@ -1,56 +1,60 @@
 <template>
   <div
     style="background: white"
-    class="flex fixed top-0 left-0 px-2 py-2 w-full"
+    class="fixed top-0 left-0 px-2 py-2 w-full border-bottom-2 border-300"
   >
-    <Button type="button" icon="pi pi-bars" @click="toggle" class="m-2" />
-    <overlay-panel ref="op">
-      <div class="flex flex-column">
-        <loading-button
-          icon="pi pi-refresh"
-          label="Discover"
-          :lClick="discoverRadios"
-          class="p-button-success mb-2"
-        />
-        <loading-button
-          icon="pi pi-refresh"
-          label="Refresh"
-          :lClick="refreshRadio"
-        />
+    <div class="flex flex-wrap">
+      <Button class="m-1" type="button" icon="pi pi-bars" @click="toggle" />
+      <radio-dropdown class="m-1 flex-auto" />
+      <overlay-panel ref="op">
+        <div class="p-buttonset">
+          <discover-button />
+          <refresh-button />
+        </div>
+      </overlay-panel>
+      <div v-if="radioReady" class="m-1 flex flex-1">
+        <radio-volume class="mr-2" />
+        <power-button class="flex-grow-1" />
       </div>
-    </overlay-panel>
-    <radio-dropdown class="flex-grow-1 m-2" />
-    <radio-volume class="m-2" />
+      <playing-text class="flex-auto m-1" />
+    </div>
   </div>
 </template>
 
 <script>
-import Toolbar from "primevue/toolbar";
+import { mapState, mapGetters } from "vuex";
+
 import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
-import { mapActions, mapState } from "vuex";
+import Toolbar from "primevue/toolbar";
 
-import LoadingButton from "./buttons/LoadingButton.vue";
-import RadioDropdown from "./RadioDropdown.vue";
-import RadioVolume from "./RadioVolume.vue";
+import DiscoverButton from "./radio/DiscoverButton.vue";
+import RadioDropdown from "./radio/RadioDropdown.vue";
+import RadioVolume from "./radio/RadioVolume.vue";
+import RefreshButton from "./radio/RefreshButton.vue";
+import PowerButton from "./radio/PowerButton.vue";
+import PlayingText from "./radio/PlayingText.vue";
 
 export default {
   components: {
-    Toolbar,
-    RadioVolume,
     Button,
+    DiscoverButton,
     OverlayPanel,
-    LoadingButton,
     RadioDropdown,
+    RadioVolume,
+    RefreshButton,
+    Toolbar,
+    PowerButton,
+    PlayingText,
   },
   methods: {
-    ...mapActions(["discoverRadios", "refreshRadio"]),
     toggle(event) {
       this.$refs.op.toggle(event);
     },
   },
   computed: {
     ...mapState(["radio"]),
+    ...mapGetters(["radioReady"]),
   },
 };
 </script>

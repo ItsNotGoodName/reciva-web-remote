@@ -18,6 +18,11 @@ export default createStore({
       radios: [],
     };
   },
+  getters: {
+    radioReady(state) {
+      return state.selectedRadio && state.radioConnected;
+    },
+  },
   modules: {
     p
   },
@@ -32,6 +37,9 @@ export default createStore({
     },
     SET_RADIO_POWER(state, power) {
       state.radio.power = power;
+    },
+    SET_RADIO_VOLUME(state, volume) {
+      state.radio.volume = volume;
     },
     SET_SELECTED_RADIO(state, selectedRadio) {
       state.selectedRadio = selectedRadio;

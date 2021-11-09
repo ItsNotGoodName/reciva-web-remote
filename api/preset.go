@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
@@ -24,17 +23,17 @@ func (p *PresetAPI) PresetMutator(ctx context.Context, preset *radio.Preset) {
 }
 
 // ReadPresets returns all presets.
-func (p *PresetAPI) ReadPresets(ctx context.Context) ([]config.Preset, error) {
+func (p *PresetAPI) ReadPresets(ctx context.Context) ([]store.Preset, error) {
 	return p.s.ReadPresets(ctx)
 }
 
 // ReadPreset returns a preset by its URL.
-func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*config.Preset, error) {
+func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*store.Preset, error) {
 	return p.s.ReadPreset(ctx, url)
 }
 
 // UpdatePreset updates a preset.
-func (p *PresetAPI) UpdatePreset(ctx context.Context, preset *config.Preset) error {
+func (p *PresetAPI) UpdatePreset(ctx context.Context, preset *store.Preset) error {
 	err := p.s.UpdatePreset(ctx, preset)
 
 	if err == store.ErrNotFound {

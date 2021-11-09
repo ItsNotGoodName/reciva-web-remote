@@ -20,7 +20,7 @@
   >
     <div class="flex gap-2">
       <button
-        v-if="config.presetsEnabled"
+        v-if="presetEnable"
         @click="toggleEdit"
         class="w-16 flex-1 sm:flex-inital btn-sm rounded"
         :class="{ 'btn-white': !edit, 'btn-warning': edit }"
@@ -129,7 +129,7 @@ export default {
   },
   computed: {
     ...mapState([
-      "config",
+      "presetEnable",
       "edit",
       "radio",
       "radioConnected",

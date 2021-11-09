@@ -15,12 +15,10 @@ import p from "./storePreset"
 export default createStore({
   state() {
     return {
-      config: {
-        presetsEnabled: false,
-      },
       edit: false,
       notificationID: 0,
       notifications: {},
+      presetEnable: false,
       radio: {},
       radioConnected: false,
       radioConnecting: false,
@@ -36,8 +34,8 @@ export default createStore({
     SET_EDIT(state, edit) {
       state.edit = edit;
     },
-    SET_CONFIG(state, config) {
-      state.config = config;
+    SET_PRESET_ENABLE(state, presetEnable) {
+      state.presetEnable = presetEnable
     },
     UPDATE_RADIO(state, radio) {
       for (let k in radio) {
@@ -91,19 +89,11 @@ export default createStore({
     },
   },
   actions: {
-    init({ dispatch }) {
-      return dispatch("loadConfig").then(() => {
-        if (this.state.config.presetsEnabled) {
-          return Promise.all([
-            dispatch("loadRadios"),
-            dispatch("readPresets"),
-          ]);
-        }
-        return dispatch("loadRadios");
-      });
-    },
-    loadConfig({ commit }) {
-      return api.getConfig().then((config) => commit("SET_CONFIG", config));
+    init({ dispatch, commit }) {
+      return Promise.all([
+        dispatch("loadRadios"),
+        dispatch("readPresets").then(() => commit("SET_PRESET_ENABLE", true)).catch(() => commit("SET_PRESET_ENABLE", false)),
+      ]);
     },
     loadRadios({ commit }) {
       return api.getRadios().then((radios) => {

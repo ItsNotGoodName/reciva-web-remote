@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
-	"github.com/ItsNotGoodName/reciva-web-remote/config"
+	"github.com/ItsNotGoodName/reciva-web-remote/store"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,7 +40,7 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	})
 
 	r.POST("/preset", func(c *gin.Context) {
-		var preset config.Preset
+		var preset store.Preset
 		if err := c.BindJSON(&preset); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return

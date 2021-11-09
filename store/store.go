@@ -1,29 +1,25 @@
 package store
 
-import (
-	"github.com/ItsNotGoodName/reciva-web-remote/config"
-)
+func NewStore(configFile string) (*Store, error) {
+	m, err := readConfig(configFile)
 
-type Store struct {
-	op  chan func(map[string]config.Preset)
-	cfg *config.Config
-}
-
-func NewStore(cfg *config.Config) (*Store, error) {
-	s := Store{op: make(chan func(map[string]config.Preset)), cfg: cfg}
-
-	// Create presets map
-	presets := make(map[string]config.Preset)
-	for _, p := range cfg.Presets {
-		presets[p.URL] = p
+	if err != nil {
+		return nil, err
 	}
-	go s.StoreLoop(presets)
+
+	s := Store{presetOp: make(chan func(map[string]Preset)), configFile: configFile}
+	go s.StoreLoop(m)
 
 	return &s, nil
 }
 
-func (s *Store) StoreLoop(presets map[string]config.Preset) {
-	for f := range s.op {
-		f(presets)
+func (s *Store) StoreLoop(presets map[string]Preset) {
+	for {
+		select {
+		case f := <-s.presetOp:
+			f(presets)
+		case f := <-s.configOp:
+			presets = f(presets)
+		}
 	}
 }

@@ -2,18 +2,14 @@ package store
 
 import (
 	"context"
-	"encoding/json"
-	"os"
-
-	"github.com/ItsNotGoodName/reciva-web-remote/config"
 )
 
 // ReadPreset returns a preset by its URL.
-func (s *Store) ReadPreset(ctx context.Context, url string) (*config.Preset, error) {
-	pChan := make(chan config.Preset)
+func (s *Store) ReadPreset(ctx context.Context, url string) (*Preset, error) {
+	pChan := make(chan Preset)
 	errChan := make(chan error)
 
-	s.op <- func(m map[string]config.Preset) {
+	s.presetOp <- func(m map[string]Preset) {
 		preset, ok := m[url]
 		if !ok {
 			select {
@@ -41,11 +37,11 @@ func (s *Store) ReadPreset(ctx context.Context, url string) (*config.Preset, err
 }
 
 // ReadPresets returns all presets.
-func (s *Store) ReadPresets(ctx context.Context) ([]config.Preset, error) {
-	pChan := make(chan []config.Preset)
+func (s *Store) ReadPresets(ctx context.Context) ([]Preset, error) {
+	pChan := make(chan []Preset)
 
-	s.op <- func(m map[string]config.Preset) {
-		presets := make([]config.Preset, 0, len(m))
+	s.presetOp <- func(m map[string]Preset) {
+		presets := make([]Preset, 0, len(m))
 		for _, preset := range m {
 			presets = append(presets, preset)
 		}
@@ -64,10 +60,10 @@ func (s *Store) ReadPresets(ctx context.Context) ([]config.Preset, error) {
 }
 
 // UpdatePreset updates a preset.
-func (s *Store) UpdatePreset(ctx context.Context, preset *config.Preset) error {
+func (s *Store) UpdatePreset(ctx context.Context, preset *Preset) error {
 	errChan := make(chan error)
 
-	s.op <- func(m map[string]config.Preset) {
+	s.presetOp <- func(m map[string]Preset) {
 		_, ok := m[preset.URL]
 		if !ok {
 			select {
@@ -78,7 +74,7 @@ func (s *Store) UpdatePreset(ctx context.Context, preset *config.Preset) error {
 			return
 		}
 		m[preset.URL] = *preset
-		err := s.saveConfig(m)
+		err := s.saveConfig(s.configFile, m)
 		select {
 		case errChan <- err:
 		case <-ctx.Done():
@@ -87,43 +83,4 @@ func (s *Store) UpdatePreset(ctx context.Context, preset *config.Preset) error {
 	}
 
 	return <-errChan
-}
-
-func (s *Store) SaveConfig(ctx context.Context) error {
-	errChan := make(chan error)
-
-	s.op <- func(m map[string]config.Preset) {
-		err := s.saveConfig(m)
-		select {
-		case errChan <- err:
-		case <-ctx.Done():
-			errChan <- ctx.Err()
-		}
-	}
-
-	return <-errChan
-}
-
-func (s *Store) saveConfig(m map[string]config.Preset) error {
-	presets := make([]config.Preset, 0, len(m))
-	for _, p := range m {
-		presets = append(presets, p)
-	}
-
-	js := config.ConfigJSON{
-		Port:    s.cfg.Port,
-		CPort:   s.cfg.CPort,
-		Presets: presets,
-	}
-	b, err := json.MarshalIndent(js, "", "	")
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(s.cfg.ConfigFile, b, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

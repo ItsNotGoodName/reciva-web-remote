@@ -16,7 +16,7 @@ import (
 
 func main() {
 	// Create config
-	cfg := config.NewConfig(config.WithFlag, config.WithFile)
+	cfg := config.NewConfig(config.WithFlag)
 
 	// Create and start controlpoint
 	cp := upnpsub.NewControlPointWithPort(cfg.CPort)
@@ -34,25 +34,19 @@ func main() {
 	// Add radio routes
 	routes.AddRadioRoutes(r.Group(cfg.APIURI), h, u)
 
-	// Add config routes
-	routes.AddConfigRoutes(r.Group(cfg.APIURI), cfg)
-
-	// Enable presets based on config
-	if cfg.PresetsEnabled {
-		// Create store
-		if s, err := store.NewStore(cfg); err == nil {
-			// Create preset api
-			p := api.NewPresetAPI(s, h)
-			// Add preset routes
-			routes.AddPresetRoutes(r.Group(cfg.APIURI), p)
-			// Add preset routes based on their uri
-			routes.AddPresetURIRoutes(r, p)
-		} else {
-			log.Println("main: presets could not be enabled:", err)
-		}
+	// Create store
+	if s, err := store.NewStore(cfg.ConfigFile); err == nil {
+		// Create preset api
+		p := api.NewPresetAPI(s, h)
+		// Add preset routes
+		routes.AddPresetRoutes(r.Group(cfg.APIURI), p)
+		// Add preset routes based on their uri
+		routes.AddPresetURIRoutes(r, p)
+	} else {
+		log.Println("main: preset editor is disabled:", err)
 	}
 
-	// Start hub and interrupt handler
+	// Start hub
 	if err := h.Start(); err != nil {
 		log.Fatal("main:", err)
 	}

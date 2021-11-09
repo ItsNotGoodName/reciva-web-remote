@@ -102,18 +102,11 @@ export default createStore({
 
       return api.refreshRadioVolume(state.selectedRadio.uuid);
     },
-    increaseRadioVolume({ state }) {
+    setRadioVolume({ state }, volume) {
       if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
       return api.updateRadio(state.selectedRadio.uuid, {
-        volume: state.radio.volume + 5,
-      });
-    },
-    decreaseRadioVolume({ state }) {
-      if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
-
-      return api.updateRadio(state.selectedRadio.uuid, {
-        volume: state.radio.volume - 5,
+        volume: volume,
       });
     },
     setSelectedRadio({ commit, state, dispatch }, radio) {

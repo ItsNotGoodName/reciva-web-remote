@@ -1,9 +1,9 @@
 <template>
   <div
     style="background: white"
-    class="flex fixed top-0 left-0 px-4 py-3 w-full"
+    class="flex fixed top-0 left-0 px-2 py-2 w-full"
   >
-    <Button type="button" icon="pi pi-bars" @click="toggle" />
+    <Button type="button" icon="pi pi-bars" @click="toggle" class="m-2" />
     <overlay-panel ref="op">
       <div class="flex flex-column">
         <loading-button
@@ -19,13 +19,8 @@
         />
       </div>
     </overlay-panel>
-    <radio-dropdown class="flex-grow-1" />
-    <loading-button
-      :icon="radio.isMuted ? 'pi pi-volume-off' : 'pi pi-volume-up'"
-      :label="radio.volume"
-      class="p-button-secondary p-button-text"
-      :lClick="refreshRadioVolume"
-    />
+    <radio-dropdown class="flex-grow-1 m-2" />
+    <radio-volume class="m-2" />
   </div>
 </template>
 
@@ -35,19 +30,21 @@ import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
 import { mapActions, mapState } from "vuex";
 
-import LoadingButton from "./LoadingButton.vue";
+import LoadingButton from "./buttons/LoadingButton.vue";
 import RadioDropdown from "./RadioDropdown.vue";
+import RadioVolume from "./RadioVolume.vue";
 
 export default {
   components: {
     Toolbar,
+    RadioVolume,
     Button,
     OverlayPanel,
     LoadingButton,
     RadioDropdown,
   },
   methods: {
-    ...mapActions(["discoverRadios", "refreshRadio", "refreshRadioVolume"]),
+    ...mapActions(["discoverRadios", "refreshRadio"]),
     toggle(event) {
       this.$refs.op.toggle(event);
     },

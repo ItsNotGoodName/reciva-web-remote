@@ -5,7 +5,7 @@
   >
     <div class="flex flex-wrap">
       <Button class="m-1" type="button" icon="pi pi-bars" @click="toggle" />
-      <radio-dropdown class="m-1 flex-auto" />
+      <radio-dropdown class="m-1 flex-grow-1" />
       <overlay-panel ref="op">
         <div class="flex flex-column">
           <discover-button class="m-1" />

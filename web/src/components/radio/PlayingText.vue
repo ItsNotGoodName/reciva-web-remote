@@ -1,21 +1,21 @@
 <template>
-  <div v-if="radioReady" class="flex">
-    <Badge size="large" class="my-auto mr-2">
+  <div v-if="radioReady" class="flex flex-wrap">
+    <Button class="my-auto flex-none sm:w-auto w-full">
       {{ radio.title }}
-    </Badge>
-    <div class="my-auto flex-1 ellipsis">
+    </Button>
+    <span class="m-auto p-2 flex-grow-1">
       {{ radio.metadata }}
-    </div>
+    </span>
   </div>
 </template>
 
 <script>
-import Badge from "primevue/badge";
+import Button from "primevue/button";
 
 import { mapGetters, mapState } from "vuex";
 export default {
   components: {
-    Badge,
+    Button,
   },
   computed: {
     ...mapState(["radio"]),
@@ -25,11 +25,4 @@ export default {
 </script>
 
 <style scoped>
-.ellipsis {
-  text-overflow: ellipsis;
-
-  /* Required for text-overflow to do anything */
-  white-space: nowrap;
-  overflow: hidden;
-}
 </style>

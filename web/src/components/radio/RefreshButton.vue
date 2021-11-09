@@ -31,7 +31,7 @@ export default {
           this.loading = false;
           this.$toast.add({
             severity: "success",
-            summary: "Refreshed radio",
+            summary: "refreshed radio",
             life: 3000,
           });
         })

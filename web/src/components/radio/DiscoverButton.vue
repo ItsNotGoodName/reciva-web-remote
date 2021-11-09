@@ -33,7 +33,7 @@ export default {
           this.$toast.add({
             severity: "success",
             summary:
-              "Discovered " + this.$store.state.radios.length + " radios",
+              "discovered " + this.$store.state.radios.length + " radios",
             life: 3000,
           });
         })

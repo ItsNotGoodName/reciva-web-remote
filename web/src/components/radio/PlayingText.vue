@@ -3,7 +3,7 @@
     <Badge size="large" class="my-auto mr-2">
       {{ radio.title }}
     </Badge>
-    <div class="my-auto ellipsis">
+    <div class="my-auto flex-1 ellipsis">
       {{ radio.metadata }}
     </div>
   </div>

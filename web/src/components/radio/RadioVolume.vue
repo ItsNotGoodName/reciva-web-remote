@@ -1,15 +1,15 @@
 <template>
-  <div class="flex">
+  <div class="flex w-12rem">
     <Button
       :icon="radio.isMuted ? 'pi pi-volume-off' : 'pi pi-volume-up'"
       :label="'' + radio.volume"
-      class="p-button-secondary p-button-text mr-2 w-5rem"
+      class="p-button-outlined mr-3 w-7rem"
       :loading="loading"
       @click="refreshRadioVolume"
     />
     <Slider
       v-model="radioVolume"
-      class="my-auto w-10rem flex-grow"
+      class="my-auto w-full"
       @slideend="setRadioVolume"
     />
   </div>

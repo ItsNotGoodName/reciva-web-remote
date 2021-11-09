@@ -7,14 +7,14 @@
       <Button class="m-1" type="button" icon="pi pi-bars" @click="toggle" />
       <radio-dropdown class="m-1 flex-auto" />
       <overlay-panel ref="op">
-        <div class="p-buttonset">
-          <discover-button />
-          <refresh-button />
+        <div class="flex flex-column">
+          <discover-button class="m-1" />
+          <refresh-button class="m-1" v-if="radioReady" />
         </div>
       </overlay-panel>
       <div v-if="radioReady" class="m-1 flex flex-1">
-        <radio-volume class="mr-2" />
-        <power-button class="flex-grow-1" />
+        <radio-volume class="mr-3 flex-grow-1" />
+        <power-button />
       </div>
       <playing-text class="flex-auto m-1" />
     </div>

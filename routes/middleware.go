@@ -2,7 +2,6 @@ package routes
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,22 +12,6 @@ func ensureUUID(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "uuid not found"})
 	}
 	c.Set("uuid", uuid)
-}
-
-func ensureID(c *gin.Context) {
-	idStr, ok := c.Params.Get("id")
-	if !ok {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "id not found"})
-		return
-	}
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-		return
-	}
-
-	c.Set("id", id)
 }
 
 func CORS() gin.HandlerFunc {

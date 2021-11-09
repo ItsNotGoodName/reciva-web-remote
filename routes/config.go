@@ -8,12 +8,11 @@ import (
 )
 
 type ConfigJSON struct {
-	PresetsEnabled bool     `json:"presetsEnabled"`
-	PresetURLS     []string `json:"presetURLS"`
+	PresetsEnabled bool `json:"presetsEnabled"`
 }
 
 func AddConfigRoutes(r *gin.RouterGroup, cfg *config.Config) {
-	cfgJSON := ConfigJSON{PresetsEnabled: cfg.PresetsEnabled, PresetURLS: cfg.URLS}
+	cfgJSON := ConfigJSON{PresetsEnabled: cfg.PresetsEnabled}
 
 	r.GET("/config", func(c *gin.Context) {
 		c.JSON(http.StatusOK, cfgJSON)

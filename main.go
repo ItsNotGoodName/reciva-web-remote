@@ -43,12 +43,10 @@ func main() {
 		if s, err := store.NewStore(cfg); err == nil {
 			// Create preset api
 			p := api.NewPresetAPI(s, h)
-			// Add stream routes
-			routes.AddStreamRoutes(r.Group(cfg.APIURI), p)
 			// Add preset routes
 			routes.AddPresetRoutes(r.Group(cfg.APIURI), p)
-			// Add preset stream routes
-			routes.AddPresetStreamRoutes(r, p)
+			// Add preset routes based on their uri
+			routes.AddPresetURIRoutes(r, p)
 		} else {
 			log.Println("main: presets could not be enabled:", err)
 		}

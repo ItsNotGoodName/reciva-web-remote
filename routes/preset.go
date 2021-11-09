@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -10,8 +12,7 @@ import (
 
 func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 	r.GET("/presets", func(c *gin.Context) {
-		// Read active presets
-		presets, err := p.ReadActivePresets(c)
+		presets, err := p.ReadPresets(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
@@ -19,75 +20,37 @@ func AddPresetRoutes(r *gin.RouterGroup, p *api.PresetAPI) {
 
 		c.JSON(http.StatusOK, presets)
 	})
-
-	r.POST("/preset", func(c *gin.Context) {
-		// Parse the JSON in the body
-		updateReq := api.UpdatePresetRequest{}
-		if err := c.BindJSON(&updateReq); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-			return
-		}
-
-		// Update the preset
-		stream, err := p.UpdatePreset(c, &updateReq)
-		if err != nil {
-			code := http.StatusInternalServerError
-			if err == api.ErrPresetNotFound {
-				code = http.StatusNotFound
-			}
-			c.JSON(code, gin.H{"err": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, stream)
-	})
-
-	r.DELETE("/preset", func(c *gin.Context) {
-		// Parse the JSON in the body
-		clearReq := api.ClearPresetRequest{}
-		if err := c.BindJSON(&clearReq); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-			return
-		}
-
-		// Delete the preset
-		preset, err := p.ClearPreset(c, &clearReq)
-		if err != nil {
-			code := http.StatusInternalServerError
-			if err == api.ErrPresetNotFound {
-				code = http.StatusNotFound
-			}
-			c.JSON(code, gin.H{"err": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, preset)
-	})
 }
 
-func newPresetStreamHandler(p *api.PresetAPI, url string) func(c *gin.Context) {
+func newPresetURIHandler(p *api.PresetAPI, url string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Read the stream
-		stream, err := p.ReadStreamByURL(c, url)
+		stream, err := p.ReadPresetByURL(c, url)
 		if err != nil {
 			code := http.StatusInternalServerError
-			if err == api.ErrPresetNotFound || err == api.ErrStreamNotFound {
-				code = http.StatusNotFound
-			}
 			c.JSON(code, gin.H{"err": err.Error()})
 			return
 		}
 
-		// TODO: sanitize the stream content to prevent XSS
-		c.Writer.WriteString(stream.Content)
+		c.Writer.WriteString(stream.NewURL)
 	}
 }
 
-func AddPresetStreamRoutes(r *gin.Engine, p *api.PresetAPI) {
-	urls := p.ReadActiveURLS()
-	for _, rawURL := range urls {
-		u, _ := url.Parse(rawURL)
-		uri := u.Path
-		r.GET(uri, newPresetStreamHandler(p, rawURL))
+func AddPresetURIRoutes(r *gin.Engine, p *api.PresetAPI) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	presets, err := p.ReadPresets(ctx)
+	cancel()
+
+	if err != nil {
+		log.Fatal("routes.AddPresetURIRoutes:", err.Error())
+	}
+
+	for _, preset := range presets {
+		if preset.NewURL == "" {
+			continue
+		}
+		u, _ := url.Parse(preset.URL)
+		r.GET(u.Path, newPresetURIHandler(p, preset.URL))
 	}
 }

@@ -1,58 +1,29 @@
 package store
 
 import (
-	"database/sql"
-
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
-	_ "modernc.org/sqlite"
 )
 
 type Store struct {
-	URLS []string
-	db   *sql.DB
+	op  chan func(map[string]config.Preset)
+	cfg *config.Config
 }
 
 func NewStore(cfg *config.Config) (*Store, error) {
-	db, err := sql.Open("sqlite", cfg.DB)
-	if err != nil {
-		return nil, err
-	}
+	s := Store{op: make(chan func(map[string]config.Preset)), cfg: cfg}
 
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS preset (
-			url TEXT PRIMARY KEY UNIQUE,
-			sid INTEGER DEFAULT 0,
-			FOREIGN KEY(sid) REFERENCES stream(id)
-		)`)
-	if err != nil {
-		return nil, err
+	// Create presets map
+	presets := make(map[string]config.Preset)
+	for _, p := range cfg.Presets {
+		presets[p.URL] = p
 	}
+	go s.StoreLoop(presets)
 
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS stream (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT UNIQUE,
-			content TEXT
-		)`)
-	if err != nil {
-		return nil, err
+	return &s, nil
+}
+
+func (s *Store) StoreLoop(presets map[string]config.Preset) {
+	for f := range s.op {
+		f(presets)
 	}
-
-	// Create presets from config in db if they do not exist
-	for _, url := range cfg.URLS {
-		pt := Preset{URL: url}
-		err = db.QueryRow("SELECT sid FROM preset WHERE url = ?", url).Scan(&pt.SID)
-		if err != nil {
-			_, err = db.Exec("INSERT INTO preset (url) VALUES (?)", url)
-			if err != nil {
-				return nil, err
-			}
-			err = db.QueryRow("SELECT sid FROM preset WHERE url = ?", url).Scan(&pt.SID)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return &Store{db: db, URLS: cfg.URLS}, nil
 }

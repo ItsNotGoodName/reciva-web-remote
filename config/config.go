@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"strings"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 )
@@ -18,25 +17,27 @@ type Config struct {
 	CPortFlag      bool
 	ConfigFile     string
 	ConfigFileFlag bool
-	URLS           []string
-	DB             string
-	DBFlag         bool
+	Presets        []Preset
 	Port           int
 	PortFlag       bool
 	PresetsEnabled bool
 }
 
 type ConfigJSON struct {
-	DBPath string   `json:"db"`
-	Port   int      `json:"port"`
-	CPort  int      `json:"cport"`
-	URLS   []string `json:"presets"`
+	Port    int      `json:"port"`
+	CPort   int      `json:"cport"`
+	Presets []Preset `json:"presets"`
+}
+
+type Preset struct {
+	URL     string `json:"url"`
+	NewName string `json:"new_name"`
+	NewURL  string `json:"new_url"`
 }
 
 const (
 	APIURI      = "/v1"
 	ConfigFile  = "reciva-web-remote.json"
-	DBPath      = "reciva-web-remote.db"
 	DefaultPort = 8080
 )
 
@@ -45,22 +46,30 @@ func NewConfig(options ...func(*Config)) *Config {
 		APIURI:     APIURI,
 		CPort:      upnpsub.DefaultPort,
 		ConfigFile: ConfigFile,
-		DB:         DBPath,
 		Port:       DefaultPort,
 	}
 	for _, option := range options {
 		option(c)
 	}
-	c.PresetsEnabled = len(c.URLS) > 0
+
+	// Validate urls
+	var urls []string
+	for i := range c.Presets {
+		urls = append(urls, c.Presets[i].URL)
+	}
+	if err := ValidateURLS(urls); err != nil {
+		log.Fatal("config.NewConfig:", err)
+	}
+
+	c.PresetsEnabled = len(c.Presets) > 0
+
 	return c
 }
 
 func WithFlag(c *Config) {
 	// Add flags
-	URLS := flag.String("presets", "", "List of preset URLs, ex. 'http://example.com//01.m3u,http://example.com/02.m3u'.")
 	config := flag.String("config", c.ConfigFile, "Path to config.")
 	cport := flag.Int("cport", c.CPort, "Listen port for UPnP notify server.")
-	db := flag.String("db", c.DB, "Path to database.")
 	port := flag.Int("port", c.Port, "Listen port for web server.")
 
 	flag.Parse()
@@ -68,18 +77,7 @@ func WithFlag(c *Config) {
 	// Add flags to config
 	c.CPort = *cport
 	c.ConfigFile = *config
-	c.DB = *db
 	c.Port = *port
-	if *URLS == "" {
-		c.URLS = []string{}
-	} else {
-		URLS := strings.Split(*URLS, ",")
-		err := ValidateURLS(URLS)
-		if err != nil {
-			log.Fatal("Config.WithFlag:", err)
-		}
-		c.URLS = URLS
-	}
 
 	// Set flags in config
 	flag.Visit(func(f *flag.Flag) {
@@ -88,9 +86,6 @@ func WithFlag(c *Config) {
 		}
 		if f.Name == "cport" {
 			c.CPortFlag = true
-		}
-		if f.Name == "db" {
-			c.DBFlag = true
 		}
 		if f.Name == "port" {
 			c.PortFlag = true
@@ -118,23 +113,14 @@ func WithFile(c *Config) {
 	if err := json.Unmarshal(data, &cj); err != nil {
 		log.Fatal(err)
 	}
+	c.Presets = cj.Presets
 
 	// Use config file if not using flags
 	if !c.CPortFlag && cj.CPort != 0 {
 		c.CPort = cj.CPort
 	}
-	if !c.DBFlag && cj.DBPath != "" {
-		c.DB = cj.DBPath
-	}
 	if !c.PortFlag && cj.Port != 0 {
 		c.Port = cj.Port
-	}
-	if !c.ConfigFileFlag && len(cj.URLS) > 0 {
-		err := ValidateURLS(cj.URLS)
-		if err != nil {
-			log.Fatal("Config.WithFile:", err)
-		}
-		c.URLS = cj.URLS
 	}
 }
 

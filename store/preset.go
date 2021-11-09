@@ -2,71 +2,127 @@ package store
 
 import (
 	"context"
-	"database/sql"
+	"encoding/json"
+	"os"
+
+	"github.com/ItsNotGoodName/reciva-web-remote/config"
 )
 
-type Preset struct {
-	URL string `json:"url"` // URL is the URL of the preset, ex. 'http://example.com/01.m3u'.
-	SID int    `json:"sid"` // SID is the stream ID of the preset, 0 means there is no stream associated with it.
-}
+// ReadPresetByURL returns a preset by its URL.
+func (s *Store) ReadPresetByURL(ctx context.Context, url string) (*config.Preset, error) {
+	pChan := make(chan config.Preset)
+	errChan := make(chan error)
 
-// CreatePreset creates a preset.
-func (s *Store) CreatePreset(ctx context.Context, preset *Preset) error {
-	_, err := s.db.ExecContext(ctx, "INSERT INTO preset (url, sid) VALUES ($1, $2)", preset.URL, preset.SID)
-	return err
+	s.op <- func(m map[string]config.Preset) {
+		preset, ok := m[url]
+		if !ok {
+			select {
+			case errChan <- ErrNotFound:
+			case <-ctx.Done():
+				errChan <- ctx.Err()
+			}
+			return
+		}
+		select {
+		case <-ctx.Done():
+			errChan <- ctx.Err()
+		case pChan <- preset:
+		}
+	}
+
+	select {
+	case err := <-errChan:
+		return nil, err
+	case preset := <-pChan:
+		return &preset, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 // ReadPresets returns all presets.
-func (s *Store) ReadPresets(ctx context.Context) ([]*Preset, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT url, sid FROM preset")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+func (s *Store) ReadPresets(ctx context.Context) ([]config.Preset, error) {
+	pChan := make(chan []config.Preset)
 
-	var presets []*Preset
-	for rows.Next() {
-		var preset Preset
-		if err := rows.Scan(&preset.URL, &preset.SID); err != nil {
-			return nil, err
+	s.op <- func(m map[string]config.Preset) {
+		presets := make([]config.Preset, 0, len(m))
+		for _, preset := range m {
+			presets = append(presets, preset)
 		}
-		presets = append(presets, &preset)
-	}
-	return presets, nil
-}
-
-// ClearPreset sets a preset's SID to 0.
-func (s *Store) ClearPreset(ctx context.Context, preset *Preset) error {
-	_, err := s.db.ExecContext(ctx, "UPDATE preset SET sid = 0 WHERE URL = $1", preset.URL)
-	preset.SID = 0
-	return err
-}
-
-// UpdatePreset updates a preset's SID.
-func (s *Store) UpdatePreset(ctx context.Context, preset *Preset) (bool, error) {
-	// Update preset's SID
-	result, err := s.db.ExecContext(ctx, "UPDATE preset SET sid = $1 WHERE URL = $2", preset.SID, preset.URL)
-	if err != nil {
-		return false, err
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-
-	return rows > 0, nil
-}
-
-// ReadPreset returns a preset by URL.
-func (s *Store) ReadPreset(ctx context.Context, url string) (*Preset, error) {
-	var preset Preset
-	err := s.db.QueryRowContext(ctx, "SELECT url, sid FROM preset WHERE url = $1", url).Scan(&preset.URL, &preset.SID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+		select {
+		case pChan <- presets:
+		case <-ctx.Done():
 		}
-		return nil, err
 	}
-	return &preset, nil
+
+	select {
+	case presets := <-pChan:
+		return presets, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+// UpdatePreset updates a preset.
+func (s *Store) UpdatePreset(ctx context.Context, preset config.Preset) error {
+	errChan := make(chan error)
+
+	s.op <- func(m map[string]config.Preset) {
+		_, ok := m[preset.URL]
+		if !ok {
+			select {
+			case errChan <- ErrNotFound:
+			case <-ctx.Done():
+				errChan <- ctx.Err()
+			}
+			return
+		}
+		m[preset.URL] = preset
+		select {
+		case errChan <- nil:
+		case <-ctx.Done():
+			errChan <- ctx.Err()
+		}
+	}
+
+	return <-errChan
+}
+
+func (s *Store) SaveConfig(ctx context.Context) error {
+	errChan := make(chan error)
+
+	s.op <- func(m map[string]config.Preset) {
+		err := s.saveConfig(m)
+		select {
+		case errChan <- err:
+		case <-ctx.Done():
+			errChan <- ctx.Err()
+		}
+	}
+
+	return <-errChan
+}
+
+func (s *Store) saveConfig(m map[string]config.Preset) error {
+	presets := make([]config.Preset, 0, len(m))
+	for _, p := range m {
+		presets = append(presets, p)
+	}
+
+	js := config.ConfigJSON{
+		Port:    s.cfg.Port,
+		CPort:   s.cfg.CPort,
+		Presets: presets,
+	}
+	b, err := json.MarshalIndent(js, "", "	")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(s.cfg.ConfigFile, b, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

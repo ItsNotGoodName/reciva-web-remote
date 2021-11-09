@@ -2,17 +2,15 @@
 import { mapActions, mapState } from "vuex";
 import Toast from "primevue/toast";
 
+import RadioPlayer from "./components/RadioPlayer.vue";
+
 export default {
   components: {
     Toast,
+    RadioPlayer,
   },
   mounted() {
-    this.$toast.add({
-      severity: "success",
-      summary: "Success Message",
-      detail: "Order submitted",
-      life: 3000,
-    });
+    this.$store.dispatch("init");
   },
   methods: {
     ...mapActions(["clearMessage"]),
@@ -25,6 +23,7 @@ export default {
 
 <template>
   <div>
+    <RadioPlayer />
     <Toast position="bottom-right" />
   </div>
 </template>

@@ -72,6 +72,9 @@ export default {
     ...mapActions(["readPresets", "updatePreset"]),
     onCellEditComplete(event) {
       let { data, newValue, field } = event;
+      if (data[field] == newValue) {
+        return;
+      }
       data[field] = newValue;
       this.updatePreset(data)
         .then(() => {

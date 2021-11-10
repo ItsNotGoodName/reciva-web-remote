@@ -1,9 +1,6 @@
 import { createStore } from "vuex";
 
 import api from "./api";
-import {
-  ErrRadioNotSelected,
-} from "./constants";
 import p from "./storePreset"
 
 export default createStore({

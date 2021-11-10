@@ -6,6 +6,7 @@
     @click="playRadioPreset(preset.number)"
     :badge="'' + preset.number"
     class="w-full h-full"
+    :title="preset.name"
   />
   <Button
     v-else
@@ -15,6 +16,7 @@
     :badge="'' + preset.number"
     badgeClass="p-badge-info"
     class="w-full h-full p-button-secondary p-button-outlined"
+    :title="preset.name"
   />
 </template>
 

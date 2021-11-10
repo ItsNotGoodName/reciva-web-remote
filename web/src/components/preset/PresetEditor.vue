@@ -1,6 +1,6 @@
 <template>
   <div class="p-fluid">
-    <div class="card">
+    <div class="card" v-if="!loading">
       <DataTable
         :value="presets"
         sortField="url"
@@ -28,6 +28,9 @@
         </Column>
       </DataTable>
     </div>
+    <div class="flex" v-else>
+      <ProgressSpinner class="mx-auto" />
+    </div>
   </div>
 </template>
 
@@ -37,12 +40,14 @@ import { mapActions, mapState } from "vuex";
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
 import InputText from "primevue/inputtext";
+import ProgressSpinner from "primevue/progressspinner";
 
 export default {
   components: {
     Column,
     DataTable,
     InputText,
+    ProgressSpinner,
   },
   data() {
     return {

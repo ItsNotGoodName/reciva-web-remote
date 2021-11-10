@@ -3,7 +3,6 @@ import api from "./api";
 export default {
     state: () => ({
         presets: [],
-        presetsLoading: false,
     }),
     mutations: {
         SET_PRESETS(state, presets) {
@@ -17,9 +16,6 @@ export default {
                 }
             }
             state.presets.push(preset);
-        },
-        SET_PRESETS_LOADING(state, presetsLoading) {
-            state.presetsLoading = presetsLoading;
         },
     },
     actions: {

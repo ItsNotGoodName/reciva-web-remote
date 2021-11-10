@@ -1,4 +1,4 @@
-import { ErrNetwork } from "./constants"
+const ErrNetwork = 'could not contact server'
 
 const API_URL = import.meta.env.VITE_API_URL
 	? import.meta.env.VITE_API_URL

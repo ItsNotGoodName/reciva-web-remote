@@ -15,7 +15,7 @@
       v-else-if="radio.state == 'Stopped'"
       icon="pi pi-stop"
     />
-    <Button class="h-full flex-grow-1">
+    <Button :title="radio.metadata" class="h-full flex-grow-1">
       {{ radio.title }}
     </Button>
   </div>

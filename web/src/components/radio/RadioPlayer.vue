@@ -18,7 +18,7 @@
         <div class="flex flex-column">
           <discover-button class="m-1" />
           <refresh-button class="m-1" v-if="radioReady" />
-          <page-button class="m-1" />
+          <page-button :toggle="toggle" class="m-1" />
         </div>
       </overlay-panel>
       <div v-if="radioReady" class="m-1 flex flex-1">

@@ -1,5 +1,6 @@
 <template>
   <Button
+    icon="pi pi-pencil"
     @click="togglePage"
     :class="{ 'p-button-outlined': page != 'edit' }"
     label="Edit"
@@ -15,12 +16,19 @@ export default {
   components: { Button },
   methods: {
     ...mapActions(["showEditPage", "showPlayerPage"]),
-    togglePage() {
+    togglePage(event) {
       if (this.page == "edit") {
         this.showPlayerPage();
       } else {
         this.showEditPage();
       }
+      this.toggle(event);
+    },
+  },
+  props: {
+    toggle: {
+      type: Function,
+      default: (event) => {},
     },
   },
   computed: {

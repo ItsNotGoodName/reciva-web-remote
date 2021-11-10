@@ -6,6 +6,10 @@ import (
 
 // SaveConfig saves to the config file.
 func (s *Store) SaveConfig(ctx context.Context) error {
+	if s.readonly {
+		return ErrReadOnly
+	}
+
 	errChan := make(chan error)
 
 	s.configOp <- func(m map[string]Preset) map[string]Preset {

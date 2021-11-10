@@ -3,14 +3,14 @@ package store
 func NewStore(configFile string) (*Store, error) {
 	m, err := readConfig(configFile)
 
+	s := Store{presetOp: make(chan func(map[string]Preset)), configFile: configFile}
 	if err != nil {
-		return nil, err
+		s.readonly = true
 	}
 
-	s := Store{presetOp: make(chan func(map[string]Preset)), configFile: configFile}
 	go s.StoreLoop(m)
 
-	return &s, nil
+	return &s, err
 }
 
 func (s *Store) StoreLoop(presets map[string]Preset) {
@@ -22,4 +22,8 @@ func (s *Store) StoreLoop(presets map[string]Preset) {
 			presets = f(presets)
 		}
 	}
+}
+
+func (s *Store) IsReadOnly() bool {
+	return s.readonly
 }

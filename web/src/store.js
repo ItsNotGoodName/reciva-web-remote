@@ -1,41 +1,35 @@
 import { createStore } from "vuex";
 
 import api from "./api";
-import {
-  MsgRadioRefreshed,
-  ErrRadioNotSelected,
-  MsgDiscoveredRadiosFn,
-  MsgConnected,
-  MsgDisconnected,
-  MsgConnecting,
-  DefNotificationTimeout,
-} from "./constants";
 import p from "./storePreset"
 
 export default createStore({
   state() {
     return {
-      edit: false,
-      notificationID: 0,
-      notifications: {},
-      presetEnable: false,
+      page: "player",
+      loading: true,
+      selectedRadio: null,
       radio: {},
       radioConnected: false,
       radioConnecting: false,
-      radioUUID: null,
       radioWS: null,
       radios: [],
     };
+  },
+  getters: {
+    radioReady(state) {
+      return state.selectedRadio && state.radioConnected;
+    },
   },
   modules: {
     p
   },
   mutations: {
-    SET_EDIT(state, edit) {
-      state.edit = edit;
+    SET_PAGE(state, page) {
+      state.page = page;
     },
-    SET_PRESET_ENABLE(state, presetEnable) {
-      state.presetEnable = presetEnable
+    SET_LOADING(state, loading) {
+      state.loading = loading;
     },
     UPDATE_RADIO(state, radio) {
       for (let k in radio) {
@@ -45,8 +39,11 @@ export default createStore({
     SET_RADIO_POWER(state, power) {
       state.radio.power = power;
     },
-    SET_RADIO_UUID(state, uuid) {
-      state.radioUUID = uuid;
+    SET_RADIO_VOLUME(state, volume) {
+      state.radio.volume = volume;
+    },
+    SET_SELECTED_RADIO(state, selectedRadio) {
+      state.selectedRadio = selectedRadio;
     },
     SET_RADIO_WS(state, radioWS) {
       state.radioWS = radioWS;
@@ -62,175 +59,122 @@ export default createStore({
       state.radioConnecting = false;
     },
     SET_RADIOS(state, radios) {
-      let rds = {};
-      for (let r in radios) {
-        rds[radios[r].uuid] = radios[r].name;
-      }
-      state.radios = rds;
+      state.radios = radios;
     },
-    ADD_NOTIFICATION(state, params) {
-      params.id = state.notificationID;
+    ADD_MESSAGE(state, params) {
+      params.id = state.messageID;
 
-      state.notifications[state.notificationID] = params;
-      state.notificationID += 1;
+      state.messages[state.messageID] = params;
+      state.messageID += 1;
 
-      let keys = Object.keys(state.notifications);
+      let keys = Object.keys(state.messages);
       if (keys.length > 3) {
-        delete state.notifications[keys[0]];
+        delete state.messages[keys[0]];
       }
-    },
-    CLEAR_NOTIFICATIONS(state) {
-      for (let k in state.notifications) {
-        delete state.notifications[k];
-      }
-    },
-    CLEAR_NOTIFICATION(state, id) {
-      delete state.notifications[id];
     },
   },
   actions: {
     init({ dispatch, commit }) {
       return Promise.all([
         dispatch("loadRadios"),
-        dispatch("readPresets").then(() => commit("SET_PRESET_ENABLE", true)).catch(() => commit("SET_PRESET_ENABLE", false)),
-      ]);
+      ]).finally(() => {
+        commit("SET_LOADING", false);
+      });
+    },
+    showEditPage({ commit }) {
+      commit("SET_PAGE", "edit");
+    },
+    showPlayerPage({ commit }) {
+      commit("SET_PAGE", "player");
     },
     loadRadios({ commit }) {
       return api.getRadios().then((radios) => {
         commit("SET_RADIOS", radios);
       });
     },
-    toggleEdit({ commit, state }) {
-      commit("SET_EDIT", !state.edit);
-    },
     refreshRadio({ dispatch, state }) {
-      if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
+      if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
       return dispatch("refreshRadioWS")
-        .then(() => api.renewRadio(state.radioUUID))
-        .then(() =>
-          dispatch("addNotification", {
-            type: "success",
-            message: MsgRadioRefreshed,
-          })
-        );
+        .then(() => api.renewRadio(state.selectedRadio.uuid))
     },
     playRadioPreset({ state }, num) {
-      if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
+      if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
-      return api.updateRadio(state.radioUUID, { preset: num });
+      return api.updateRadio(state.selectedRadio.uuid, { preset: num });
     },
     toggleRadioPower({ state, commit }) {
-      if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
+      if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
       let newPower = !state.radio.power;
       return api
-        .updateRadio(state.radioUUID, { power: newPower })
+        .updateRadio(state.selectedRadio.uuid, { power: newPower })
         .then(() => commit("SET_RADIO_POWER", newPower));
     },
     refreshRadioVolume({ state }) {
-      if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
+      if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
-      return api.refreshRadioVolume(state.radioUUID);
+      return api.refreshRadioVolume(state.selectedRadio.uuid);
     },
-    increaseRadioVolume({ state }) {
-      if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
+    setRadioVolume({ state }, volume) {
+      if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
-      return api.updateRadio(state.radioUUID, {
-        volume: state.radio.volume + 5,
+      return api.updateRadio(state.selectedRadio.uuid, {
+        volume: volume,
       });
     },
-    decreaseRadioVolume({ state }) {
-      if (!state.radioUUID) return Promise.reject(ErrRadioNotSelected);
-
-      return api.updateRadio(state.radioUUID, {
-        volume: state.radio.volume - 5,
-      });
-    },
-    setRadioUUID({ commit, state, dispatch }, uuid) {
-      if (uuid == state.radioUUID) {
+    setSelectedRadio({ commit, state, dispatch }, radio) {
+      if (radio.uuid == state.radio.uuid) {
         return Promise.resolve();
       }
-      commit("SET_RADIO_UUID", uuid);
+      commit("SET_SELECTED_RADIO", radio);
       return dispatch("refreshRadioWS");
     },
-    discoverRadios({ dispatch, commit, state }) {
-      commit("CLEAR_NOTIFICATIONS");
+    discoverRadios({ dispatch, state }) {
       return api
         .discoverRadios()
         .then(() => dispatch("loadRadios"))
-        .then(() =>
-          dispatch("addNotification", {
-            type: "success",
-            message: MsgDiscoveredRadiosFn(Object.keys(state.radios).length),
-          })
-        );
     },
     refreshRadioWS({ state, commit, dispatch }) {
       // Full state update when radio websocket is connected
       if (state.radioConnected) {
-        if (state.radioUUID) {
-          state.radioWS.send(state.radioUUID);
+        if (state.selectedRadio) {
+          state.radioWS.send(state.selectedRadio.uuid);
         }
         return;
       }
 
-      // Do not create a new websocket if current websocket is connecting or radioUUID is not set
-      if (state.radioConnecting || !state.radioUUID) {
+      // Do not create a new websocket if current websocket is connecting or selectedRadio is not set
+      if (state.radioConnecting || !state.selectedRadio) {
         return;
       }
 
       commit("SET_RADIO_CONNECTING", true);
-      let ws = api.radioWS(state.radioUUID);
+      let ws = api.radioWS(state.selectedRadio.uuid);
 
       // Handle messsage
       ws.addEventListener("message", function (event) {
         let radio = JSON.parse(event.data);
-        if (radio.uuid != state.radioUUID) return;
+        if (radio.uuid != state.selectedRadio.uuid) return;
         commit("UPDATE_RADIO", radio);
         commit("SET_RADIO_CONNECTED", true);
       });
 
       ws.addEventListener("open", () => {
-        commit("CLEAR_NOTIFICATIONS");
-        dispatch("addNotification", { type: "success", message: MsgConnected });
       });
 
-      let onEnd = function (event) {
+      let onDisconnect = function (event) {
         console.log(event);
         commit("SET_RADIO_CONNECTED", false);
-        commit("CLEAR_NOTIFICATIONS");
-        dispatch("addNotification", {
-          type: "error",
-          message: MsgDisconnected,
-        });
         setTimeout(() => {
-          dispatch("addNotification", {
-            type: "warning",
-            message: MsgConnecting,
-          });
           dispatch("refreshRadioWS");
         }, 3000);
       };
 
       // Handle close
-      ws.addEventListener("close", onEnd);
+      ws.addEventListener("close", onDisconnect);
 
       commit("SET_RADIO_WS", ws);
-    },
-    addNotification({ commit, state }, params) {
-      let id = state.notificationID;
-      commit("ADD_NOTIFICATION", params);
-      params.timeout != 0 &&
-        setTimeout(
-          () => {
-            commit("CLEAR_NOTIFICATION", id);
-          },
-          params.timeout ? params.timeout : DefNotificationTimeout
-        );
-    },
-    clearNotification({ commit }, id) {
-      commit("CLEAR_NOTIFICATION", id);
     },
   },
 });

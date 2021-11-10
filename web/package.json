@@ -7,16 +7,15 @@
     "serve": "vite preview --host"
   },
   "dependencies": {
-    "@heroicons/vue": "^1.0.4",
+    "primeflex": "^3.1.0",
+    "primeicons": "^5.0.0",
+    "primevue": "^3.8.2",
     "vue": "^3.2.16",
     "vuex": "^4.0.2"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^1.9.2",
-    "autoprefixer": "^10.3.7",
-    "postcss": "^8.3.9",
-    "tailwindcss": "^2.2.16",
-    "vite": "^2.6.0",
+    "@vitejs/plugin-vue": "^1.9.3",
+    "vite": "^2.6.4",
     "vite-plugin-pwa": "^0.11.3"
   }
 }

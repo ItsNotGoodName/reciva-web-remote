@@ -13,13 +13,13 @@ func NewPresetAPI(s *store.Store, h *radio.Hub) *PresetAPI {
 	return &p
 }
 
-func (p *PresetAPI) PresetMutator(ctx context.Context, preset *radio.Preset) {
-	stream, err := p.s.ReadPreset(ctx, preset.URL)
-	if err != nil {
-		preset.Name = preset.Title
+func (p *PresetAPI) PresetMutator(ctx context.Context, rp *radio.Preset) {
+	sp, err := p.s.ReadPreset(ctx, rp.URL)
+	if err != nil || sp.NewName == "" {
+		rp.Name = rp.Title
 		return
 	}
-	preset.Name = stream.NewName
+	rp.Name = sp.NewName
 }
 
 // ReadPresets returns all presets.
@@ -34,11 +34,6 @@ func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*store.Preset, 
 
 // UpdatePreset updates a preset.
 func (p *PresetAPI) UpdatePreset(ctx context.Context, preset *store.Preset) error {
-	// Validate the preset
-	if preset.NewName == "" {
-		return ErrPresetNewNameInvalid
-	}
-
 	// Update the preset
 	err := p.s.UpdatePreset(ctx, preset)
 	if err == store.ErrNotFound {

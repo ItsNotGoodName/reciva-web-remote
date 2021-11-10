@@ -35,16 +35,19 @@ func main() {
 	routes.AddRadioRoutes(r.Group(cfg.APIURI), h, u)
 
 	// Create store
-	if s, err := store.NewStore(cfg.ConfigFile); err == nil {
-		// Create preset api
-		p := api.NewPresetAPI(s, h)
-		// Add preset routes
-		routes.AddPresetRoutes(r.Group(cfg.APIURI), p)
-		// Add preset routes based on their uri
-		routes.AddPresetURIRoutes(r, p)
-	} else {
-		log.Println("main: preset editor is disabled:", err)
+	s, err := store.NewStore(cfg.ConfigFile)
+	if err != nil {
+		log.Println("main: store is readonly:", err)
 	}
+
+	// Create preset api
+	p := api.NewPresetAPI(s, h)
+
+	// Add preset routes
+	routes.AddPresetRoutes(r.Group(cfg.APIURI), p)
+
+	// Add preset routes based on their uri
+	routes.AddPresetURIRoutes(r, p)
 
 	// Start hub
 	if err := h.Start(); err != nil {

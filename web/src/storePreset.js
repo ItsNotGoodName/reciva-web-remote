@@ -30,7 +30,6 @@ export default {
                 })
         },
         updatePreset({ commit }, preset) {
-            console.log(preset);
             return api.updatePreset(preset)
                 .then((preset) => {
                     commit("ADD_PRESET", preset);

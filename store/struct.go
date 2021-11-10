@@ -10,6 +10,7 @@ type Preset struct {
 	NewURL  string `json:"newUrl"`
 }
 type Store struct {
+	readonly   bool
 	presetOp   chan func(map[string]Preset)
 	configOp   chan func(map[string]Preset) map[string]Preset
 	configFile string

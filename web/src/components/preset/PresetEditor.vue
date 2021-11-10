@@ -63,7 +63,22 @@ export default {
     onCellEditComplete(event) {
       let { data, newValue, field } = event;
       data[field] = newValue;
-      this.updatePreset(data);
+      this.updatePreset(data)
+        .then(() => {
+          this.$toast.add({
+            severity: "success",
+            summary: "Preset Updated",
+            life: 1000,
+          });
+        })
+        .catch((err) => {
+          this.$toast.add({
+            severity: "error",
+            summary: "Preset Update Failed",
+            detail: err,
+            life: 3000,
+          });
+        });
     },
   },
   computed: {

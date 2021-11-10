@@ -61,6 +61,10 @@ func (s *Store) ReadPresets(ctx context.Context) ([]Preset, error) {
 
 // UpdatePreset updates a preset.
 func (s *Store) UpdatePreset(ctx context.Context, preset *Preset) error {
+	if s.readonly {
+		return ErrReadOnly
+	}
+
 	errChan := make(chan error)
 
 	s.presetOp <- func(m map[string]Preset) {

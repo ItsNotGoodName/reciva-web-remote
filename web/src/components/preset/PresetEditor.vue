@@ -60,7 +60,7 @@ export default {
       .catch((err) => {
         this.$toast.add({
           severity: "error",
-          summary: "Could not fetch Presets",
+          summary: "could not fetch presets",
           detail: err,
         });
       })
@@ -77,14 +77,14 @@ export default {
         .then(() => {
           this.$toast.add({
             severity: "success",
-            summary: "Preset Updated",
+            summary: "preset updated",
             life: 1000,
           });
         })
         .catch((err) => {
           this.$toast.add({
             severity: "error",
-            summary: "Preset Update Failed",
+            summary: "preset update failed",
             detail: err,
             life: 3000,
           });

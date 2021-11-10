@@ -1,7 +1,15 @@
 <template>
   <div
-    style="background: white"
-    class="fixed top-0 left-0 px-2 py-2 w-full border-bottom-2 border-300"
+    class="
+      sticky
+      z-3
+      bg-white
+      top-0
+      left-0
+      pb-2
+      w-full
+      border-bottom-2 border-500
+    "
   >
     <div class="flex flex-wrap">
       <Button class="m-1" type="button" icon="pi pi-bars" @click="toggle" />
@@ -16,7 +24,7 @@
         <radio-volume class="mr-3 flex-grow-1" />
         <power-button />
       </div>
-      <playing-text class="flex-auto m-1" />
+      <playing-text class="w-full m-1" />
     </div>
   </div>
 </template>

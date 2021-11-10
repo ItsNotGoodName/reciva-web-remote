@@ -1,13 +1,15 @@
 <script>
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import Toast from "primevue/toast";
 
 import RadioPlayer from "./components/RadioPlayer.vue";
+import PresetPlayer from "./components/radio/PresetList.vue";
 
 export default {
   components: {
     Toast,
     RadioPlayer,
+    PresetPlayer,
   },
   mounted() {
     this.$store.dispatch("init");
@@ -17,13 +19,15 @@ export default {
   },
   computed: {
     ...mapState({}),
+    ...mapGetters(["radioReady"]),
   },
 };
 </script>
 
 <template>
   <div>
-    <RadioPlayer />
+    <radio-player class="mb-3" />
+    <preset-player v-if="radioReady" />
     <Toast position="bottom-right" />
   </div>
 </template>

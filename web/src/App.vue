@@ -1,25 +1,25 @@
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { mapGetters, mapState } from "vuex";
+
 import Toast from "primevue/toast";
 
-import RadioPlayer from "./components/RadioPlayer.vue";
+import PresetEditor from "./components/preset/PresetEditor.vue";
 import PresetPlayer from "./components/radio/PresetList.vue";
+import RadioPlayer from "./components/radio/RadioPlayer.vue";
 
 export default {
   components: {
     Toast,
-    RadioPlayer,
+    PresetEditor,
     PresetPlayer,
+    RadioPlayer,
   },
   mounted() {
     this.$store.dispatch("init");
   },
-  methods: {
-    ...mapActions(["clearMessage"]),
-  },
   computed: {
-    ...mapState({}),
     ...mapGetters(["radioReady"]),
+    ...mapState(["page"]),
   },
 };
 </script>
@@ -27,7 +27,8 @@ export default {
 <template>
   <div>
     <radio-player class="mb-3" />
-    <preset-player v-if="radioReady" />
+    <preset-player v-if="page == 'player' && radioReady" />
+    <preset-editor v-else-if="page == 'edit'" />
     <Toast position="bottom-right" />
   </div>
 </template>

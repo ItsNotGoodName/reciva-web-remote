@@ -18,6 +18,7 @@
         <div class="flex flex-column">
           <discover-button class="m-1" />
           <refresh-button class="m-1" v-if="radioReady" />
+          <page-button class="m-1" />
         </div>
       </overlay-panel>
       <div v-if="radioReady" class="m-1 flex flex-1">
@@ -36,12 +37,13 @@ import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
 import Toolbar from "primevue/toolbar";
 
-import DiscoverButton from "./radio/DiscoverButton.vue";
-import RadioDropdown from "./radio/RadioDropdown.vue";
-import RadioVolume from "./radio/RadioVolume.vue";
-import RefreshButton from "./radio/RefreshButton.vue";
-import PowerButton from "./radio/PowerButton.vue";
-import PlayingText from "./radio/PlayingText.vue";
+import DiscoverButton from "./DiscoverButton.vue";
+import RadioDropdown from "./RadioDropdown.vue";
+import RadioVolume from "./RadioVolume.vue";
+import RefreshButton from "./RefreshButton.vue";
+import PowerButton from "./PowerButton.vue";
+import PlayingText from "./PlayingText.vue";
+import PageButton from "../PageButton.vue";
 
 export default {
   components: {
@@ -54,6 +56,7 @@ export default {
     Toolbar,
     PowerButton,
     PlayingText,
+    PageButton,
   },
   methods: {
     toggle(event) {

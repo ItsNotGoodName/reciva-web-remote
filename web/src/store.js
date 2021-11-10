@@ -9,6 +9,7 @@ import p from "./storePreset"
 export default createStore({
   state() {
     return {
+      page: "player",
       loading: true,
       selectedRadio: null,
       radio: {},
@@ -27,6 +28,9 @@ export default createStore({
     p
   },
   mutations: {
+    SET_PAGE(state, page) {
+      state.page = page;
+    },
     SET_LOADING(state, loading) {
       state.loading = loading;
     },
@@ -80,6 +84,12 @@ export default createStore({
       ]).finally(() => {
         commit("SET_LOADING", false);
       });
+    },
+    showEditPage({ commit }) {
+      commit("SET_PAGE", "edit");
+    },
+    showPlayerPage({ commit }) {
+      commit("SET_PAGE", "player");
     },
     loadRadios({ commit }) {
       return api.getRadios().then((radios) => {

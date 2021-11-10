@@ -3,18 +3,26 @@
     <div class="card">
       <DataTable
         :value="presets"
+        sortField="url"
+        :sortOrder="1"
         editMode="cell"
         @cell-edit-complete="onCellEditComplete"
         class="editable-cells-table"
         responsiveLayout="scroll"
       >
+        <Column :sortable="true" field="url" header="URL" key="url" />
+        <Column :sortable="true" field="newUrl" header="New URL" key="newUrl">
+          <template #editor="{ data, field }">
+            <InputText v-model="data[field]" autofocus />
+          </template>
+        </Column>
         <Column
-          v-for="col of columns"
-          :field="col.field"
-          :header="col.header"
-          :key="col.field"
+          :sortable="true"
+          field="newName"
+          header="New Name"
+          key="newName"
         >
-          <template v-if="col.field != 'url'" #editor="{ data, field }">
+          <template #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus />
           </template>
         </Column>
@@ -38,31 +46,22 @@ export default {
   },
   data() {
     return {
-      columns: null,
+      loading: false,
     };
   },
   created() {
-    this.columns = [
-      {
-        field: "url",
-        header: "URL",
-      },
-      {
-        field: "newName",
-        header: "New Name",
-      },
-      {
-        field: "newUrl",
-        header: "New URL",
-      },
-    ];
-    this.readPresets().catch((err) => {
-      this.$toast.add({
-        severity: "error",
-        summary: "Could not fetch Presets",
-        detail: err,
+    this.loading = true;
+    this.readPresets()
+      .catch((err) => {
+        this.$toast.add({
+          severity: "error",
+          summary: "Could not fetch Presets",
+          detail: err,
+        });
+      })
+      .finally(() => {
+        this.loading = false;
       });
-    });
   },
   methods: {
     ...mapActions(["readPresets", "updatePreset"]),

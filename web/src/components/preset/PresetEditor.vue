@@ -13,7 +13,6 @@
           :field="col.field"
           :header="col.header"
           :key="col.field"
-          style="width: 25%"
         >
           <template v-if="col.field != 'url'" #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus />
@@ -57,9 +56,16 @@ export default {
         header: "New URL",
       },
     ];
+    this.readPresets().catch((err) => {
+      this.$toast.add({
+        severity: "error",
+        summary: "Could not fetch Presets",
+        detail: err,
+      });
+    });
   },
   methods: {
-    ...mapActions(["updatePreset"]),
+    ...mapActions(["readPresets", "updatePreset"]),
     onCellEditComplete(event) {
       let { data, newValue, field } = event;
       data[field] = newValue;

@@ -80,7 +80,6 @@ export default createStore({
     init({ dispatch, commit }) {
       return Promise.all([
         dispatch("loadRadios"),
-        dispatch("readPresets")
       ]).finally(() => {
         commit("SET_LOADING", false);
       });

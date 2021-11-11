@@ -12,8 +12,7 @@
     "
   >
     <div class="flex flex-wrap">
-      <Button class="m-1" type="button" icon="pi pi-bars" @click="toggle" />
-      <radio-dropdown class="m-1 flex-grow-1" />
+      <Button class="m-1" icon="pi pi-bars" @click="toggle" />
       <OverlayPanel ref="op">
         <div class="flex flex-column">
           <discover-button class="m-1" />
@@ -21,17 +20,24 @@
           <page-button :toggle="toggle" class="m-1" />
         </div>
       </OverlayPanel>
-      <div v-if="radioReady" class="m-1 flex flex-1">
-        <radio-volume class="mr-3 flex-grow-1" />
-        <power-button />
-      </div>
+      <radio-dropdown class="m-1 flex-auto" />
+      <Button
+        class="m-1"
+        :loading="loading"
+        icon="pi pi-refresh"
+        @click="loadRadios"
+      />
+      <template v-if="radioReady" class="m-1 flex flex-1">
+        <radio-volume class="m-1 mr-3 flex-grow-1" />
+        <power-button class="m-1 flex-auto" />
+      </template>
       <playing-text class="w-full m-1" />
     </div>
   </div>
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { mapState, mapGetters, mapActions } from "vuex";
 
 import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
@@ -59,12 +65,13 @@ export default {
     PageButton,
   },
   methods: {
+    ...mapActions(["loadRadios"]),
     toggle(event) {
       this.$refs.op.toggle(event);
     },
   },
   computed: {
-    ...mapState(["radio"]),
+    ...mapState(["radio", "loading"]),
     ...mapGetters(["radioReady"]),
   },
 };

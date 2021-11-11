@@ -39,6 +39,8 @@ export default {
             return api.readPreset(rootState.radio.url)
                 .then((preset) => {
                     commit("SET_PRESET", preset);
+                }).catch(() => {
+                    commit("SET_PRESET", {});
                 });
         }
     },

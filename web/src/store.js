@@ -123,7 +123,7 @@ export default createStore({
       commit("SET_SELECTED_RADIO", radio);
       return dispatch("refreshRadioWS");
     },
-    discoverRadios({ dispatch, state }) {
+    discoverRadios({ dispatch }) {
       return api
         .discoverRadios()
         .then(() => dispatch("loadRadios"))

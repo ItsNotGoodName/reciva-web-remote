@@ -1,17 +1,17 @@
 <template>
   <div v-if="radioReady" class="flex">
     <Button
-      class="p-button-rounded pl-1 mr-2"
+      class="flex-shrink-0 p-button-rounded pl-1 mr-2"
       v-if="radio.state == 'Playing'"
       icon="pi pi-play"
     />
     <Button
-      class="p-button-warning p-button-rounded mr-2"
+      class="flex-shrink-0 p-button-warning p-button-rounded mr-2"
       v-else-if="radio.state == 'Connecting'"
       icon="pi pi-spin pi-spinner"
     />
     <Button
-      class="p-button-danger p-button-rounded mr-2"
+      class="flex-shrink-0 p-button-danger p-button-rounded mr-2"
       v-else-if="radio.state == 'Stopped'"
       icon="pi pi-stop"
     />
@@ -25,28 +25,21 @@
         </caption>
         <tbody>
           <tr>
-            <td><Badge class="w-full" severity="warning">Metadata</Badge></td>
+            <td>
+              <Badge class="h-full w-full" severity="warning">Metadata</Badge>
+            </td>
             <td>{{ radio.metadata }}</td>
           </tr>
           <tr>
-            <td><Badge class="w-full">Preset Name</Badge></td>
-            <td>{{ radio.title }}</td>
-          </tr>
-          <tr>
-            <td><Badge class="w-full">Preset URL</Badge></td>
+            <td><Badge class="h-full w-full">Preset URL</Badge></td>
             <td>{{ radio.url }}</td>
           </tr>
           <tr>
-            <td><Badge class="w-full" severity="success">New Name</Badge></td>
             <td>
-              <Skeleton v-if="loading" />
-              <span v-else>
-                {{ preset.newName }}
-              </span>
+              <Badge class="h-full w-full flex-nowrap" severity="success"
+                >New URL</Badge
+              >
             </td>
-          </tr>
-          <tr>
-            <td><Badge class="w-full" severity="success">New URL</Badge></td>
             <td>
               <Skeleton v-if="loading" />
               <span v-else>
@@ -77,6 +70,7 @@ export default {
   data() {
     return {
       loading: false,
+      reload: false,
     };
   },
   computed: {
@@ -91,11 +85,18 @@ export default {
       this.$refs.op.toggle(event);
     },
     readPreset() {
-      if (this.loading) return;
-
+      if (this.loading) {
+        this.reload = true;
+        return;
+      }
       this.loading = true;
+      this.reload = false;
+
       this.$store.dispatch("readPreset").finally(() => {
         this.loading = false;
+        if (this.reload) {
+          this.$nextTick(this.readPreset);
+        }
       });
     },
   },

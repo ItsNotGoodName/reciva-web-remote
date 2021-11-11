@@ -17,7 +17,7 @@ export default {
     Toast,
   },
   created() {
-    this.$store.dispatch("loadRadios");
+    this.$store.dispatch("init");
   },
   computed: {
     ...mapGetters(["radioReady"]),

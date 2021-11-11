@@ -28,7 +28,7 @@ export default {
   props: {
     toggle: {
       type: Function,
-      default: (event) => {},
+      default: () => {},
     },
   },
   computed: {

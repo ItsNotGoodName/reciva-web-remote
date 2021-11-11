@@ -45,6 +45,7 @@ export default createStore({
     },
     SET_SELECTED_RADIO(state, selectedRadio) {
       state.selectedRadio = selectedRadio;
+      localStorage.lastRadioUUID = selectedRadio.uuid;
     },
     SET_RADIO_WS(state, radioWS) {
       state.radioWS = radioWS;
@@ -76,6 +77,18 @@ export default createStore({
     }
   },
   actions: {
+    init({ dispatch, state }) {
+      return dispatch('loadRadios').then(() => {
+        if (localStorage.lastRadioUUID) {
+          for (let radio of state.radios) {
+            if (radio.uuid == localStorage.lastRadioUUID) {
+              dispatch('setSelectedRadio', radio);
+              return
+            }
+          }
+        }
+      })
+    },
     showEditPage({ commit }) {
       commit("SET_PAGE", "edit");
     },
@@ -121,10 +134,7 @@ export default createStore({
         volume: volume,
       });
     },
-    setSelectedRadio({ commit, state, dispatch }, radio) {
-      if (radio.uuid == state.radio.uuid) {
-        return Promise.resolve();
-      }
+    setSelectedRadio({ commit, dispatch }, radio) {
       commit("SET_SELECTED_RADIO", radio);
       return dispatch("refreshRadioWS");
     },

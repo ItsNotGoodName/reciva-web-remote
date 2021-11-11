@@ -81,9 +81,9 @@ func (rd *Radio) radioLoop() {
 		case <-rd.refreshPresets:
 			for i := range rd.state.Presets {
 				rd.h.PresetMutator(rd.ctx, &rd.state.Presets[i])
-				if rd.state.Preset == rd.state.Presets[i].Number {
-					rd.state.Title = rd.state.Presets[i].Name
-				}
+			}
+			if rd.state.Preset > 0 {
+				rd.state.Title = rd.state.Presets[rd.state.Preset-1].Name
 			}
 			rd.sendState(&State{Presets: rd.state.Presets, Title: rd.state.Title})
 		case newEvent := <-rd.Subscription.Event:

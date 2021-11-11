@@ -3,6 +3,7 @@ import api from "./api";
 export default {
     state: () => ({
         presets: [],
+        preset: {}
     }),
     mutations: {
         SET_PRESETS(state, presets) {
@@ -17,6 +18,9 @@ export default {
             }
             state.presets.push(preset);
         },
+        SET_PRESET(state, preset) {
+            state.preset = preset;
+        }
     },
     actions: {
         readPresets({ commit }) {
@@ -31,6 +35,12 @@ export default {
                     commit("ADD_PRESET", preset);
                 });
         },
+        readPreset({ commit, rootState }) {
+            return api.readPreset(rootState.radio.url)
+                .then((preset) => {
+                    commit("SET_PRESET", preset);
+                });
+        }
     },
     getters: {
 

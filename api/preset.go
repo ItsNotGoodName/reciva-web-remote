@@ -29,7 +29,11 @@ func (p *PresetAPI) ReadPresets(ctx context.Context) ([]store.Preset, error) {
 
 // ReadPreset returns a preset by its URL.
 func (p *PresetAPI) ReadPreset(ctx context.Context, url string) (*store.Preset, error) {
-	return p.s.ReadPreset(ctx, url)
+	pt, err := p.s.ReadPreset(ctx, url)
+	if err == store.ErrNotFound {
+		return nil, ErrPresetNotFound
+	}
+	return pt, err
 }
 
 // UpdatePreset updates a preset.

@@ -14,6 +14,7 @@ export default createStore({
       radioConnecting: false,
       radioWS: null,
       radios: [],
+      message: null
     };
   },
   getters: {
@@ -61,17 +62,9 @@ export default createStore({
     SET_RADIOS(state, radios) {
       state.radios = radios;
     },
-    ADD_MESSAGE(state, params) {
-      params.id = state.messageID;
-
-      state.messages[state.messageID] = params;
-      state.messageID += 1;
-
-      let keys = Object.keys(state.messages);
-      if (keys.length > 3) {
-        delete state.messages[keys[0]];
-      }
-    },
+    SET_MESSAGE(state, message) {
+      state.message = message;
+    }
   },
   actions: {
     init({ dispatch, commit }) {
@@ -152,21 +145,30 @@ export default createStore({
       commit("SET_RADIO_CONNECTING", true);
       let ws = api.radioWS(state.selectedRadio.uuid);
 
-      // Handle messsage
-      ws.addEventListener("message", function (event) {
+      let onMessage = function (event) {
         let radio = JSON.parse(event.data);
         if (radio.uuid != state.selectedRadio.uuid) return;
         commit("UPDATE_RADIO", radio);
-        commit("SET_RADIO_CONNECTED", true);
-      });
+      }
 
-      ws.addEventListener("open", () => {
-      });
+      let onFirstMessage = function (event) {
+        let radio = JSON.parse(event.data);
+        if (radio.uuid != state.selectedRadio.uuid) return;
+        commit("UPDATE_RADIO", radio);
+
+        commit("SET_RADIO_CONNECTED", true);
+        commit("SET_MESSAGE", null);
+        ws.removeEventListener("message", onFirstMessage);
+        ws.addEventListener("message", onMessage);
+      }
+
+      ws.addEventListener("message", onFirstMessage);
 
       let onDisconnect = function (event) {
-        console.log(event);
         commit("SET_RADIO_CONNECTED", false);
+        commit("SET_MESSAGE", { content: "Disconnected from radio, reconnecting in 3 seconds", severity: "error" });
         setTimeout(() => {
+          commit("SET_MESSAGE", { content: "Reconnecting...", severity: "info" });
           dispatch("refreshRadioWS");
         }, 3000);
       };

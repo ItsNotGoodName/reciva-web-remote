@@ -34,7 +34,10 @@ export default {
     }}</Message>
     <preset-player v-if="page == 'player' && radioReady" />
     <preset-editor v-else-if="page == 'edit'" />
-    <Toast position="bottom-right" />
+    <Toast
+      :breakpoints="{ '480px': { width: '100%', right: '0', left: '0' } }"
+      position="bottom-right"
+    />
   </div>
 </template>
 

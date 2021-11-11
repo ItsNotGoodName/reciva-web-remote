@@ -31,7 +31,7 @@
             <td>{{ radio.metadata }}</td>
           </tr>
           <tr>
-            <td><Badge class="h-full w-full">Preset URL</Badge></td>
+            <td><Badge class="h-full w-full">URL</Badge></td>
             <td>{{ radio.url }}</td>
           </tr>
           <tr>

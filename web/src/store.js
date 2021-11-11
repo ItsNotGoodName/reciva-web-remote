@@ -61,19 +61,21 @@ export default createStore({
     },
     SET_RADIOS(state, radios) {
       state.radios = radios;
+      if (state.selectedRadio) {
+        for (let radio of radios) {
+          if (radio.uuid == state.selectedRadio.uuid) {
+            state.selectedRadio = radio;
+            return
+          }
+        }
+        state.selectedRadio = null;
+      }
     },
     SET_MESSAGE(state, message) {
       state.message = message;
     }
   },
   actions: {
-    init({ dispatch, commit }) {
-      return Promise.all([
-        dispatch("loadRadios"),
-      ]).finally(() => {
-        commit("SET_LOADING", false);
-      });
-    },
     showEditPage({ commit }) {
       commit("SET_PAGE", "edit");
     },
@@ -81,8 +83,11 @@ export default createStore({
       commit("SET_PAGE", "player");
     },
     loadRadios({ commit }) {
+      commit("SET_LOADING", true);
       return api.getRadios().then((radios) => {
         commit("SET_RADIOS", radios);
+      }).finally(() => {
+        commit("SET_LOADING", false);
       });
     },
     refreshRadio({ dispatch, state }) {

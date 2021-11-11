@@ -16,8 +16,8 @@ export default {
     RadioPlayer,
     Toast,
   },
-  mounted() {
-    this.$store.dispatch("init");
+  created() {
+    this.$store.dispatch("loadRadios");
   },
   computed: {
     ...mapGetters(["radioReady"]),

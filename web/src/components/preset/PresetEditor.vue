@@ -11,17 +11,17 @@
         responsiveLayout="scroll"
       >
         <Column :sortable="true" field="url" header="URL" key="url" />
-        <Column :sortable="true" field="newUrl" header="New URL" key="newUrl">
-          <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus />
-          </template>
-        </Column>
         <Column
           :sortable="true"
           field="newName"
           header="New Name"
           key="newName"
         >
+          <template #editor="{ data, field }">
+            <InputText v-model="data[field]" autofocus />
+          </template>
+        </Column>
+        <Column :sortable="true" field="newUrl" header="New URL" key="newUrl">
           <template #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus />
           </template>

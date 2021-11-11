@@ -1,10 +1,11 @@
 <template>
   <Button
-    icon="pi pi-pencil"
+    v-if="page == 'edit'"
+    icon="pi pi-play"
     @click="togglePage"
-    :class="{ 'p-button-outlined': page != 'edit' }"
-    label="Edit"
+    label="Play"
   />
+  <Button v-else icon="pi pi-pencil" @click="togglePage" label="Edit" />
 </template>
 
 <script>

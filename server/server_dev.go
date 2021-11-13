@@ -1,11 +1,10 @@
 //go:build !prod
 
-package main
+package server
 
 import (
 	"net/http"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -14,7 +13,7 @@ func NewRouter() *gin.Engine {
 	r := gin.Default()
 
 	// Enable CORS on gin
-	r.Use(routes.CORS())
+	r.Use(CORS())
 
 	return r
 }

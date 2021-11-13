@@ -7,21 +7,18 @@ import (
 )
 
 type Config struct {
-	APIURI     string
 	CPort      int
 	ConfigFile string
 	Port       int
 }
 
 const (
-	APIURI      = "/v1"
 	ConfigFile  = "reciva-web-remote.json"
 	DefaultPort = 8080
 )
 
 func NewConfig(options ...func(*Config)) *Config {
 	c := &Config{
-		APIURI:     APIURI,
 		CPort:      upnpsub.DefaultPort,
 		ConfigFile: ConfigFile,
 		Port:       DefaultPort,

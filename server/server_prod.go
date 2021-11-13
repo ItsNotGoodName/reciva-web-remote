@@ -1,18 +1,11 @@
 //go:build prod
 
-package main
+package server
 
 import (
-	"embed"
-
-	"github.com/ItsNotGoodName/reciva-web-remote/routes"
+	"github.com/ItsNotGoodName/reciva-web-remote/web"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-)
-
-var (
-	//go:embed web/dist
-	dist embed.FS
 )
 
 func NewRouter() *gin.Engine {
@@ -21,8 +14,7 @@ func NewRouter() *gin.Engine {
 
 	r := gin.Default()
 
-	// Add web routes
-	routes.AddWebRoutes(r, &dist)
+	web.AddWebRoutes(r)
 
 	return r
 }

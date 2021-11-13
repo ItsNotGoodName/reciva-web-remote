@@ -7,9 +7,11 @@ import (
 )
 
 type Config struct {
-	CPort      int
-	ConfigFile string
-	Port       int
+	CPort       int
+	ConfigFile  string
+	Port        int
+	ShowInfo    bool
+	ShowVersion bool
 }
 
 const (
@@ -36,6 +38,8 @@ func WithFlag(c *Config) {
 	config := flag.String("config", c.ConfigFile, "Path to config.")
 	cport := flag.Int("cport", c.CPort, "Listen port for UPnP notify server.")
 	port := flag.Int("port", c.Port, "Listen port for web server.")
+	showInfo := flag.Bool("info", c.ShowInfo, "Show build information about this binary.")
+	ShowVersion := flag.Bool("version", c.ShowVersion, "Show version.")
 
 	flag.Parse()
 
@@ -43,4 +47,6 @@ func WithFlag(c *Config) {
 	c.CPort = *cport
 	c.ConfigFile = *config
 	c.Port = *port
+	c.ShowInfo = *showInfo
+	c.ShowVersion = *ShowVersion
 }

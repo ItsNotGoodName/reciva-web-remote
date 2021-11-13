@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -10,9 +11,28 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/server"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+	builtBy = "unknown"
+)
+
 func main() {
 	// Create config
 	cfg := config.NewConfig(config.WithFlag)
+
+	// Show version and exit
+	if cfg.ShowVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
+
+	// Show info and exit
+	if cfg.ShowInfo {
+		fmt.Printf("Version: %s\nCommit: %s\nDate: %s\nBuilt by: %s\n", version, commit, date, builtBy)
+		os.Exit(0)
+	}
 
 	// Create server
 	s := server.NewServer(cfg)

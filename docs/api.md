@@ -48,10 +48,10 @@ Gets volume from radio and updates radio state.
 POST http://localhost:8080/v1/radio/:uuid/volume
 ```
 
-### Renew UPnP subscription to radio's UPnP event publisher
+### Refresh UPnP subscription to radio's UPnP event publisher
 
 ```
-POST http://localhost:8080/v1/radio/:uuid/renew
+POST http://localhost:8080/v1/radio/:uuid
 ```
 ## Preset API
 

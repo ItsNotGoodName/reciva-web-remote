@@ -17,7 +17,7 @@ func (s *Server) routes() {
 		g.POST("/radios", s.handlePostRadios())
 		g.Use(ensureRadio(s.h))
 		g.PATCH("/radio/:uuid", s.handlePatchRadio())
-		g.POST("/radio/:uuid/renew", s.handlePostRadioRenew())
+		g.POST("/radio/:uuid", s.handlePostRadio())
 		g.POST("/radio/:uuid/volume", s.handlePostRadioVolume())
 	}
 

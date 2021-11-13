@@ -107,7 +107,7 @@ export default createStore({
       if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);
 
       return dispatch("refreshRadioWS")
-        .then(() => api.renewRadio(state.selectedRadio.uuid))
+        .then(() => api.refreshRadio(state.selectedRadio.uuid))
     },
     playRadioPreset({ state }, num) {
       if (!state.selectedRadio) return Promise.reject(ErrRadioNotSelected);

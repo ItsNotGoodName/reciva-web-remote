@@ -104,13 +104,12 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 	}
 }
 
-func (s *Server) handlePostRadioRenew() func(c *gin.Context) {
+func (s *Server) handlePostRadio() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get radio
 		rd := c.MustGet("radio").(*radio.Radio)
 
-		// Renew
-		rd.Renew()
+		rd.Refresh()
 	}
 }
 

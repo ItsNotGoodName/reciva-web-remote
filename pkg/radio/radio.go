@@ -57,7 +57,7 @@ func (rd *Radio) RefreshVolume(ctx context.Context) error {
 	return rd.updateVolume(vol)
 }
 
-func (rd *Radio) Renew() {
+func (rd *Radio) Refresh() {
 	rd.Subscription.Renew()
 }
 

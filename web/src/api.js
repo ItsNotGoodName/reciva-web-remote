@@ -53,8 +53,8 @@ export default {
 	getRadios() {
 		return jsonResponse(fetch(API_URL + "/v1/radios"))
 	},
-	renewRadio(uuid) {
-		return emptyResponse(fetch(API_URL + "/v1/radio/" + uuid + "/renew", { method: "POST" }))
+	refreshRadio(uuid) {
+		return emptyResponse(fetch(API_URL + "/v1/radio/" + uuid, { method: "POST" }))
 	},
 	refreshRadioVolume(uuid) {
 		return emptyResponse(fetch(API_URL + "/v1/radio/" + uuid + "/volume", { method: "POST" }))

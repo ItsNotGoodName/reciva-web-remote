@@ -57,8 +57,10 @@ func NewServer(cfg *config.Config) *Server {
 }
 
 func (s *Server) Start(cfg *config.Config) {
-	log.Println("Server.Start: listening on port", cfg.Port)
-	log.Fatal("Server.Start", s.r.Run(":"+strconv.Itoa(cfg.Port)))
+	port := strconv.Itoa(cfg.Port)
+	log.Println("Server.Start: starting on port", port)
+	PrintAddresses(port)
+	log.Fatal("Server.Start", s.r.Run(":"+port))
 }
 
 func (s *Server) Stop() error {

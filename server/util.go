@@ -17,7 +17,7 @@ func GetPresetURLS(p *api.PresetAPI) []string {
 	presets, err := p.ReadPresets(ctx)
 	cancel()
 	if err != nil {
-		log.Fatal("server.GetPresets:", err.Error())
+		log.Fatal("server.GetPresets(ERROR):", err)
 	}
 	urls := make([]string, len(presets))
 	for i := range presets {
@@ -30,7 +30,7 @@ func GetPresetURLS(p *api.PresetAPI) []string {
 func PrintAddresses(port string) {
 	addr, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Println("server.PrintAddresses:", err.Error())
+		log.Println("server.PrintAddresses(ERROR):", err)
 		return
 	}
 	message := "\nNavigate to one of the following addresses:\n"

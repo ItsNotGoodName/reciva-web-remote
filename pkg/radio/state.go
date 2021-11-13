@@ -77,7 +77,7 @@ func (h *Hub) emitState(state *State) {
 			default:
 				delete(m, client)
 				close(*client)
-				log.Println("Hub.stateLoop: client deleted")
+				log.Println("Hub.stateLoop(WARNING): client was deleted because it was not ready to accept new state")
 			}
 		}
 	}

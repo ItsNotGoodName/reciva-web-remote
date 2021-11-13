@@ -33,7 +33,7 @@ func NewServer(cfg *config.Config) *Server {
 	// Create store
 	store, err := store.NewStore(cfg.ConfigFile)
 	if err != nil {
-		log.Println("server.NewServer: store is in readonly mode:", err)
+		log.Println("server.NewServer(INFO): store is in readonly mode:", err)
 	}
 
 	// Create preset api
@@ -41,7 +41,7 @@ func NewServer(cfg *config.Config) *Server {
 
 	// Start hub
 	if err := s.h.Start(); err != nil {
-		log.Fatal("server.NewServer:", err)
+		log.Fatal("server.NewServer(ERROR):", err)
 	}
 
 	// Create websocket upgrader

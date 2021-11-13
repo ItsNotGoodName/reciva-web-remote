@@ -41,7 +41,7 @@ func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
 }
 
 func (rd *Radio) SetVolume(volume int) error {
-	volume = NormalizeVolume(volume)
+	volume = normalizeVolume(volume)
 	if err := rd.setVolume(rd.ctx, volume); err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (rd *Radio) radioLoop() {
 
 					sXML := stateXML{}
 					if err := xml.Unmarshal([]byte(v.Value), &sXML); err != nil {
-						log.Println("Radio.radioLoop:", err)
+						log.Println("Radio.radioLoop(ERROR):", err)
 						continue
 					}
 
@@ -198,7 +198,7 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.ctx)); err != nil {
-		log.Println("Radio.initState:", err)
+		log.Println("Radio.initState(ERROR):", err)
 	} else {
 		numPresets = numPresets - 2
 		if numPresets < 1 {
@@ -218,7 +218,7 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.ctx)); err != nil {
-		log.Println("Radio.initState:", err)
+		log.Println("Radio.initState(ERROR):", err)
 	} else {
 		rd.state.Volume = &volume
 	}
@@ -233,7 +233,7 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.ctx)); err != nil {
-		log.Println("Radio.initState:", err)
+		log.Println("Radio.initState(ERROR):", err)
 	} else {
 		for i := range presets {
 			rd.h.PresetMutator(rd.ctx, &presets[i])

@@ -7,7 +7,7 @@ import (
 	"github.com/huin/goupnp"
 )
 
-func NormalizeVolume(volume int) int {
+func normalizeVolume(volume int) int {
 	if volume < 0 {
 		return 0
 	}

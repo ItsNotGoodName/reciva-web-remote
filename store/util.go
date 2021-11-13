@@ -34,7 +34,7 @@ func readConfig(path string) (map[string]Preset, error) {
 	presets := make(map[string]Preset, len(config.Presets))
 	for _, p := range config.Presets {
 		if err := validateURL(p.URL); err != nil {
-			log.Fatal("store.readConfig:", err)
+			log.Fatal("store.readConfig(ERROR):", err)
 		}
 		presets[p.URL] = p
 	}

@@ -47,6 +47,6 @@ func main() {
 
 	// Shutdown server
 	if err := s.Stop(); err != nil {
-		log.Fatal("main:", err)
+		log.Fatal("main(ERROR):", err)
 	}
 }

@@ -2,7 +2,6 @@ package radio
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 )
 
@@ -35,7 +34,7 @@ func (rd *Radio) playPreset(ctx context.Context, preset int) error {
 	}{}
 	response := interface{}(nil)
 
-	request.NewPresetNumberValue = fmt.Sprint(preset)
+	request.NewPresetNumberValue = strconv.Itoa(preset)
 
 	// Play preset
 	return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "PlayPreset", request, response)

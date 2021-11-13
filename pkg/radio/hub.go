@@ -46,7 +46,7 @@ func (h *Hub) NewRadios() ([]*Radio, error) {
 	for i := range clients {
 		radio, err := h.NewRadio(clients[i])
 		if err != nil {
-			log.Println("Hub.NewRadios:", err)
+			log.Println("Hub.NewRadios(ERROR):", err)
 			continue
 		}
 

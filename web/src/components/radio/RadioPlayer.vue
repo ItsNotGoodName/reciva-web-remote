@@ -26,6 +26,7 @@
         :loading="loading"
         icon="pi pi-refresh"
         @click="loadRadios"
+        title="Refresh radio list."
       />
       <template v-if="radioReady" class="m-1 flex flex-1">
         <radio-volume class="m-1 mr-3 flex-grow-1" />

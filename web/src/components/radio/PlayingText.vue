@@ -4,16 +4,19 @@
       class="flex-shrink-0 p-button-rounded pl-1 mr-2"
       v-if="radio.state == 'Playing'"
       icon="pi pi-play"
+      title="Playing"
     />
     <Button
       class="flex-shrink-0 p-button-warning p-button-rounded mr-2"
       v-else-if="radio.state == 'Connecting'"
       icon="pi pi-spin pi-spinner"
+      title="Connecting"
     />
     <Button
       class="flex-shrink-0 p-button-danger p-button-rounded mr-2"
       v-else-if="radio.state == 'Stopped'"
       icon="pi pi-stop"
+      title="Stopped"
     />
     <Button @click="toggle" class="h-full flex-grow-1">
       {{ radio.title }}
@@ -21,7 +24,7 @@
     <OverlayPanel @show="readPreset" ref="op">
       <table>
         <caption>
-          Preset Information
+          Stream Information
         </caption>
         <tbody>
           <tr>

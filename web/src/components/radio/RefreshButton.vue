@@ -2,6 +2,7 @@
   <Button
     icon="pi pi-refresh"
     label="Refresh"
+    title="Refresh current radio's UPnP subscription."
     :loading="loading"
     @click="refreshRadio"
   />

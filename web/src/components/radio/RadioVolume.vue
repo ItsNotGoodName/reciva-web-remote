@@ -3,6 +3,7 @@
     <Button
       :icon="radio.isMuted ? 'pi pi-volume-off' : 'pi pi-volume-up'"
       :label="'' + radio.volume"
+      title="Refresh volume."
       class="p-button-outlined mr-3 w-7rem"
       :loading="loading"
       @click="refreshRadioVolume"
@@ -12,6 +13,7 @@
       @click="setRadioVolume"
       class="my-auto w-full"
       @slideend="setRadioVolume"
+      title="Change volume."
     />
   </div>
 </template>

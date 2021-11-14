@@ -6,6 +6,7 @@
     @click="toggleRadioPower"
     class="p-button-success w-6rem"
     icon="pi pi-circle-on"
+    title="Turn off radio."
   />
   <Button
     v-else
@@ -14,6 +15,7 @@
     @click="toggleRadioPower"
     class="p-button-danger w-6rem"
     icon="pi pi-circle-off"
+    title="Turn on radio."
   />
 </template>
 

@@ -3,6 +3,7 @@
     icon="pi pi-refresh"
     label="Discover"
     :loading="loading"
+    title="Discovers radios on the local network."
     @click="discoverRadios"
     class="p-button-success"
   />

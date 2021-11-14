@@ -2,6 +2,7 @@ import { createStore } from "vuex";
 
 import api from "./api";
 import p from "./storePreset"
+import { ErrDisconnected, ErrRadioNotSelected, InfoConnecting, ReconnectTimeout } from "./constant"
 
 export default createStore({
   state() {
@@ -179,13 +180,13 @@ export default createStore({
 
       ws.addEventListener("message", onFirstMessage);
 
-      let onDisconnect = function (event) {
+      let onDisconnect = function () {
         commit("SET_RADIO_CONNECTED", false);
-        commit("SET_MESSAGE", { content: "Disconnected from radio, reconnecting in 3 seconds", severity: "error" });
+        commit("SET_MESSAGE", { content: ErrDisconnected, severity: "error" });
         setTimeout(() => {
-          commit("SET_MESSAGE", { content: "Reconnecting...", severity: "info" });
+          commit("SET_MESSAGE", { content: InfoConnecting, severity: "info" });
           dispatch("refreshRadioWS");
-        }, 3000);
+        }, ReconnectTimeout);
       };
 
       // Handle close

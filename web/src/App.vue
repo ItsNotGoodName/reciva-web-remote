@@ -7,6 +7,7 @@ import Toast from "primevue/toast";
 import PresetEditor from "./components/preset/PresetEditor.vue";
 import PresetPlayer from "./components/radio/PresetList.vue";
 import RadioPlayer from "./components/radio/RadioPlayer.vue";
+import ReloadPrompt from "./components/ReloadPrompt.vue";
 
 export default {
   components: {
@@ -15,6 +16,7 @@ export default {
     PresetPlayer,
     RadioPlayer,
     Toast,
+    ReloadPrompt,
   },
   created() {
     this.$store.dispatch("init");
@@ -29,6 +31,7 @@ export default {
 <template>
   <div class="md:w-11 xl:w-9 mx-auto">
     <radio-player class="mb-3" />
+    <reload-prompt />
     <Message v-if="message" :severity="message.severity" :closable="false">{{
       message.content
     }}</Message>

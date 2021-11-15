@@ -30,7 +30,9 @@ func AddWebRoutes(r *gin.Engine) {
 
 	// GET /index.html
 	if index, err := dist.ReadFile("dist/index.html"); err == nil {
-		r.GET("/", handleGetWebIndex(index))
+		hw := handleGetWebIndex(index)
+		r.GET("/", hw)
+		r.GET("/index.html", hw)
 	} else {
 		log.Fatal("AddWebRoutes(ERROR):", err)
 	}

@@ -159,6 +159,7 @@ export default createStore({
       }
 
       commit("SET_RADIO_CONNECTING", true);
+      commit("SET_MESSAGE", { content: InfoConnecting, severity: "info" });
       let ws = api.radioWS(state.selectedRadio.uuid);
 
       let onMessage = function (event) {
@@ -184,7 +185,6 @@ export default createStore({
         commit("SET_RADIO_CONNECTED", false);
         commit("SET_MESSAGE", { content: ErrDisconnected, severity: "error" });
         setTimeout(() => {
-          commit("SET_MESSAGE", { content: InfoConnecting, severity: "info" });
           dispatch("refreshRadioWS");
         }, ReconnectTimeout);
       };

@@ -10,7 +10,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/api"
 )
 
-// GetPresetURLS returns all urls for presets
+// GetPresetURLS returns all urls for presets.
 func GetPresetURLS(p *api.PresetAPI) []string {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)

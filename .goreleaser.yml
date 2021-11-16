@@ -32,6 +32,7 @@ archives:
       - LICENSE
       - README.md
       - reciva-web-remote.json
+      - start.bat
 checksum:
   name_template: "checksums.txt"
 snapshot:

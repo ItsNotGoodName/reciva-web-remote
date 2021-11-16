@@ -2,14 +2,23 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 )
 
 func validateURL(u string) error {
-	_, err := url.Parse(u)
-	return err
+	uu, err := url.ParseRequestURI(u)
+	if err != nil {
+		return err
+	}
+
+	if uu.Scheme == "" || uu.Host == "" {
+		return fmt.Errorf("invalid URL: %s", u)
+	}
+
+	return nil
 }
 
 // readConfig reads the config file.

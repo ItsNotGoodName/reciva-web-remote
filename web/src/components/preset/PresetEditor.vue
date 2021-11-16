@@ -4,29 +4,88 @@
       <DataTable
         :value="presets"
         sortField="url"
+        dataKey="url"
         :sortOrder="1"
-        editMode="cell"
-        @cell-edit-complete="onCellEditComplete"
-        class="editable-cells-table"
         responsiveLayout="scroll"
       >
-        <Column :sortable="true" field="url" header="URL" key="url" />
-        <Column
-          :sortable="true"
-          field="newName"
-          header="New Name"
-          key="newName"
-        >
-          <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus />
+        <Column :sortable="true" field="url" header="URL" />
+        <Column :sortable="true" field="newName" header="New Name" />
+        <Column :sortable="true" field="newUrl" header="New URL">
+          <template #body="slotProps">
+            <pre
+              style="max-height: 80px"
+              class="my-0 overflow-x-hidden overflow-y-auto"
+              >{{ slotProps.data.newUrl }}</pre
+            >
           </template>
         </Column>
-        <Column :sortable="true" field="newUrl" header="New URL" key="newUrl">
-          <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus />
+        <Column :exportable="false" class="w-1rem">
+          <template #body="slotProps">
+            <Button
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-success p-mr-2"
+              @click="editPreset(slotProps.data)"
+            />
           </template>
         </Column>
       </DataTable>
+      <!-- eslint-disable vue/no-v-model-argument -->
+      <Dialog
+        v-model:visible="presetDialog"
+        :style="{ width: '450px' }"
+        header="Preset Details"
+        :modal="true"
+        class="p-fluid"
+      >
+        <!--eslint-enable-->
+        <div class="p-field mb-2">
+          <label for="url">URL</label>
+          <InputText
+            id="url"
+            v-model.trim="preset.url"
+            disabled
+            required="true"
+            autofocus
+          />
+        </div>
+
+        <div class="p-field mb-2">
+          <label for="newName">New Name</label>
+          <InputText
+            id="newName"
+            v-model.trim="preset.newName"
+            required="true"
+            autofocus
+          />
+        </div>
+
+        <div class="p-field mb-2">
+          <label for="newUrl">New URL</label>
+          <TextArea
+            id="newUrl"
+            v-model="preset.newUrl"
+            required="true"
+            rows="3"
+            cols="20"
+          />
+        </div>
+
+        <template #footer>
+          <Button
+            label="Cancel"
+            icon="pi pi-times"
+            class="p-button-text"
+            @click="hideDialog"
+          />
+          <Button
+            label="Save"
+            icon="pi pi-check"
+            class="p-button-text"
+            @click="savePreset"
+            :loading="submitting"
+          />
+        </template>
+      </Dialog>
     </div>
     <div class="flex" v-else>
       <ProgressSpinner class="mx-auto" />
@@ -37,21 +96,30 @@
 <script>
 import { mapActions, mapState } from "vuex";
 
+import Button from "primevue/button";
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
+import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import ProgressSpinner from "primevue/progressspinner";
+import TextArea from "primevue/textarea";
 
 export default {
   components: {
+    Button,
     Column,
     DataTable,
+    Dialog,
     InputText,
     ProgressSpinner,
+    TextArea,
   },
   data() {
     return {
       loading: false,
+      preset: {},
+      presetDialog: false,
+      submitting: false,
     };
   },
   created() {
@@ -70,13 +138,11 @@ export default {
   },
   methods: {
     ...mapActions(["readPresets", "updatePreset"]),
-    onCellEditComplete(event) {
-      let { data, newValue, field } = event;
-      if (data[field] == newValue) {
-        return;
-      }
-      data[field] = newValue;
-      this.updatePreset(data)
+    savePreset() {
+      this.submitting = true;
+
+      console.log(this.preset);
+      this.updatePreset(this.preset)
         .then(() => {
           this.$toast.add({
             severity: "success",
@@ -91,7 +157,23 @@ export default {
             detail: err,
             life: 3000,
           });
+        })
+        .finally(() => {
+          this.submitting = false;
+          this.presetDialog = false;
+          this.preset = {};
         });
+    },
+    editPreset(preset) {
+      this.preset = { ...preset };
+      this.presetDialog = true;
+    },
+    openNew() {
+      this.preset = {};
+      this.presetDialog = true;
+    },
+    hideDialog() {
+      this.presetDialog = false;
     },
   },
   computed: {
@@ -103,8 +185,4 @@ export default {
 </script>
 
 <style scoped>
-::v-deep(.editable-cells-table td.p-cell-editing) {
-  padding-top: 0;
-  padding-bottom: 0;
-}
 </style>

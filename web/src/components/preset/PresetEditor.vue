@@ -10,13 +10,16 @@
       >
         <Column :sortable="true" field="url" header="URL" />
         <Column :sortable="true" field="newName" header="New Name" />
-        <Column :sortable="true" field="newUrl" header="New URL">
+        <Column
+          style="max-width: 200px"
+          :sortable="true"
+          field="newUrl"
+          header="New URL"
+        >
           <template #body="slotProps">
-            <pre
-              style="max-height: 80px"
-              class="my-0 overflow-x-hidden overflow-y-auto"
-              >{{ slotProps.data.newUrl }}</pre
-            >
+            <pre style="max-height: 80px" class="my-0 overflow-auto">{{
+              slotProps.data.newUrl
+            }}</pre>
           </template>
         </Column>
         <Column :exportable="false" class="w-1rem">
@@ -185,4 +188,7 @@ export default {
 </script>
 
 <style scoped>
+.p-inputtextarea {
+  resize: vertical;
+}
 </style>

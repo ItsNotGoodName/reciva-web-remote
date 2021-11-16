@@ -10,7 +10,6 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 - Change radio's volume 
 - Play presets that are on the radio
 - Host playlists for radios
-- Website is a PWA, requires HTTPS
 ## Running
 
 Download and extract the zip file from [releases](https://github.com/ItsNotGoodName/reciva-web-remote/releases). Open the extracted folder and run the executable. On Windows, you may need to press `Enter` after the terminal opens.

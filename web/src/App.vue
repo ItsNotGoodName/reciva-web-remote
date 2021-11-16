@@ -31,7 +31,6 @@ export default {
 <template>
   <div class="md:w-11 xl:w-9 mx-auto">
     <radio-player class="mb-3" />
-    <reload-prompt />
     <Message v-if="message" :severity="message.severity" :closable="false">{{
       message.content
     }}</Message>

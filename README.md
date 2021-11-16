@@ -12,7 +12,7 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 - Host playlists for radios
 ## Running
 
-Download and extract the zip file from [releases](https://github.com/ItsNotGoodName/reciva-web-remote/releases). Open the extracted folder and run the executable. On Windows, you may need to press `Enter` after the terminal opens.
+Download and extract the zip file from [releases](https://github.com/ItsNotGoodName/reciva-web-remote/releases). Open the extracted folder and run the executable. On Windows, you may need to press `Enter` after the terminal opens and also press allow when the firewall prompt opens.
 
 ## Configuration
 
@@ -37,7 +37,7 @@ It looks for `reciva-web-remote.json` in the current folder by default. It can b
 
 Playlists can be hosted on the program's web server, ex. `http://example.com/01.m3u`, `http://example.com/02.m3u`. This is only useful if you were able to point your presets to a domain that you own or an IP before Reciva shutdown it's services.
 
-Create a `reciva-web-remote.json` file with the following content and then run the program.
+Open `reciva-web-remote.json` and add the following content before running the program.
 
 ```json
 {
@@ -52,7 +52,9 @@ Create a `reciva-web-remote.json` file with the following content and then run t
 }
 ```
 
-The program will host the m3u playlists on `/01.m3u` and `/02.m3u`. The contents of the playlists can be changed in the web interface.
+The program will host the m3u playlists on `/01.m3u` and `/02.m3u`. 
+
+The contents of the playlists can be changed in the web interface.
 
 ## Build
 

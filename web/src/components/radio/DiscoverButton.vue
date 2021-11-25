@@ -2,7 +2,7 @@
   <Button
     icon="pi pi-refresh"
     label="Discover"
-    :loading="loading"
+    :loading="discovering"
     title="Discovers radios on the local network."
     @click="discoverRadios"
     class="p-button-success"
@@ -11,26 +11,23 @@
 
 <script>
 import Button from "primevue/button";
+import { mapState } from "vuex";
 
 export default {
   components: {
     Button,
   },
-  data() {
-    return {
-      loading: false,
-    };
+  computed: {
+    ...mapState(["discovering"]),
   },
   methods: {
     discoverRadios() {
-      if (this.loading) {
+      if (this.discovering) {
         return;
       }
-      this.loading = true;
       this.$store
         .dispatch("discoverRadios")
         .then(() => {
-          this.loading = false;
           this.$toast.add({
             severity: "success",
             summary:
@@ -39,7 +36,6 @@ export default {
           });
         })
         .catch((err) => {
-          this.loading = false;
           this.$toast.add({
             severity: "error",
             summary: err || "Error",

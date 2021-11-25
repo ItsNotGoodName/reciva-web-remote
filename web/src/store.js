@@ -9,6 +9,7 @@ export default createStore({
     return {
       page: "player",
       loading: true,
+      discovering: false,
       selectedRadio: null,
       radio: {},
       radioConnected: false,
@@ -32,6 +33,9 @@ export default createStore({
     },
     SET_LOADING(state, loading) {
       state.loading = loading;
+    },
+    SET_DISCOVERING(state, discovering) {
+      state.discovering = discovering;
     },
     UPDATE_RADIO(state, radio) {
       for (let k in radio) {
@@ -139,10 +143,12 @@ export default createStore({
       commit("SET_SELECTED_RADIO", radio);
       return dispatch("refreshRadioWS");
     },
-    discoverRadios({ dispatch }) {
+    discoverRadios({ commit, dispatch }) {
+      commit("SET_DISCOVERING", true);
       return api
         .discoverRadios()
         .then(() => dispatch("loadRadios"))
+        .finally(() => commit("SET_DISCOVERING", false));
     },
     refreshRadioWS({ state, commit, dispatch }) {
       // Full state update when radio websocket is connected

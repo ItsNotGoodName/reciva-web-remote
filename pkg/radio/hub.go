@@ -41,16 +41,31 @@ func (h *Hub) NewRadios() ([]*Radio, error) {
 		return nil, err
 	}
 
-	// Create radios array
-	var radios []*Radio
-	for i := range clients {
-		radio, err := h.NewRadio(clients[i])
-		if err != nil {
-			log.Println("Hub.NewRadios(ERROR):", err)
-			continue
-		}
+	rds := make(chan *Radio)
+	var wg sync.WaitGroup
 
-		radios = append(radios, radio)
+	for i := range clients {
+		wg.Add(1)
+
+		go (func(idx int) {
+			radio, err := h.NewRadio(clients[idx])
+			if err != nil {
+				log.Println("Hub.NewRadios(ERROR):", err)
+			} else {
+				rds <- radio
+			}
+			wg.Done()
+		})(i)
+	}
+
+	go (func() {
+		wg.Wait()
+		close(rds)
+	})()
+
+	var radios []*Radio
+	for r := range rds {
+		radios = append(radios, r)
 	}
 
 	return radios, nil
@@ -85,6 +100,13 @@ func (h *Hub) NewRadio(client goupnp.ServiceClient) (*Radio, error) {
 		updateVolumeChan: make(chan int),
 		refreshPresets:   make(chan bool, 1),
 	}
+
+	err = rd.initState()
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
 	go rd.radioLoop()
 
 	return &rd, nil
@@ -185,6 +207,7 @@ func (h *Hub) discoverLoop() {
 			radios, err := h.NewRadios()
 			if err != nil {
 				d <- err
+				continue
 			}
 
 			// Create new radios map

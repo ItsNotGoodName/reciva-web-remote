@@ -3,7 +3,9 @@ package radio
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/avast/retry-go"
 )
@@ -63,8 +65,6 @@ func (rd *Radio) Refresh() {
 
 func (rd *Radio) radioLoop() {
 	log.Println("Radio.radioLoop: started")
-
-	rd.initState()
 
 	for {
 		select {
@@ -184,7 +184,7 @@ func (rd *Radio) sendState(state *State) {
 	rd.h.emitState(state)
 }
 
-func (rd *Radio) initState() {
+func (rd *Radio) initState() error {
 	// Set name of radio
 	rd.state.Name = rd.Client.RootDevice.Device.FriendlyName
 
@@ -198,11 +198,11 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.ctx)); err != nil {
-		log.Println("Radio.initState(ERROR):", err)
+		return err
 	} else {
 		numPresets = numPresets - 2
 		if numPresets < 1 {
-			log.Println("Radio.initState(ERROR): invalid number of presets were given from radio,", numPresets)
+			return fmt.Errorf("invalid number of presets were given from radio, " + strconv.Itoa(numPresets))
 		} else {
 			rd.state.NumPresets = numPresets
 		}
@@ -218,7 +218,7 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.ctx)); err != nil {
-		log.Println("Radio.initState(ERROR):", err)
+		return err
 	} else {
 		rd.state.Volume = &volume
 	}
@@ -233,11 +233,13 @@ func (rd *Radio) initState() {
 			return nil
 		}
 	}, retry.Context(rd.ctx)); err != nil {
-		log.Println("Radio.initState(ERROR):", err)
+		return err
 	} else {
 		for i := range presets {
 			rd.h.PresetMutator(rd.ctx, &presets[i])
 		}
 		rd.state.Presets = presets
 	}
+
+	return nil
 }

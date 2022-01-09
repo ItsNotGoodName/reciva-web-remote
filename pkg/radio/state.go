@@ -14,6 +14,7 @@ type State struct {
 	IsMuted    *bool    `json:"isMuted,omitempty"`    // IsMuted represents if the Radio's volume is muted.
 	Metadata   *string  `json:"metadata,omitempty"`   // Metadata that is received from the stream url.
 	Name       string   `json:"name,omitempty"`       // Name of the radio.
+	NewURL     *string  `json:"newURL,omitempty"`     // NewURL represents the url of the stream.
 	NumPresets int      `json:"numPresets,omitempty"` // NumPresets on the radio, it will not change after it is set.
 	Power      *bool    `json:"power,omitempty"`      // Power represents if the radio is not in standby.
 	Preset     int      `json:"preset,omitempty"`     // Preset is the current preset that is playing, -1 means it is unknown.
@@ -26,10 +27,10 @@ type State struct {
 }
 
 type Preset struct {
-	Name   string `json:"name"`   // Name of the preset that overrides Title.
-	Number int    `json:"number"` //
-	Title  string `json:"-"`      // Title given by the radio.
-	URL    string `json:"url"`    //
+	Name   string `json:"name"`   // Name given by user or radio.
+	Number int    `json:"number"` // Number is the preset number.
+	Title  string `json:"title"`  // Title on the radio.
+	URL    string `json:"url"`    // URL on the radio.
 }
 
 type stateXML struct {
@@ -48,6 +49,7 @@ func newState(uuid, name string) *State {
 		IsMuted:  &boolDefault,
 		Metadata: &stringDefault,
 		Name:     name,
+		NewURL:   &stringDefault,
 		Power:    &boolDefault,
 		Preset:   -1,
 		UUID:     uuid,
@@ -96,10 +98,6 @@ func newStateFromClient(ctx context.Context, client goupnp.ServiceClient) (*Stat
 	}, retry.Context(ctx)); err != nil {
 		return nil, err
 	} else {
-		// TODO: Mutate preset somewhere else
-		// for i := range presets {
-		// 	 rd.h.PresetMutator(rd.ctx, &presets[i])
-		// }
 		state.Presets = presets
 	}
 
@@ -127,6 +125,9 @@ func (s *State) Merge(ss *State) {
 	}
 	if ss.Metadata != nil {
 		s.Metadata = ss.Metadata
+	}
+	if ss.NewURL != nil {
+		s.NewURL = ss.NewURL
 	}
 	if ss.Name != "" {
 		s.Name = ss.Name

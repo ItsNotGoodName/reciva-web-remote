@@ -19,3 +19,4 @@ dist/
 *.db
 *.db-journal
 reciva-web-remote
+tmp

@@ -10,6 +10,8 @@ import (
 )
 
 type Hub struct {
+	Done         chan struct{}         // Done is closed when all radios are stopped.
+	Mutator      MutatorPort           // mutator is used to mutate the state of the radio.
 	Pub          *Pub                  // Pub is the state change event publisher
 	cp           *upnpsub.ControlPoint // cp is used to create subscriptions.
 	discoverChan chan chan error       // discoverChan is used to discover radios.
@@ -19,7 +21,13 @@ type Hub struct {
 }
 
 func NewHub(cp *upnpsub.ControlPoint) *Hub {
+	return NewHubWithMutator(cp, NewMutator())
+}
+
+func NewHubWithMutator(cp *upnpsub.ControlPoint, mutator MutatorPort) *Hub {
 	return &Hub{
+		Done:         make(chan struct{}),
+		Mutator:      mutator,
 		Pub:          newPub(),
 		cp:           cp,
 		discoverChan: make(chan chan error),
@@ -49,8 +57,6 @@ func (h *Hub) GetRadio(uuid string) (*Radio, error) {
 
 	return r, nil
 }
-
-// TODO: remove get radio state and get radio states
 
 func (h *Hub) GetRadioState(ctx context.Context, uuid string) (*State, error) {
 	h.radiosMu.RLock()
@@ -86,6 +92,14 @@ func (h *Hub) IsValidRadio(uuid string) bool {
 	return ok
 }
 
+func (h *Hub) MutateRadios() {
+	h.radiosMu.RLock()
+	for _, v := range h.radios {
+		v.Mutate()
+	}
+	h.radiosMu.RUnlock()
+}
+
 func (h *Hub) Start(ctx context.Context) {
 	discover := func(cancel context.CancelFunc) (context.CancelFunc, error) {
 		newCtx, newCancel := context.WithCancel(ctx)
@@ -113,15 +127,20 @@ func (h *Hub) Start(ctx context.Context) {
 
 	cancel, err := discover(nil)
 	if err != nil {
-		log.Println("Hub.run(ERROR):", err)
+		log.Println("Hub.Start(ERROR):", err)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			if cancel != nil {
-				cancel()
+			h.radiosMu.RLock()
+			for _, radio := range h.radios {
+				<-radio.Done
 			}
+			close(h.Done)
+			h.radiosMu.RUnlock()
+			log.Println("Hub.Start: stopped")
+			return
 		case errC := <-h.discoverChan:
 			cancel, err = discover(cancel)
 			errC <- err
@@ -154,7 +173,9 @@ func (h *Hub) discover(ctx context.Context) ([]*Radio, error) {
 		go (func(idx int) {
 			radio, err := h.newRadio(ctx, clients[idx])
 			if err != nil {
-				log.Println("Hub.discover(ERROR):", err)
+				if err != context.Canceled {
+					log.Println("Hub.discover(ERROR):", err)
+				}
 			} else {
 				rds <- radio
 			}
@@ -190,7 +211,7 @@ func (h *Hub) newRadio(ctx context.Context, client goupnp.ServiceClient) (*Radio
 
 	// Create and start radio
 	rd := newRadio(state.UUID, client, sub, h.Pub)
-	go rd.start(ctx, *state)
+	go rd.start(ctx, *state, h.Mutator)
 
 	return rd, nil
 }

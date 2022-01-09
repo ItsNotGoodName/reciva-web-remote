@@ -10,13 +10,14 @@ import (
 )
 
 type Radio struct {
-	UUID       string                // UUID of the radio.
 	Done       chan struct{}         // Channel to signal that the radio is done.
+	UUID       string                // UUID of the radio.
 	client     goupnp.ServiceClient  // client is the SOAP client.
 	getStateC  chan State            // getStateC is used to read the state.
+	mutateC    chan struct{}         // mutateC is used to signal that mutator has changed.
+	pub        *Pub                  // pub is where state change events are sent.
 	setVolumeC chan int              // setVolumeC is used to set the volume.
-	pub        *Pub                  // pub is where state changes events are sent.
-	sub        *upnpsub.Subscription // subscription that belongs to this Radio.
+	sub        *upnpsub.Subscription // sub that belongs to this Radio.
 }
 
 func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscription, pub *Pub) *Radio {
@@ -25,8 +26,9 @@ func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscriptio
 		Done:       make(chan struct{}),
 		client:     client,
 		getStateC:  make(chan State),
-		setVolumeC: make(chan int),
+		mutateC:    make(chan struct{}, 1),
 		pub:        pub,
+		setVolumeC: make(chan int),
 		sub:        sub,
 	}
 }
@@ -107,20 +109,31 @@ func (rd *Radio) Refresh() {
 	rd.sub.Renew()
 }
 
+func (rd *Radio) Mutate() {
+	select {
+	case rd.mutateC <- struct{}{}:
+	default:
+	}
+}
+
 func (rd *Radio) publish(state *State) {
 	state.UUID = rd.UUID
 	rd.pub.publish(state)
 }
 
-func (rd *Radio) start(ctx context.Context, state State) {
+func (rd *Radio) start(ctx context.Context, state State, mutator MutatorPort) {
 	log.Println("Radio.start: started")
+
+	mutator.Mutate(ctx, &state)
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Radio.start: ctx is done, exiting")
 			close(rd.Done)
+			log.Println("Radio.start: stopped")
 			return
+		case <-rd.mutateC:
+			rd.publish(mutator.Mutate(ctx, &state))
 		case rd.getStateC <- state:
 		case newVolume := <-rd.setVolumeC:
 			// Volume change
@@ -129,7 +142,7 @@ func (rd *Radio) start(ctx context.Context, state State) {
 				rd.publish(&State{Volume: &newVolume})
 			}
 		case event := <-rd.sub.Event:
-			newState := State{}
+			diffState := State{}
 			changed := false
 
 			for _, v := range event.Properties {
@@ -139,7 +152,7 @@ func (rd *Radio) start(ctx context.Context, state State) {
 					// Power change
 					if newPower != *state.Power {
 						state.Power = &newPower
-						newState.Power = &newPower
+						diffState.Power = &newPower
 						changed = true
 					}
 				} else if v.Name == "PlaybackXML" {
@@ -156,14 +169,14 @@ func (rd *Radio) start(ctx context.Context, state State) {
 					// State change
 					if sXML.State != state.State {
 						state.State = sXML.State
-						newState.State = sXML.State
+						diffState.State = sXML.State
 						changed = true
 					}
 
 					// Title change
 					if sXML.Title != state.Title {
 						state.Title = sXML.Title
-						newState.Title = sXML.Title
+						diffState.Title = sXML.Title
 
 						// Preset Change
 						newPreset := -1
@@ -171,12 +184,12 @@ func (rd *Radio) start(ctx context.Context, state State) {
 							if state.Presets[i].Title == sXML.Title {
 								newPreset = i + 1
 								state.Title = state.Presets[i].Name
-								newState.Title = state.Presets[i].Name
+								diffState.Title = state.Presets[i].Name
 								break
 							}
 						}
 						state.Preset = newPreset
-						newState.Preset = newPreset
+						diffState.Preset = newPreset
 
 						changed = true
 					}
@@ -184,7 +197,11 @@ func (rd *Radio) start(ctx context.Context, state State) {
 					// Url change
 					if sXML.URL != state.URL {
 						state.URL = sXML.URL
-						newState.URL = sXML.URL
+						diffState.URL = sXML.URL
+
+						mutator.MutateNewURL(ctx, &state)
+						diffState.NewURL = state.NewURL
+
 						changed = true
 					}
 
@@ -192,7 +209,7 @@ func (rd *Radio) start(ctx context.Context, state State) {
 					if sXML.Metadata != *state.Metadata {
 						newMetadata := sXML.Metadata
 						state.Metadata = &newMetadata
-						newState.Metadata = &newMetadata
+						diffState.Metadata = &newMetadata
 						changed = true
 					}
 				} else if v.Name == "IsMuted" {
@@ -200,14 +217,14 @@ func (rd *Radio) start(ctx context.Context, state State) {
 
 					if newIsMuted != *state.IsMuted {
 						state.IsMuted = &newIsMuted
-						newState.IsMuted = &newIsMuted
+						diffState.IsMuted = &newIsMuted
 						changed = true
 					}
 				}
 			}
 
 			if changed {
-				rd.publish(&newState)
+				rd.publish(&diffState)
 			}
 		}
 	}

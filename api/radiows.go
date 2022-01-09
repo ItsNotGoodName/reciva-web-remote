@@ -24,11 +24,10 @@ const (
 )
 
 func NewRadioWS(conn *websocket.Conn, h *radio.Hub) *RadioWS {
-	hc := make(chan radio.State, 2)
 	return &RadioWS{
 		h:        h,
 		conn:     conn,
-		hubChan:  &hc,
+		sub:      radio.NewSub(make(chan *radio.State, 2)),
 		readChan: make(chan *radio.State),
 		sendChan: make(chan *radio.State),
 	}
@@ -38,7 +37,7 @@ func (rs *RadioWS) Start(uuid string) {
 	go rs.balancer(uuid)
 
 	// Register with hub
-	rs.h.AddClient(rs.hubChan)
+	rs.h.Pub.Subscribe(rs.sub)
 
 	// Start read handler
 	go rs.handleRead(uuid)
@@ -57,7 +56,8 @@ func (rs *RadioWS) balancer(uuid string) {
 	for {
 		if toSend == nil {
 			select {
-			case state, ok := <-*rs.hubChan:
+			case state, ok := <-rs.sub.HandleC:
+
 				if !ok {
 					close(rs.sendChan)
 					return
@@ -67,7 +67,7 @@ func (rs *RadioWS) balancer(uuid string) {
 					continue
 				}
 
-				toSend = &state
+				toSend = state
 			case state := <-rs.readChan:
 				uuid = state.UUID
 				toSend = state
@@ -77,7 +77,7 @@ func (rs *RadioWS) balancer(uuid string) {
 		select {
 		case rs.sendChan <- toSend:
 			toSend = nil
-		case state, ok := <-*rs.hubChan:
+		case state, ok := <-rs.sub.HandleC:
 			if !ok {
 				close(rs.sendChan)
 				return
@@ -87,7 +87,7 @@ func (rs *RadioWS) balancer(uuid string) {
 				continue
 			}
 
-			toSend.Merge(&state)
+			toSend.Merge(state)
 		case state := <-rs.readChan:
 			uuid = state.UUID
 			toSend = state
@@ -132,7 +132,7 @@ func (rs *RadioWS) handleRead(uuid string) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
-		rs.h.RemoveClient(rs.hubChan)
+		// rs.h.RemoveClient(rs.hubChan)
 		rs.conn.Close()
 		cancel()
 	}()

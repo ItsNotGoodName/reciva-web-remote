@@ -2,14 +2,17 @@ package radio
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+
+	"github.com/huin/goupnp"
 )
 
 const radioServiceType = "urn:reciva-com:service:RecivaRadio:0.0"
 
 // const controlServiceType = "urn:schemas-upnp-org:service:RenderingControl:1"
 
-func (rd *Radio) setPowerState(ctx context.Context, power bool) error {
+func setPowerState(ctx context.Context, client goupnp.ServiceClient, power bool) error {
 	// Create request
 	request := &struct {
 		NewPowerStateValue string
@@ -24,10 +27,15 @@ func (rd *Radio) setPowerState(ctx context.Context, power bool) error {
 	}
 
 	// Send request
-	return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "SetPowerState", request, response)
+	err := client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "SetPowerState", request, response)
+	if err != nil {
+		return fmt.Errorf("could not set power to %t: %v", power, err)
+	}
+
+	return nil
 }
 
-func (rd *Radio) playPreset(ctx context.Context, preset int) error {
+func playPreset(ctx context.Context, client goupnp.ServiceClient, preset int) error {
 	// Create request
 	request := &struct {
 		NewPresetNumberValue string
@@ -37,10 +45,15 @@ func (rd *Radio) playPreset(ctx context.Context, preset int) error {
 	request.NewPresetNumberValue = strconv.Itoa(preset)
 
 	// Play preset
-	return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "PlayPreset", request, response)
+	err := client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "PlayPreset", request, response)
+	if err != nil {
+		return fmt.Errorf("could not play preset %d: %v", preset, err)
+	}
+
+	return nil
 }
 
-func (rd *Radio) getNumberOfPresets(ctx context.Context) (int, error) {
+func getNumberOfPresets(ctx context.Context, client goupnp.ServiceClient) (int, error) {
 	// Create request
 	request := interface{}(nil)
 	response := &struct {
@@ -48,16 +61,15 @@ func (rd *Radio) getNumberOfPresets(ctx context.Context) (int, error) {
 	}{}
 
 	// Send request
-	err := rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "GetNumberOfPresets", request, response)
-
-	// Return number of presets
+	err := client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "GetNumberOfPresets", request, response)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("could not get number of presets: %v", err)
 	}
+
 	return response.RetNumberOfPresetsValue, nil
 }
 
-func (rd *Radio) getPreset(ctx context.Context, num int) (*Preset, error) {
+func getPreset(ctx context.Context, client goupnp.ServiceClient, num int) (*Preset, error) {
 	// Create request
 	request := &struct {
 		RetPresetNumberValue string
@@ -70,20 +82,19 @@ func (rd *Radio) getPreset(ctx context.Context, num int) (*Preset, error) {
 	request.RetPresetNumberValue = strconv.Itoa(num)
 
 	// Send request
-	err := rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "GetPreset", request, response)
-
+	err := client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "GetPreset", request, response)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get preset %d: %v", num, err)
 	}
 
 	return &Preset{Number: num, Title: response.RetPresetName, URL: response.RetPresetURL}, nil
 }
 
-func (rd *Radio) getPresets(ctx context.Context) ([]Preset, error) {
+func getPresets(ctx context.Context, client goupnp.ServiceClient, numPresets int) ([]Preset, error) {
 	var pts []Preset
 
-	for i := 1; i <= rd.state.NumPresets; i++ {
-		p, err := rd.getPreset(ctx, i)
+	for i := 1; i <= numPresets; i++ {
+		p, err := getPreset(ctx, client, i)
 		if err != nil {
 			return pts, err
 		}
@@ -93,7 +104,7 @@ func (rd *Radio) getPresets(ctx context.Context) ([]Preset, error) {
 	return pts, nil
 }
 
-func (rd *Radio) setVolume(ctx context.Context, volume int) error {
+func setVolume(ctx context.Context, client goupnp.ServiceClient, volume int) error {
 	// Create request
 	request := &struct {
 		NewVolumeValue string
@@ -103,10 +114,15 @@ func (rd *Radio) setVolume(ctx context.Context, volume int) error {
 	request.NewVolumeValue = strconv.Itoa(volume)
 
 	// Send request
-	return rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "SetVolume", request, response)
+	err := client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "SetVolume", request, response)
+	if err != nil {
+		return fmt.Errorf("could not set volume to %d: %v", volume, err)
+	}
+
+	return nil
 }
 
-func (rd *Radio) getVolume(ctx context.Context) (int, error) {
+func getVolume(ctx context.Context, client goupnp.ServiceClient) (int, error) {
 	// Create request
 	request := interface{}(nil)
 	response := &struct {
@@ -114,11 +130,10 @@ func (rd *Radio) getVolume(ctx context.Context) (int, error) {
 	}{}
 
 	// Send request
-	err := rd.Client.SOAPClient.PerformActionCtx(ctx, rd.Client.Service.ServiceType, "GetVolume", request, response)
-
-	// Return volume
+	err := client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "GetVolume", request, response)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("could not get volume: %v", err)
 	}
+
 	return response.RetVolumeValue, nil
 }

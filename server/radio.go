@@ -86,7 +86,7 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 			// Play preset if not nil
 			if err := rd.PlayPreset(c, *radioPatch.Preset); err != nil {
 				code := http.StatusServiceUnavailable
-				if err == radio.ErrInvalidPreset {
+				if err == radio.ErrPresetInvalid {
 					code = http.StatusBadRequest
 				}
 				c.JSON(code, gin.H{"err": err.Error()})
@@ -96,7 +96,7 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 
 		// Set volume if not nil
 		if radioPatch.Volume != nil {
-			if err := rd.SetVolume(*radioPatch.Volume); err != nil {
+			if err := rd.SetVolume(c, *radioPatch.Volume); err != nil {
 				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 				return
 			}

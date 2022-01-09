@@ -2,114 +2,38 @@ package radio
 
 import (
 	"context"
-	"errors"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/huin/goupnp"
 )
 
+type Hub struct {
+	Done         chan struct{}         // Done is closed when all radios are stopped.
+	Mutator      MutatorPort           // mutator is used to mutate the state of the radio.
+	Pub          *Pub                  // Pub is the state change event publisher
+	cp           *upnpsub.ControlPoint // cp is used to create subscriptions.
+	discoverChan chan chan error       // discoverChan is used to discover radios.
+
+	radiosMu sync.RWMutex      // radiosMu is used to protect radios map.
+	radios   map[string]*Radio // radios is used to store all the Radios.
+}
+
 func NewHub(cp *upnpsub.ControlPoint) *Hub {
-	h := Hub{
-		PresetMutator: presetMutator,
-		cp:            cp,
-		discoverChan:  make(chan chan error),
-		radios:        make(map[string]*Radio),
-		radiosMu:      sync.RWMutex{},
-		stateOPS:      make(chan func(map[*chan State]bool)),
-		stopChan:      make(chan chan error),
-	}
-	return &h
+	return NewHubWithMutator(cp, NewMutator())
 }
 
-func (h *Hub) Start() error {
-	go h.discoverLoop()
-	go h.stateLoop()
-
-	// Discover radios
-	errChan := make(chan error)
-	h.discoverChan <- errChan
-	return <-errChan
-}
-
-func (h *Hub) NewRadios() ([]*Radio, error) {
-	// Discover clients
-	clients, _, err := goupnp.NewServiceClients(radioServiceType)
-	if err != nil {
-		return nil, err
+func NewHubWithMutator(cp *upnpsub.ControlPoint, mutator MutatorPort) *Hub {
+	return &Hub{
+		Done:         make(chan struct{}),
+		Mutator:      mutator,
+		Pub:          newPub(),
+		cp:           cp,
+		discoverChan: make(chan chan error),
+		radios:       make(map[string]*Radio),
+		radiosMu:     sync.RWMutex{},
 	}
-
-	rds := make(chan *Radio)
-	var wg sync.WaitGroup
-
-	for i := range clients {
-		wg.Add(1)
-
-		go (func(idx int) {
-			radio, err := h.NewRadio(clients[idx])
-			if err != nil {
-				log.Println("Hub.NewRadios(ERROR):", err)
-			} else {
-				rds <- radio
-			}
-			wg.Done()
-		})(i)
-	}
-
-	go (func() {
-		wg.Wait()
-		close(rds)
-	})()
-
-	var radios []*Radio
-	for r := range rds {
-		radios = append(radios, r)
-	}
-
-	return radios, nil
-}
-
-func (h *Hub) NewRadio(client goupnp.ServiceClient) (*Radio, error) {
-	// Get UUID from client
-	uuid, ok := getServiceClientUUID(&client)
-	if !ok {
-		return nil, errors.New("could not find uuid from client")
-	}
-
-	// Create sub
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	sub, err := h.cp.NewSubscription(ctx, &client.Service.EventSubURL.URL)
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-
-	// Create rd and start radioLoop
-	rd := Radio{
-		Cancel:           cancel,
-		Client:           client,
-		Subscription:     sub,
-		UUID:             uuid,
-		ctx:              ctx,
-		getStateChan:     make(chan State),
-		h:                h,
-		state:            NewState(uuid),
-		updateVolumeChan: make(chan int),
-		refreshPresets:   make(chan bool, 1),
-	}
-
-	err = rd.initState()
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-
-	go rd.radioLoop()
-
-	return &rd, nil
 }
 
 func (h *Hub) GetRadios() []*Radio {
@@ -123,11 +47,15 @@ func (h *Hub) GetRadios() []*Radio {
 	return radios
 }
 
-func (h *Hub) GetRadio(uuid string) (*Radio, bool) {
+func (h *Hub) GetRadio(uuid string) (*Radio, error) {
 	h.radiosMu.RLock()
 	r, ok := h.radios[uuid]
 	h.radiosMu.RUnlock()
-	return r, ok
+	if !ok {
+		return nil, ErrRadioNotFound
+	}
+
+	return r, nil
 }
 
 func (h *Hub) GetRadioState(ctx context.Context, uuid string) (*State, error) {
@@ -164,15 +92,60 @@ func (h *Hub) IsValidRadio(uuid string) bool {
 	return ok
 }
 
-func (h *Hub) RefreshPresets() {
+func (h *Hub) MutateRadios() {
 	h.radiosMu.RLock()
-	for _, r := range h.radios {
-		select {
-		case r.refreshPresets <- true:
-		default:
-		}
+	for _, v := range h.radios {
+		v.Mutate()
 	}
 	h.radiosMu.RUnlock()
+}
+
+func (h *Hub) Start(ctx context.Context) {
+	discover := func(cancel context.CancelFunc) (context.CancelFunc, error) {
+		newCtx, newCancel := context.WithCancel(ctx)
+		newRadios, err := h.discover(newCtx)
+		if err != nil {
+			newCancel()
+			return nil, err
+		}
+
+		radios := make(map[string]*Radio)
+		for _, r := range newRadios {
+			radios[r.UUID] = r
+		}
+
+		if cancel != nil {
+			cancel()
+		}
+
+		h.radiosMu.Lock()
+		h.radios = radios
+		h.radiosMu.Unlock()
+
+		return newCancel, nil
+	}
+
+	cancel, err := discover(nil)
+	if err != nil {
+		log.Println("Hub.Start(ERROR):", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			h.radiosMu.RLock()
+			for _, radio := range h.radios {
+				<-radio.Done
+			}
+			close(h.Done)
+			h.radiosMu.RUnlock()
+			log.Println("Hub.Start: stopped")
+			return
+		case errC := <-h.discoverChan:
+			cancel, err = discover(cancel)
+			errC <- err
+		}
+	}
 }
 
 func (h *Hub) Discover() error {
@@ -185,75 +158,60 @@ func (h *Hub) Discover() error {
 	}
 }
 
-// Stop closes radios and makes further discovery not possible.
-func (h *Hub) Stop() error {
-	errChan := make(chan error)
-	h.stopChan <- errChan
-	return <-errChan
+func (h *Hub) discover(ctx context.Context) ([]*Radio, error) {
+	clients, _, err := goupnp.NewServiceClients(radioServiceType)
+	if err != nil {
+		return nil, err
+	}
+
+	rds := make(chan *Radio)
+	var wg sync.WaitGroup
+
+	for i := range clients {
+		wg.Add(1)
+
+		go (func(idx int) {
+			radio, err := h.newRadio(ctx, clients[idx])
+			if err != nil {
+				if err != context.Canceled {
+					log.Println("Hub.discover(ERROR):", err)
+				}
+			} else {
+				rds <- radio
+			}
+			wg.Done()
+		})(i)
+	}
+
+	go (func() {
+		wg.Wait()
+		close(rds)
+	})()
+
+	var radios []*Radio
+	for r := range rds {
+		radios = append(radios, r)
+	}
+
+	return radios, nil
 }
 
-func (h *Hub) discoverLoop() {
-	stopped := false
-	firstDiscover := true
-	for {
-		select {
-		case d := <-h.discoverChan:
-			if stopped {
-				d <- errors.New("discoverLoop is stopped")
-				continue
-			}
-
-			// Discover radios
-			radios, err := h.NewRadios()
-			if err != nil {
-				d <- err
-				continue
-			}
-
-			// Create new radios map
-			newRadioMap := make(map[string]*Radio)
-			for _, v := range radios {
-				newRadioMap[v.UUID] = v
-			}
-			numRadios := len(newRadioMap)
-
-			// Wait for radios to update their state and also rate limit discovery
-			if !firstDiscover {
-				<-time.After(time.Second * 5)
-			} else {
-				firstDiscover = false
-			}
-
-			// Swap old and new radios map
-			h.radiosMu.Lock()
-			oldRadioMap := h.radios
-			h.radios = newRadioMap
-			h.radiosMu.Unlock()
-
-			// Close old radios
-			for _, v := range oldRadioMap {
-				v.Cancel()
-			}
-
-			log.Printf("Hub.discoverLoop: discovered %d radios", numRadios)
-			d <- nil
-		case s := <-h.stopChan:
-			newRadioMap := make(map[string]*Radio)
-
-			h.radiosMu.Lock()
-			oldRadioMap := h.radios
-			h.radios = newRadioMap
-			h.radiosMu.Unlock()
-
-			for _, v := range oldRadioMap {
-				v.Cancel()
-			}
-			for _, v := range oldRadioMap {
-				<-v.Subscription.Done
-			}
-			stopped = true
-
-			s <- nil
-		}
+func (h *Hub) newRadio(ctx context.Context, client goupnp.ServiceClient) (*Radio, error) {
+	// Create sub
+	sub, err := h.cp.NewSubscription(ctx, &client.Service.EventSubURL.URL)
+	if err != nil {
+		return nil, err
 	}
+
+	// Create state
+	state, err := newStateFromClient(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create and start radio
+	rd := newRadio(state.UUID, client, sub, h.Pub)
+	go rd.start(ctx, *state, h.Mutator)
+
+	return rd, nil
 }

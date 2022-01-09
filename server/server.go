@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log"
 	"strconv"
 
@@ -14,14 +15,18 @@ import (
 )
 
 type Server struct {
-	p *api.PresetAPI
-	h *radio.Hub
-	r *gin.Engine
-	u *websocket.Upgrader
+	p    *api.PresetAPI
+	h    *radio.Hub
+	r    *gin.Engine
+	u    *websocket.Upgrader
+	stop context.CancelFunc
 }
 
 func NewServer(cfg *config.Config) *Server {
-	s := Server{}
+	ctx, cancel := context.WithCancel(context.Background())
+	s := Server{
+		stop: cancel,
+	}
 
 	// Create and start controlpoint
 	cp := upnpsub.NewControlPointWithPort(cfg.CPort)
@@ -40,9 +45,7 @@ func NewServer(cfg *config.Config) *Server {
 	s.p = api.NewPresetAPI(store, s.h)
 
 	// Start hub
-	if err := s.h.Start(); err != nil {
-		log.Fatal("server.NewServer(ERROR):", err)
-	}
+	go s.h.Start(ctx)
 
 	// Create websocket upgrader
 	s.u = NewUpgrader()
@@ -65,5 +68,7 @@ func (s *Server) Start(cfg *config.Config) {
 
 func (s *Server) Stop() error {
 	log.Println("Server.Stop: stopping")
-	return s.h.Stop()
+	s.stop()
+	<-s.h.Done
+	return nil
 }

@@ -1,11 +1,22 @@
 package radio
 
 import (
-	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/huin/goupnp"
 )
+
+var uuidReg = regexp.MustCompile(`(?m)\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b`)
+
+func getServiceClientUUID(c goupnp.ServiceClient) (string, error) {
+	uuid := uuidReg.FindString(c.Location.String())
+	if uuid == "" {
+		return "", fmt.Errorf("could not find UUID in location: %s", c.Location)
+	}
+
+	return uuid, nil
+}
 
 func normalizeVolume(volume int) int {
 	if volume < 0 {
@@ -15,18 +26,4 @@ func normalizeVolume(volume int) int {
 		return 100
 	}
 	return volume
-}
-
-var uuidReg = regexp.MustCompile(`(?m)\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b`)
-
-func getServiceClientUUID(c *goupnp.ServiceClient) (string, bool) {
-	uuid := uuidReg.FindString(c.Location.String())
-	if uuid == "" {
-		return uuid, false
-	}
-	return uuid, true
-}
-
-func presetMutator(ctx context.Context, p *Preset) {
-	p.Name = p.Title
 }

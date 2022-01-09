@@ -3,100 +3,126 @@ package radio
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
 	"log"
-	"strconv"
 
-	"github.com/avast/retry-go"
+	"github.com/ItsNotGoodName/go-upnpsub"
+	"github.com/huin/goupnp"
 )
 
+type Radio struct {
+	UUID         string
+	client       goupnp.ServiceClient  // client is the SOAP client.
+	subscription *upnpsub.Subscription // subscription that belongs to this Radio.
+	getStateC    chan State            // getStateC is used to read the state.
+	setVolumeC   chan int              // setVolumeC is used to set the volume.
+}
+
+func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscription) *Radio {
+	return &Radio{
+		client:       client,
+		subscription: sub,
+		getStateC:    make(chan State),
+		setVolumeC:   make(chan int),
+	}
+}
+
+// GetState returns the current state of the radio.
 func (rd *Radio) GetState(ctx context.Context) (*State, error) {
 	select {
+	case s := <-rd.getStateC:
+		return &s, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	case <-rd.ctx.Done():
-		return nil, rd.ctx.Err()
-	case state := <-rd.getStateChan:
-		return &state, nil
 	}
 }
 
+// SetPowerState sets the power state of the radio.
 func (rd *Radio) SetPower(ctx context.Context, power bool) error {
-	return rd.setPowerState(ctx, power)
+	return setPowerState(ctx, rd.client, power)
 }
 
+// PlayPreset plays the given preset.
 func (rd *Radio) PlayPreset(ctx context.Context, preset int) error {
-	if preset < 1 || preset > rd.state.NumPresets {
-		return ErrInvalidPreset
-	}
-
 	state, err := rd.GetState(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !*state.Power && rd.setPowerState(ctx, true) != nil {
+	if err := state.ValidPreset(preset); err != nil {
 		return err
 	}
 
-	return rd.playPreset(ctx, preset)
+	if !state.On() {
+		if err := setPowerState(ctx, rd.client, true); err != nil {
+			return err
+		}
+	}
+
+	return playPreset(ctx, rd.client, preset)
 }
 
-func (rd *Radio) SetVolume(volume int) error {
+// SetVolume sets the volume of the radio.
+func (rd *Radio) SetVolume(ctx context.Context, volume int) error {
 	volume = normalizeVolume(volume)
-	if err := rd.setVolume(rd.ctx, volume); err != nil {
+	if err := setVolume(ctx, rd.client, volume); err != nil {
 		return err
 	}
-	return rd.updateVolume(volume)
+
+	select {
+	case rd.setVolumeC <- volume:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
+// RefreshVolume fetches volume from the radio.
 func (rd *Radio) RefreshVolume(ctx context.Context) error {
-	vol, err := rd.getVolume(ctx)
+	volume, err := getVolume(ctx, rd.client)
 	if err != nil {
 		return err
 	}
 
-	return rd.updateVolume(vol)
+	select {
+	case rd.setVolumeC <- volume:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
+// Refresh renews subscription to the radio.
 func (rd *Radio) Refresh() {
-	rd.Subscription.Renew()
+	rd.subscription.Renew()
 }
 
-func (rd *Radio) radioLoop() {
-	log.Println("Radio.radioLoop: started")
+func (rd *Radio) run(ctx context.Context, state State) {
+	log.Println("Radio.run: started")
 
 	for {
 		select {
-		case <-rd.ctx.Done():
-			log.Println("Radio.radioLoop: ctx is done, exiting")
+		case <-ctx.Done():
+			log.Println("Radio.run: ctx is done, exiting")
 			return
-		case rd.getStateChan <- *rd.state:
-		case newVolume := <-rd.updateVolumeChan:
+		case rd.getStateC <- state:
+		case newVolume := <-rd.setVolumeC:
 			// Volume change
-			if *rd.state.Volume != newVolume {
-				rd.state.Volume = &newVolume
-				rd.sendState(&State{Volume: &newVolume})
+			if *state.Volume != newVolume {
+				state.Volume = &newVolume
+				// TODO: emit event
+				log.Println("Radio.run: state volume changed:", newVolume)
 			}
-		case <-rd.refreshPresets:
-			for i := range rd.state.Presets {
-				rd.h.PresetMutator(rd.ctx, &rd.state.Presets[i])
-			}
-			if rd.state.Preset > 0 {
-				rd.state.Title = rd.state.Presets[rd.state.Preset-1].Name
-			}
-			rd.sendState(&State{Presets: rd.state.Presets, Title: rd.state.Title})
-		case newEvent := <-rd.Subscription.Event:
+		case event := <-rd.subscription.Event:
 			newState := State{}
 			changed := false
 
-			for _, v := range newEvent.Properties {
+			for _, v := range event.Properties {
 				if v.Name == "PowerState" {
 					newPower := v.Value == "On"
 
 					// Power change
-					if newPower != *rd.state.Power {
-						rd.state.Power = &newPower
+					if newPower != *state.Power {
+						state.Power = &newPower
 						newState.Power = &newPower
 						changed = true
 					}
@@ -107,139 +133,67 @@ func (rd *Radio) radioLoop() {
 
 					sXML := stateXML{}
 					if err := xml.Unmarshal([]byte(v.Value), &sXML); err != nil {
-						log.Println("Radio.radioLoop(ERROR):", err)
+						log.Println("Radio.run(ERROR):", err)
 						continue
 					}
 
 					// State change
-					if sXML.State != rd.state.State {
-						rd.state.State = sXML.State
+					if sXML.State != state.State {
+						state.State = sXML.State
 						newState.State = sXML.State
 						changed = true
 					}
 
 					// Title change
-					if sXML.Title != rd.state.Title {
-						rd.state.Title = sXML.Title
+					if sXML.Title != state.Title {
+						state.Title = sXML.Title
 						newState.Title = sXML.Title
 
 						// Preset Change
 						newPreset := -1
-						for i := range rd.state.Presets {
-							if rd.state.Presets[i].Title == sXML.Title {
+						for i := range state.Presets {
+							if state.Presets[i].Title == sXML.Title {
 								newPreset = i + 1
-								rd.state.Title = rd.state.Presets[i].Name
-								newState.Title = rd.state.Presets[i].Name
+								state.Title = state.Presets[i].Name
+								newState.Title = state.Presets[i].Name
 								break
 							}
 						}
-						rd.state.Preset = newPreset
+						state.Preset = newPreset
 						newState.Preset = newPreset
 
 						changed = true
 					}
 
 					// Url change
-					if sXML.URL != rd.state.URL {
-						rd.state.URL = sXML.URL
+					if sXML.URL != state.URL {
+						state.URL = sXML.URL
 						newState.URL = sXML.URL
 						changed = true
 					}
 
 					// Metadata change
-					if sXML.Metadata != *rd.state.Metadata {
+					if sXML.Metadata != *state.Metadata {
 						newMetadata := sXML.Metadata
-						rd.state.Metadata = &newMetadata
+						state.Metadata = &newMetadata
 						newState.Metadata = &newMetadata
 						changed = true
 					}
 				} else if v.Name == "IsMuted" {
 					newIsMuted := v.Value == "TRUE"
 
-					if newIsMuted != *rd.state.IsMuted {
-						rd.state.IsMuted = &newIsMuted
+					if newIsMuted != *state.IsMuted {
+						state.IsMuted = &newIsMuted
 						newState.IsMuted = &newIsMuted
 						changed = true
 					}
 				}
 			}
+
 			if changed {
-				rd.sendState(&newState)
+				// TODO: emit event
+				log.Println("Radio.run: state changed:", newState)
 			}
 		}
 	}
-}
-
-func (rd *Radio) updateVolume(volume int) error {
-	select {
-	case <-rd.ctx.Done():
-		return rd.ctx.Err()
-	case rd.updateVolumeChan <- volume:
-		return nil
-	}
-}
-
-func (rd *Radio) sendState(state *State) {
-	state.UUID = rd.state.UUID
-	rd.h.emitState(state)
-}
-
-func (rd *Radio) initState() error {
-	// Set name of radio
-	rd.state.Name = rd.Client.RootDevice.Device.FriendlyName
-
-	// Get number of presets
-	var numPresets int
-	if err := retry.Do(func() error {
-		if p, e := rd.getNumberOfPresets(rd.ctx); e != nil {
-			return e
-		} else {
-			numPresets = p
-			return nil
-		}
-	}, retry.Context(rd.ctx)); err != nil {
-		return err
-	} else {
-		numPresets = numPresets - 2
-		if numPresets < 1 {
-			return fmt.Errorf("invalid number of presets were given from radio, " + strconv.Itoa(numPresets))
-		} else {
-			rd.state.NumPresets = numPresets
-		}
-	}
-
-	// Get volume
-	var volume int
-	if err := retry.Do(func() error {
-		if v, e := rd.getVolume(rd.ctx); e != nil {
-			return e
-		} else {
-			volume = v
-			return nil
-		}
-	}, retry.Context(rd.ctx)); err != nil {
-		return err
-	} else {
-		rd.state.Volume = &volume
-	}
-
-	// Get presets
-	var presets []Preset
-	if err := retry.Do(func() error {
-		if p, e := rd.getPresets(rd.ctx); e != nil {
-			return e
-		} else {
-			presets = p
-			return nil
-		}
-	}, retry.Context(rd.ctx)); err != nil {
-		return err
-	} else {
-		for i := range presets {
-			rd.h.PresetMutator(rd.ctx, &presets[i])
-		}
-		rd.state.Presets = presets
-	}
-
-	return nil
 }

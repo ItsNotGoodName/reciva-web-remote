@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log"
 	"strconv"
 
@@ -40,9 +41,7 @@ func NewServer(cfg *config.Config) *Server {
 	s.p = api.NewPresetAPI(store, s.h)
 
 	// Start hub
-	if err := s.h.Start(); err != nil {
-		log.Fatal("server.NewServer(ERROR):", err)
-	}
+	go s.h.Start(context.Background())
 
 	// Create websocket upgrader
 	s.u = NewUpgrader()
@@ -65,5 +64,5 @@ func (s *Server) Start(cfg *config.Config) {
 
 func (s *Server) Stop() error {
 	log.Println("Server.Stop: stopping")
-	return s.h.Stop()
+	return nil
 }

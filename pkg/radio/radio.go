@@ -10,19 +10,24 @@ import (
 )
 
 type Radio struct {
-	UUID         string
-	client       goupnp.ServiceClient  // client is the SOAP client.
-	subscription *upnpsub.Subscription // subscription that belongs to this Radio.
-	getStateC    chan State            // getStateC is used to read the state.
-	setVolumeC   chan int              // setVolumeC is used to set the volume.
+	UUID       string                // UUID of the radio.
+	Done       chan struct{}         // Channel to signal that the radio is done.
+	client     goupnp.ServiceClient  // client is the SOAP client.
+	getStateC  chan State            // getStateC is used to read the state.
+	setVolumeC chan int              // setVolumeC is used to set the volume.
+	pub        *Pub                  // pub is where state changes events are sent.
+	sub        *upnpsub.Subscription // subscription that belongs to this Radio.
 }
 
-func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscription) *Radio {
+func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscription, pub *Pub) *Radio {
 	return &Radio{
-		client:       client,
-		subscription: sub,
-		getStateC:    make(chan State),
-		setVolumeC:   make(chan int),
+		UUID:       uuid,
+		Done:       make(chan struct{}),
+		client:     client,
+		getStateC:  make(chan State),
+		setVolumeC: make(chan int),
+		pub:        pub,
+		sub:        sub,
 	}
 }
 
@@ -31,6 +36,8 @@ func (rd *Radio) GetState(ctx context.Context) (*State, error) {
 	select {
 	case s := <-rd.getStateC:
 		return &s, nil
+	case <-rd.Done:
+		return nil, ErrRadioNotFound
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
@@ -71,6 +78,8 @@ func (rd *Radio) SetVolume(ctx context.Context, volume int) error {
 	select {
 	case rd.setVolumeC <- volume:
 		return nil
+	case <-rd.Done:
+		return ErrRadioNotFound
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -86,6 +95,8 @@ func (rd *Radio) RefreshVolume(ctx context.Context) error {
 	select {
 	case rd.setVolumeC <- volume:
 		return nil
+	case <-rd.Done:
+		return ErrRadioNotFound
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -93,26 +104,31 @@ func (rd *Radio) RefreshVolume(ctx context.Context) error {
 
 // Refresh renews subscription to the radio.
 func (rd *Radio) Refresh() {
-	rd.subscription.Renew()
+	rd.sub.Renew()
 }
 
-func (rd *Radio) run(ctx context.Context, state State) {
-	log.Println("Radio.run: started")
+func (rd *Radio) publish(state *State) {
+	state.UUID = rd.UUID
+	rd.pub.publish(state)
+}
+
+func (rd *Radio) start(ctx context.Context, state State) {
+	log.Println("Radio.start: started")
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Radio.run: ctx is done, exiting")
+			log.Println("Radio.start: ctx is done, exiting")
+			close(rd.Done)
 			return
 		case rd.getStateC <- state:
 		case newVolume := <-rd.setVolumeC:
 			// Volume change
 			if *state.Volume != newVolume {
 				state.Volume = &newVolume
-				// TODO: emit event
-				log.Println("Radio.run: state volume changed:", newVolume)
+				rd.publish(&State{Volume: &newVolume})
 			}
-		case event := <-rd.subscription.Event:
+		case event := <-rd.sub.Event:
 			newState := State{}
 			changed := false
 
@@ -133,7 +149,7 @@ func (rd *Radio) run(ctx context.Context, state State) {
 
 					sXML := stateXML{}
 					if err := xml.Unmarshal([]byte(v.Value), &sXML); err != nil {
-						log.Println("Radio.run(ERROR):", err)
+						log.Println("Radio.start(ERROR):", err)
 						continue
 					}
 
@@ -191,8 +207,7 @@ func (rd *Radio) run(ctx context.Context, state State) {
 			}
 
 			if changed {
-				// TODO: emit event
-				log.Println("Radio.run: state changed:", newState)
+				rd.publish(&newState)
 			}
 		}
 	}

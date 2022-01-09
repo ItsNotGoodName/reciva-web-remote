@@ -96,7 +96,7 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 
 		// Set volume if not nil
 		if radioPatch.Volume != nil {
-			if err := rd.SetVolume(*radioPatch.Volume); err != nil {
+			if err := rd.SetVolume(c, *radioPatch.Volume); err != nil {
 				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
 				return
 			}

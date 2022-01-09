@@ -29,9 +29,9 @@ func ensureRadio(h *radio.Hub) gin.HandlerFunc {
 			return
 		}
 
-		rd, ok := h.GetRadio(uuid)
-		if !ok {
-			c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
+		rd, err := h.GetRadio(uuid)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
 			return
 		}
 

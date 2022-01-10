@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/huin/goupnp"
@@ -111,9 +112,11 @@ func (h *Hub) mutatorStart(ctx context.Context) {
 func (h *Hub) Start(ctx context.Context) {
 	go h.mutatorStart(ctx)
 
+	firstRun := true
+
 	discover := func(cancel context.CancelFunc) (context.CancelFunc, error) {
-		newCtx, newCancel := context.WithCancel(ctx)
-		newRadios, err := h.discover(newCtx)
+		radioCTX, newCancel := context.WithCancel(ctx)
+		newRadios, err := h.discover(radioCTX)
 		if err != nil {
 			newCancel()
 			return nil, err
@@ -126,6 +129,17 @@ func (h *Hub) Start(ctx context.Context) {
 
 		if cancel != nil {
 			cancel()
+		}
+
+		if !firstRun {
+			// Sleep for a while to allow radios to get their initial state and to prevent spamming the discovery channel.
+			select {
+			case <-ctx.Done():
+				newCancel()
+				return nil, ctx.Err()
+			case <-time.After(3 * time.Second):
+			}
+			firstRun = false
 		}
 
 		h.radiosMu.Lock()

@@ -12,6 +12,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/router"
 	"github.com/ItsNotGoodName/reciva-web-remote/server"
+	"github.com/ItsNotGoodName/reciva-web-remote/store"
 )
 
 var (
@@ -37,13 +38,21 @@ func main() {
 		return
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Create preset store
+	presetStore := store.New(cfg.ConfigFile)
+	go presetStore.Start(ctx)
+
+	// Create Mutator
+	mutator := store.NewMutator(presetStore)
+
 	// Create and start control point
 	cp := upnpsub.NewControlPointWithPort(cfg.CPort)
 	go cp.Start()
 
 	// Create and start hub
-	ctx, cancel := context.WithCancel(context.Background())
-	hub := radio.NewHub(cp)
+	hub := radio.NewHubWithMutator(cp, mutator)
 	go hub.Start(ctx)
 
 	// Create engine
@@ -57,6 +66,7 @@ func main() {
 		engine,
 		upgrader,
 		hub,
+		presetStore,
 	)
 
 	// Start engine
@@ -67,7 +77,8 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 
-	// Stop hub
+	// Stop hub and store
 	cancel()
 	<-hub.Done
+	<-presetStore.Done
 }

@@ -21,7 +21,7 @@
     <Button @click="toggle" class="h-full flex-grow-1">
       {{ radio.title }}
     </Button>
-    <OverlayPanel @show="readPreset" ref="op">
+    <OverlayPanel ref="op">
       <table>
         <caption>
           Stream Information
@@ -39,16 +39,11 @@
           </tr>
           <tr>
             <td>
-              <Badge class="h-full w-full flex-nowrap" severity="success"
-                >New URL</Badge
-              >
+              <Badge class="h-full w-full flex-nowrap" severity="success">
+                New URL
+              </Badge>
             </td>
-            <td>
-              <Skeleton v-if="loading" />
-              <span v-else>
-                {{ preset.newUrl }}
-              </span>
-            </td>
+            <td>{{ radio.newURL }}</td>
           </tr>
         </tbody>
       </table>
@@ -72,7 +67,6 @@ export default {
   },
   data() {
     return {
-      loading: false,
       reload: false,
     };
   },
@@ -87,24 +81,8 @@ export default {
     toggle(event) {
       this.$refs.op.toggle(event);
     },
-    readPreset() {
-      if (this.loading) {
-        this.reload = true;
-        return;
-      }
-      this.loading = true;
-      this.reload = false;
-
-      this.$store.dispatch("readPreset").finally(() => {
-        this.loading = false;
-        if (this.reload) {
-          this.$nextTick(this.readPreset);
-        }
-      });
-    },
   },
 };
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

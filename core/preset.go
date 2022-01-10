@@ -1,6 +1,13 @@
 package core
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
+
+var (
+	ErrPresetNotFound = fmt.Errorf("preset not found")
+)
 
 type (
 	Preset struct {
@@ -13,5 +20,6 @@ type (
 		ListPresets(ctx context.Context) ([]Preset, error)
 		GetPreset(ctx context.Context, url string) (*Preset, error)
 		UpdatePreset(ctx context.Context, preset *Preset) error
+		PresetChanged() <-chan struct{}
 	}
 )

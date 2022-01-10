@@ -11,8 +11,8 @@ import (
 
 type Hub struct {
 	Done         chan struct{}         // Done is closed when all radios are stopped.
-	Mutator      MutatorPort           // mutator is used to mutate the state of the radio.
 	Pub          *Pub                  // Pub is the state change event publisher
+	mutator      MutatorPort           // mutator is used to mutate the state of the radio.
 	cp           *upnpsub.ControlPoint // cp is used to create subscriptions.
 	discoverChan chan chan error       // discoverChan is used to discover radios.
 
@@ -27,10 +27,10 @@ func NewHub(cp *upnpsub.ControlPoint) *Hub {
 func NewHubWithMutator(cp *upnpsub.ControlPoint, mutator MutatorPort) *Hub {
 	return &Hub{
 		Done:         make(chan struct{}),
-		Mutator:      mutator,
 		Pub:          newPub(),
 		cp:           cp,
 		discoverChan: make(chan chan error),
+		mutator:      mutator,
 		radios:       make(map[string]*Radio),
 		radiosMu:     sync.RWMutex{},
 	}
@@ -92,15 +92,25 @@ func (h *Hub) IsValidRadio(uuid string) bool {
 	return ok
 }
 
-func (h *Hub) MutateRadios() {
-	h.radiosMu.RLock()
-	for _, v := range h.radios {
-		v.Mutate()
+func (h *Hub) mutatorStart(ctx context.Context) {
+	c := h.mutator.GetTrigger()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-c:
+			h.radiosMu.RLock()
+			for _, v := range h.radios {
+				v.Mutate()
+			}
+			h.radiosMu.RUnlock()
+		}
 	}
-	h.radiosMu.RUnlock()
 }
 
 func (h *Hub) Start(ctx context.Context) {
+	go h.mutatorStart(ctx)
+
 	discover := func(cancel context.CancelFunc) (context.CancelFunc, error) {
 		newCtx, newCancel := context.WithCancel(ctx)
 		newRadios, err := h.discover(newCtx)
@@ -211,7 +221,7 @@ func (h *Hub) newRadio(ctx context.Context, client goupnp.ServiceClient) (*Radio
 
 	// Create and start radio
 	rd := newRadio(state.UUID, client, sub, h.Pub)
-	go rd.start(ctx, *state, h.Mutator)
+	go rd.start(ctx, *state, h.mutator)
 
 	return rd, nil
 }

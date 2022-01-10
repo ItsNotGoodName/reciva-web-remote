@@ -25,7 +25,7 @@ const (
 
 // Handle handles radio websocket connection.
 func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
-	log.Println("ws.Handle(INFO): new connection from", conn.RemoteAddr())
+	//log.Println("ws.Handle(INFO): new connection from", conn.RemoteAddr())
 
 	// Start read goroutine
 	readC := make(chan string, 1)
@@ -49,15 +49,15 @@ func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
 	hub.Pub.Subscribe(sub)
 
 	defer func() {
-		log.Println("ws.Handle(INFO): closing connection from", conn.RemoteAddr())
+		//log.Println("ws.Handle(INFO): closing connection from", conn.RemoteAddr())
 		conn.Close()
 		hub.Pub.Unsubscribe(sub)
 		close(mergeWriteC)
-		log.Println("ws.Handle(INFO): connection closed from", conn.RemoteAddr())
+		//log.Println("ws.Handle(INFO): connection closed from", conn.RemoteAddr())
 	}()
 
 	for {
-		log.Println("ws.Handle(INFO): looping in handle from", conn.RemoteAddr())
+		//log.Println("ws.Handle(INFO): looping in handle from", conn.RemoteAddr())
 		select {
 		case state, ok := <-subC:
 			if !ok {
@@ -70,7 +70,7 @@ func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
 
 			mergeWriteC <- &state
 		case newUUID, ok := <-readC:
-			log.Println("ws.Handle(INFO): readC trigger from", conn.RemoteAddr(), newUUID, ok)
+			//log.Println("ws.Handle(INFO): readC trigger from", conn.RemoteAddr(), newUUID, ok)
 			if !ok {
 				return
 			}
@@ -83,7 +83,7 @@ func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
 
 			mergeWriteC <- state
 		case <-writeDoneC:
-			log.Println("ws.Handle(INFO): writeDoneC trigger from", conn.RemoteAddr())
+			//log.Println("ws.Handle(INFO): writeDoneC trigger from", conn.RemoteAddr())
 			return
 		}
 	}
@@ -102,7 +102,7 @@ func mergeWrite(inC <-chan *radio.State, outC chan<- *radio.State) {
 			case state, ok := <-inC:
 				if !ok {
 					close(outC)
-					log.Println("ws.mergeWrite(INFO): closed mergeWrite")
+					//log.Println("ws.mergeWrite(INFO): closed mergeWrite")
 					return
 				}
 				toWrite.Merge(state)
@@ -111,7 +111,7 @@ func mergeWrite(inC <-chan *radio.State, outC chan<- *radio.State) {
 			toWrite, ok = <-inC
 			if !ok {
 				close(outC)
-				log.Println("ws.mergeWrite(INFO): closed mergeWrite")
+				//log.Println("ws.mergeWrite(INFO): closed mergeWrite")
 				return
 			}
 		}
@@ -124,7 +124,7 @@ func handleWrite(conn *websocket.Conn, writeC <-chan *radio.State, doneC chan<- 
 	defer func() {
 		ticker.Stop()
 		close(doneC)
-		log.Println("ws.handleWrite(INFO): closed handleWrite from", conn.RemoteAddr())
+		//log.Println("ws.handleWrite(INFO): closed handleWrite from", conn.RemoteAddr())
 	}()
 
 	for {
@@ -166,7 +166,7 @@ func handleRead(conn *websocket.Conn, readC chan string) {
 				log.Printf("ws.handleRead(ERROR): could not read from %s: %s", conn.RemoteAddr(), err)
 			}
 			close(readC)
-			log.Println("ws.handleRead(INFO): closed handleRead from", conn.RemoteAddr())
+			//log.Println("ws.handleRead(INFO): closed handleRead from", conn.RemoteAddr())
 			return
 		}
 

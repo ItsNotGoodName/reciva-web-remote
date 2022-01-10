@@ -2,7 +2,6 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
-    - npm run build --prefix web
 builds:
   - env:
       - CGO_ENABLED=0
@@ -22,8 +21,6 @@ builds:
         goarch: arm64
       - goos: darwin
         goarch: 386
-    flags:
-      - -tags=prod
 archives:
   - format_overrides:
       - goos: windows

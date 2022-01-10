@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
+	"github.com/ItsNotGoodName/reciva-web-remote/router"
 	"github.com/ItsNotGoodName/reciva-web-remote/server"
 )
 
@@ -25,28 +28,46 @@ func main() {
 	// Show version and exit
 	if cfg.ShowVersion {
 		fmt.Println(version)
-		os.Exit(0)
+		return
 	}
 
 	// Show info and exit
 	if cfg.ShowInfo {
 		fmt.Printf("Version: %s\nCommit: %s\nDate: %s\nBuilt by: %s\n", version, commit, date, builtBy)
-		os.Exit(0)
+		return
 	}
 
-	// Create server
-	s := server.NewServer(cfg)
+	// Create and start control point
+	cp := upnpsub.NewControlPointWithPort(cfg.CPort)
+	go cp.Start()
 
-	// Start server
-	go s.Start(cfg)
+	// Create and start hub
+	ctx, cancel := context.WithCancel(context.Background())
+	hub := radio.NewHub(cp)
+	go hub.Start(ctx)
+
+	// Create engine
+	engine := router.NewEngine()
+
+	// Create WS upgrader
+	upgrader := router.NewUpgrader()
+
+	// Create routes
+	server.Route(
+		engine,
+		upgrader,
+		hub,
+	)
+
+	// Start engine
+	go router.Start(engine, cfg.PortStr)
 
 	// Listen for interrupt
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 
-	// Shutdown server
-	if err := s.Stop(); err != nil {
-		log.Fatal("main(ERROR):", err)
-	}
+	// Stop hub
+	cancel()
+	<-hub.Done
 }

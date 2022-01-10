@@ -122,15 +122,16 @@ func (rd *Radio) publish(state *State) {
 }
 
 func (rd *Radio) start(ctx context.Context, state State, mutator MutatorPort) {
-	log.Println("Radio.start: started")
+	log.Println("Radio.start: started radio", rd.UUID)
 
 	mutator.Mutate(ctx, &state)
 
 	for {
 		select {
 		case <-ctx.Done():
+			<-rd.sub.Done
 			close(rd.Done)
-			log.Println("Radio.start: stopped")
+			log.Println("Radio.start: stopped radio", rd.UUID)
 			return
 		case <-rd.mutateC:
 			rd.publish(mutator.Mutate(ctx, &state))

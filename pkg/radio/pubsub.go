@@ -43,13 +43,13 @@ func (p *Pub) publish(state *State) {
 }
 
 type Sub struct {
-	HandleC chan *State
+	HandleC chan State
 
 	mu     sync.RWMutex
 	closed bool
 }
 
-func NewSub(handleC chan *State) *Sub {
+func NewSub(handleC chan State) *Sub {
 	return &Sub{
 		mu:      sync.RWMutex{},
 		closed:  false,
@@ -60,7 +60,7 @@ func NewSub(handleC chan *State) *Sub {
 func (s *Sub) handle(state *State) bool {
 	s.mu.RLock()
 	select {
-	case s.HandleC <- state:
+	case s.HandleC <- *state:
 		s.mu.RUnlock()
 		return true
 	default:

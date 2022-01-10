@@ -3,12 +3,13 @@ package server
 import (
 	"net/http"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
+	"github.com/ItsNotGoodName/reciva-web-remote/ws"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
-func (s *Server) handleGetRadio() func(c *gin.Context) {
+func handleRadioGet() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get radio
 		rd := c.MustGet("radio").(*radio.Radio)
@@ -16,7 +17,7 @@ func (s *Server) handleGetRadio() func(c *gin.Context) {
 		// Get state
 		state, err := rd.GetState(c)
 		if err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+			renderError(c, http.StatusServiceUnavailable, err)
 			return
 		}
 
@@ -25,37 +26,30 @@ func (s *Server) handleGetRadio() func(c *gin.Context) {
 	}
 }
 
-func (s *Server) handleGetRadios() func(c *gin.Context) {
+func handleRadioList(h *radio.Hub) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, s.h.GetRadioStates(c))
+		c.JSON(http.StatusOK, h.GetRadioStates(c))
 	}
 }
 
-func (s *Server) handleGetRadioWS() func(c *gin.Context) {
+func handleRadioWS(hub *radio.Hub, upgrader *websocket.Upgrader) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get uuid
-		uuid, ok := c.GetQuery("uuid")
-		if ok {
-			// Return 404 if radio does not exist
-			if !s.h.IsValidRadio(uuid) {
-				c.JSON(http.StatusNotFound, gin.H{"err": radio.ErrRadioNotFound.Error()})
-				return
-			}
-		}
+		uuid, _ := c.GetQuery("uuid")
 
 		// Upgrade connection to websocket
-		conn, err := s.u.Upgrade(c.Writer, c.Request, nil)
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			renderError(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		// Handle websocket
-		api.NewRadioWS(conn, s.h).Start(uuid)
+		go ws.Handle(conn, hub, uuid)
 	}
 }
 
-func (s *Server) handlePatchRadio() func(c *gin.Context) {
+func handleRadioPatch() func(c *gin.Context) {
 	type RadioPatch struct {
 		Power  *bool `json:"power,omitempty"`
 		Preset *int  `json:"preset,omitempty"`
@@ -70,7 +64,7 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 		var radioPatch RadioPatch
 		err := c.BindJSON(&radioPatch)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			renderError(c, http.StatusBadRequest, err)
 			return
 		}
 
@@ -78,7 +72,7 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 		if radioPatch.Preset == nil {
 			if radioPatch.Power != nil {
 				if err := rd.SetPower(c, *radioPatch.Power); err != nil {
-					c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+					renderError(c, http.StatusServiceUnavailable, err)
 					return
 				}
 			}
@@ -89,7 +83,7 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 				if err == radio.ErrPresetInvalid {
 					code = http.StatusBadRequest
 				}
-				c.JSON(code, gin.H{"err": err.Error()})
+				renderError(c, code, err)
 				return
 			}
 		}
@@ -97,14 +91,14 @@ func (s *Server) handlePatchRadio() func(c *gin.Context) {
 		// Set volume if not nil
 		if radioPatch.Volume != nil {
 			if err := rd.SetVolume(c, *radioPatch.Volume); err != nil {
-				c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+				renderError(c, http.StatusServiceUnavailable, err)
 				return
 			}
 		}
 	}
 }
 
-func (s *Server) handlePostRadio() func(c *gin.Context) {
+func handleRadioRefresh() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get radio
 		rd := c.MustGet("radio").(*radio.Radio)
@@ -113,24 +107,23 @@ func (s *Server) handlePostRadio() func(c *gin.Context) {
 	}
 }
 
-func (s *Server) handlePostRadioVolume() func(c *gin.Context) {
+func handleRadioVolumeRefresh() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// Get radio
 		rd := c.MustGet("radio").(*radio.Radio)
 
 		// Refresh volume
 		if err := rd.RefreshVolume(c); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"err": err.Error()})
+			renderError(c, http.StatusServiceUnavailable, err)
 			return
 		}
 	}
 }
 
-func (s *Server) handlePostRadios() func(c *gin.Context) {
+func handleRadioDiscover(h *radio.Hub) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		err := s.h.Discover()
-		if err != nil {
-			c.JSON(http.StatusConflict, gin.H{"err": err.Error()})
+		if err := h.Discover(); err != nil {
+			renderError(c, http.StatusConflict, err)
 			return
 		}
 	}

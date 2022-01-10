@@ -49,7 +49,7 @@ func readPresets(path string) (map[string]core.Preset, error) {
 	return presets, nil
 }
 
-// writeConfig writes the config file.
+// saveConfig writes the config file.
 func saveConfig(configFile string, m map[string]core.Preset) error {
 	// Create presets slice from map
 	presets := make([]core.Preset, 0, len(m))

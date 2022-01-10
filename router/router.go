@@ -13,7 +13,7 @@ func NewEngine() *gin.Engine {
 
 	r := gin.Default()
 
-	handleFS(r, web.GetFS())
+	handleFS(r, web.FS())
 
 	return r
 }

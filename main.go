@@ -40,7 +40,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Create preset store
+	// Create and start preset store
 	presetStore := store.New(cfg.ConfigFile)
 	go presetStore.Start(ctx)
 
@@ -79,6 +79,6 @@ func main() {
 
 	// Stop hub and store
 	cancel()
-	<-hub.Done
-	<-presetStore.Done
+	<-hub.DoneC
+	<-presetStore.DoneC
 }

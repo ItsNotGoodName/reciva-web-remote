@@ -8,7 +8,7 @@ import (
 )
 
 type Store struct {
-	Done           chan struct{}
+	DoneC          chan struct{}
 	PresetChangedC chan struct{}
 	configFile     string
 	op             chan func(map[string]core.Preset)
@@ -30,7 +30,7 @@ func New(configFile string) *Store {
 	}
 
 	return &Store{
-		Done:           make(chan struct{}),
+		DoneC:          make(chan struct{}),
 		PresetChangedC: make(chan struct{}, 1),
 		configFile:     configFile,
 		op:             make(chan func(map[string]core.Preset)),
@@ -47,7 +47,7 @@ func (s *Store) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			close(s.Done)
+			close(s.DoneC)
 			return
 		case op := <-s.op:
 			op(s.presets)

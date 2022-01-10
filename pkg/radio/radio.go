@@ -10,7 +10,7 @@ import (
 )
 
 type Radio struct {
-	Done       chan struct{}         // Channel to signal that the radio is done.
+	DoneC      chan struct{}         // Channel to signal that the radio is done.
 	UUID       string                // UUID of the radio.
 	client     goupnp.ServiceClient  // client is the SOAP client.
 	getStateC  chan State            // getStateC is used to read the state.
@@ -23,7 +23,7 @@ type Radio struct {
 func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscription, pub *Pub) *Radio {
 	return &Radio{
 		UUID:       uuid,
-		Done:       make(chan struct{}),
+		DoneC:      make(chan struct{}),
 		client:     client,
 		getStateC:  make(chan State),
 		mutateC:    make(chan struct{}, 1),
@@ -38,7 +38,7 @@ func (rd *Radio) GetState(ctx context.Context) (*State, error) {
 	select {
 	case s := <-rd.getStateC:
 		return &s, nil
-	case <-rd.Done:
+	case <-rd.DoneC:
 		return nil, ErrRadioNotFound
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -80,7 +80,7 @@ func (rd *Radio) SetVolume(ctx context.Context, volume int) error {
 	select {
 	case rd.setVolumeC <- volume:
 		return nil
-	case <-rd.Done:
+	case <-rd.DoneC:
 		return ErrRadioNotFound
 	case <-ctx.Done():
 		return ctx.Err()
@@ -97,7 +97,7 @@ func (rd *Radio) RefreshVolume(ctx context.Context) error {
 	select {
 	case rd.setVolumeC <- volume:
 		return nil
-	case <-rd.Done:
+	case <-rd.DoneC:
 		return ErrRadioNotFound
 	case <-ctx.Done():
 		return ctx.Err()
@@ -130,7 +130,7 @@ func (rd *Radio) start(ctx context.Context, state State, mutator MutatorPort) {
 		select {
 		case <-ctx.Done():
 			<-rd.sub.Done
-			close(rd.Done)
+			close(rd.DoneC)
 			log.Println("Radio.start: stopped radio", rd.UUID)
 			return
 		case <-rd.mutateC:

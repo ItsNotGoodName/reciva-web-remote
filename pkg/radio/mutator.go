@@ -3,8 +3,9 @@ package radio
 import "context"
 
 type MutatorPort interface {
+	// GetTrigger that is called when mutation is needed.
 	GetTrigger() <-chan struct{}
-	// Called when radio starts and when Change() triggers.
+	// Mutate is called when radio starts and when the channel from GetTrigger() triggers.
 	Mutate(ctx context.Context, state *State) *State
 	// MutateNewURL is called when the URL state changes.
 	MutateNewURL(ctx context.Context, state *State) *State

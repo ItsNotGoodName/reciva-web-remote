@@ -14,7 +14,7 @@ type State struct {
 	IsMuted    *bool    `json:"isMuted,omitempty"`    // IsMuted represents if the Radio's volume is muted.
 	Metadata   *string  `json:"metadata,omitempty"`   // Metadata that is received from the stream url.
 	Name       string   `json:"name,omitempty"`       // Name of the radio.
-	NewURL     *string  `json:"newURL,omitempty"`     // NewURL represents the url of the stream.
+	NewURL     *string  `json:"newURL,omitempty"`     // NewURL represents the new url of the stream.
 	NumPresets int      `json:"numPresets,omitempty"` // NumPresets on the radio, it will not change after it is set.
 	Power      *bool    `json:"power,omitempty"`      // Power represents if the radio is not in standby.
 	Preset     int      `json:"preset,omitempty"`     // Preset is the current preset that is playing, -1 means it is unknown.

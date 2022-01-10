@@ -1,8 +1,11 @@
 package radio
 
 import (
+	"fmt"
 	"sync"
 )
+
+var ErrSubscriptionClosed = fmt.Errorf("subscription closed")
 
 type Pub struct {
 	subsMu sync.Mutex
@@ -23,57 +26,57 @@ func (p *Pub) Unsubscribe(sub *Sub) {
 	p.subsMu.Unlock()
 }
 
-func (p *Pub) Subscribe(sub *Sub) {
+func (p *Pub) Subscribe(sub *Sub) error {
+	var err error
+
 	p.subsMu.Lock()
-	p.subs[sub] = struct{}{}
+	if sub.open {
+		p.subs[sub] = struct{}{}
+	} else {
+		err = ErrSubscriptionClosed
+	}
 	p.subsMu.Unlock()
+
+	return err
 }
 
 func (p *Pub) publish(state *State) {
 	p.subsMu.Lock()
-
 	for sub := range p.subs {
 		if !sub.handle(state) {
 			delete(p.subs, sub)
 			sub.close()
 		}
 	}
-
 	p.subsMu.Unlock()
 }
 
 type Sub struct {
 	HandleC chan State
-
-	mu     sync.RWMutex
-	closed bool
+	open    bool
 }
 
 func NewSub(handleC chan State) *Sub {
 	return &Sub{
-		mu:      sync.RWMutex{},
-		closed:  false,
 		HandleC: handleC,
+		open:    true,
 	}
 }
 
+// handle sends state to subscriber.
 func (s *Sub) handle(state *State) bool {
-	s.mu.RLock()
 	select {
 	case s.HandleC <- *state:
-		s.mu.RUnlock()
 		return true
 	default:
-		s.mu.RUnlock()
 		return false
 	}
 }
 
+// close the sub.
 func (s *Sub) close() {
-	s.mu.RLock()
-	if !s.closed {
+	if s.open {
 		close(s.HandleC)
-		s.closed = true
+		s.open = false
 	}
-	s.mu.RUnlock()
 }

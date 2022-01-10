@@ -46,7 +46,6 @@ func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
 	// Subscribe to hub
 	subC := make(chan radio.State, 5)
 	sub := radio.NewSub(subC)
-	hub.Pub.Subscribe(sub)
 
 	defer func() {
 		//log.Println("ws.Handle(INFO): closing connection from", conn.RemoteAddr())
@@ -55,6 +54,11 @@ func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
 		close(mergeWriteC)
 		//log.Println("ws.Handle(INFO): connection closed from", conn.RemoteAddr())
 	}()
+
+	if err := hub.Pub.Subscribe(sub); err != nil {
+		log.Printf("ws.Handle(ERROR): %s could not subscribe to hub: %s", conn.RemoteAddr(), err)
+		return
+	}
 
 	for {
 		//log.Println("ws.Handle(INFO): looping in handle from", conn.RemoteAddr())

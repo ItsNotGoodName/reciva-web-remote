@@ -11,11 +11,11 @@ import (
 )
 
 type Hub struct {
-	Done         chan struct{}         // Done is closed when all radios are stopped.
-	Pub          *Pub                  // Pub is the state change event publisher
-	mutator      MutatorPort           // mutator is used to mutate the state of the radio.
-	cp           *upnpsub.ControlPoint // cp is used to create subscriptions.
-	discoverChan chan chan error       // discoverChan is used to discover radios.
+	DoneC     chan struct{}         // DoneC is closed when all radios are stopped.
+	Pub       *Pub                  // Pub is the state change event publisher
+	mutator   MutatorPort           // mutator is used to mutate the state of the radio.
+	cp        *upnpsub.ControlPoint // cp is used to create subscriptions.
+	discoverC chan chan error       // discoverC is used to discover radios.
 
 	radiosMu sync.RWMutex      // radiosMu is used to protect radios map.
 	radios   map[string]*Radio // radios is used to store all the Radios.
@@ -27,13 +27,13 @@ func NewHub(cp *upnpsub.ControlPoint) *Hub {
 
 func NewHubWithMutator(cp *upnpsub.ControlPoint, mutator MutatorPort) *Hub {
 	return &Hub{
-		Done:         make(chan struct{}),
-		Pub:          newPub(),
-		cp:           cp,
-		discoverChan: make(chan chan error),
-		mutator:      mutator,
-		radios:       make(map[string]*Radio),
-		radiosMu:     sync.RWMutex{},
+		DoneC:     make(chan struct{}),
+		Pub:       newPub(),
+		cp:        cp,
+		discoverC: make(chan chan error),
+		mutator:   mutator,
+		radios:    make(map[string]*Radio),
+		radiosMu:  sync.RWMutex{},
 	}
 }
 
@@ -94,10 +94,12 @@ func (h *Hub) IsValidRadio(uuid string) bool {
 }
 
 func (h *Hub) mutatorStart(ctx context.Context) {
+	log.Println("Hub.mutatorStart: starting mutator")
 	c := h.mutator.GetTrigger()
 	for {
 		select {
 		case <-ctx.Done():
+			log.Println("Hub.mutatorStart: stopped")
 			return
 		case <-c:
 			h.radiosMu.RLock()
@@ -110,6 +112,7 @@ func (h *Hub) mutatorStart(ctx context.Context) {
 }
 
 func (h *Hub) Start(ctx context.Context) {
+	log.Println("Hub.Start: starting hub")
 	go h.mutatorStart(ctx)
 
 	firstRun := true
@@ -159,13 +162,13 @@ func (h *Hub) Start(ctx context.Context) {
 		case <-ctx.Done():
 			h.radiosMu.RLock()
 			for _, radio := range h.radios {
-				<-radio.Done
+				<-radio.DoneC
 			}
-			close(h.Done)
+			close(h.DoneC)
 			h.radiosMu.RUnlock()
 			log.Println("Hub.Start: stopped")
 			return
-		case errC := <-h.discoverChan:
+		case errC := <-h.discoverC:
 			cancel, err = discover(cancel)
 			errC <- err
 		}
@@ -175,7 +178,7 @@ func (h *Hub) Start(ctx context.Context) {
 func (h *Hub) Discover() error {
 	errChan := make(chan error)
 	select {
-	case h.discoverChan <- errChan:
+	case h.discoverC <- errChan:
 		return <-errChan
 	default:
 		return ErrDiscovering

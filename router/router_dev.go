@@ -1,6 +1,6 @@
-//go:build !prod
+//go:build dev
 
-package server
+package router
 
 import (
 	"net/http"
@@ -9,17 +9,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func NewRouter() *gin.Engine {
+func NewEngine() *gin.Engine {
 	r := gin.Default()
 
-	// Enable CORS on gin
-	r.Use(CORS())
+	r.Use(cors())
 
 	return r
 }
 
 func NewUpgrader() *websocket.Upgrader {
-	// Ignore origin on websocket
 	return &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}

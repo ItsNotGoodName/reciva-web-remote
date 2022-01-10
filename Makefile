@@ -1,38 +1,37 @@
 NAME := reciva-web-remote
-TAGS := "prod"
 
-build: frontend backend
+npm:
+	npm i --prefix web
 
-release: frontend backend-linux backend-darwin backend-windows 
+build: generate backend
+
+release: generate backend-linux backend-darwin backend-windows 
 
 snapshot: 
 	goreleaser release --snapshot --rm-dist
 
-frontend:
-	npm run build --prefix web
+generate:
+	go generate ./...
 
 backend:
-	go build -tags=$(TAGS) -o bin/$(NAME)
+	go build -o bin/$(NAME)
 
 dev-frontend:
 	npm run dev --prefix web
 
 dev-backend:
-	go run .
-
-npm:
-	npm i --prefix web
+	go run --tags dev . 
 
 backend-linux:
-	GOOS=linux GOARCH=386 go build -o bin/$(NAME)-linux-386 -tags=$(TAGS)
-	GOOS=linux GOARCH=amd64 go build -o bin/$(NAME)-linux-amd64 -tags=$(TAGS)
-	GOOS=linux GOARCH=arm go build -o bin/$(NAME)-linux-arm -tags=$(TAGS)
-	GOOS=linux GOARCH=arm64 go build -o bin/$(NAME)-linux-arm64 -tags=$(TAGS)
+	GOOS=linux GOARCH=386 go build -o bin/$(NAME)-linux-386
+	GOOS=linux GOARCH=amd64 go build -o bin/$(NAME)-linux-amd64
+	GOOS=linux GOARCH=arm go build -o bin/$(NAME)-linux-arm
+	GOOS=linux GOARCH=arm64 go build -o bin/$(NAME)-linux-arm64
 
 backend-darwin:
-	GOOS=darwin GOARCH=amd64 go build -o bin/$(NAME)-darwin-amd64 -tags=$(TAGS)
-	GOOS=darwin GOARCH=arm64 go build -o bin/$(NAME)-darwin-arm64 -tags=$(TAGS)
+	GOOS=darwin GOARCH=amd64 go build -o bin/$(NAME)-darwin-amd64
+	GOOS=darwin GOARCH=arm64 go build -o bin/$(NAME)-darwin-arm64
 
 backend-windows:
-	GOOS=windows GOARCH=386 go build -o bin/$(NAME)-windows-386.exe -tags=$(TAGS)
-	GOOS=windows GOARCH=amd64 go build -o bin/$(NAME)-windows-amd64.exe -tags=$(TAGS)
+	GOOS=windows GOARCH=386 go build -o bin/$(NAME)-windows-386.exe
+	GOOS=windows GOARCH=amd64 go build -o bin/$(NAME)-windows-amd64.exe

@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"strconv"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 )
@@ -10,6 +11,7 @@ type Config struct {
 	CPort       int
 	ConfigFile  string
 	Port        int
+	PortStr     string
 	ShowInfo    bool
 	ShowVersion bool
 }
@@ -29,6 +31,8 @@ func NewConfig(options ...func(*Config)) *Config {
 	for _, option := range options {
 		option(c)
 	}
+
+	c.PortStr = strconv.Itoa(c.Port)
 
 	return c
 }

@@ -1,6 +1,6 @@
-//go:build prod
+//go:build !dev
 
-package server
+package router
 
 import (
 	"github.com/ItsNotGoodName/reciva-web-remote/web"
@@ -8,13 +8,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func NewRouter() *gin.Engine {
-	// Set release mode
+func NewEngine() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
 
-	web.AddWebRoutes(r)
+	handleFS(r, web.GetFS())
 
 	return r
 }

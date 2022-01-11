@@ -134,7 +134,12 @@ func (rd *Radio) start(ctx context.Context, state State, mutator MutatorPort) {
 			log.Println("Radio.start: stopped radio", rd.UUID)
 			return
 		case <-rd.mutateC:
-			rd.publish(mutator.Mutate(ctx, &state))
+			diffState := mutator.Mutate(ctx, &state)
+			if state.ValidPreset(state.Preset) == nil {
+				state.Title = state.Presets[state.Preset-1].Name
+				diffState.Title = state.Title
+			}
+			rd.publish(diffState)
 		case rd.getStateC <- state:
 		case newVolume := <-rd.setVolumeC:
 			// Volume change

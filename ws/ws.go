@@ -35,11 +35,11 @@ func Handle(conn *websocket.Conn, hub *radio.Hub, uuid string) {
 	go handleRead(conn, readC)
 
 	// Start write goroutine
-	writeC := make(chan *radio.State, 1)
+	writeC := make(chan *radio.State)
 	writeDoneC := make(chan struct{})
 	go handleWrite(conn, writeC, writeDoneC)
 
-	// Start buffering write goroutine
+	// Start merge write goroutine
 	mergeWriteC := make(chan *radio.State)
 	go mergeWrite(mergeWriteC, writeC)
 

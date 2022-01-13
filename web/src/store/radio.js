@@ -20,7 +20,7 @@ export default {
       return state.radioUUID
     },
     radioLoaded(state) {
-      return state.radio.uuid == state.radioUUID
+      return state.radio.uuid == state.radioUUID && state.radioWSConnected
     }
   },
   mutations: {
@@ -43,9 +43,16 @@ export default {
     },
     SET_RADIO_UUID(state, radioUUID) {
       state.radioUUID = radioUUID
+      localStorage.lastRadioUUID = radioUUID;
     },
     SET_RADIOS(state, radios) {
       state.radios = radios
+      for (let i in radios) {
+        if (state.radios[i].uuid == state.radioUUID) {
+          return
+        }
+      }
+      state.radioUUID = ''
     },
     SET_RADIOS_DISCOVERING(state, radiosDiscovering) {
       state.radiosDiscovering = radiosDiscovering
@@ -64,12 +71,24 @@ export default {
     }
   },
   actions: {
+    initRadio({ dispatch, state }) {
+      return dispatch('listRadios').then(() => {
+        if (localStorage.lastRadioUUID) {
+          for (let radio of state.radios) {
+            if (radio.uuid == localStorage.lastRadioUUID) {
+              dispatch('setRadioUUID', radio.uuid);
+              return
+            }
+          }
+        }
+      })
+    },
     discoverRadios({ commit, dispatch }) {
       commit("SET_RADIOS_DISCOVERING", true);
       return api.discoverRadios()
         .then(({ ok, error }) => {
           if (ok) {
-            dispatch("listRadios");
+            return dispatch("listRadios");
           } else {
             console.error(error)
           }
@@ -98,8 +117,9 @@ export default {
           commit("SET_RADIOS_LOADING", false)
         })
     },
-    refreshRadio({ commit, state }) {
+    refreshRadio({ commit, dispatch, state }) {
       commit("SET_RADIO_REFRESHING", true)
+      dispatch("refreshRadioWS")
       return api.refreshRadio(state.radioUUID)
         .then(({ ok, error }) => {
           if (!ok) {
@@ -129,7 +149,7 @@ export default {
         })
     },
     toggleRadioPower({ commit, state }) {
-      power = !state.radio.power
+      let power = !state.radio.power
       return api.patchRadio(state.radioUUID, { power })
         .then(({ ok, error }) => {
           if (ok) {
@@ -142,12 +162,10 @@ export default {
           console.error(error)
         })
     },
-    setRadioVolume({ commit }, volume) {
+    setRadioVolume({ state }, volume) {
       return api.patchRadio(state.radioUUID, { volume })
         .then(({ ok, error }) => {
-          if (ok) {
-            commit('SET_RADIO_VOLUME', volume)
-          } else {
+          if (!ok) {
             console.error(error)
           }
         })
@@ -155,7 +173,7 @@ export default {
           console.error(error)
         })
     },
-    setRadioPreset({ commit }, preset) {
+    setRadioPreset({ commit, state }, preset) {
       return api.patchRadio(state.radioUUID, { preset })
         .then(({ ok, error }) => {
           if (ok) {
@@ -205,6 +223,7 @@ export default {
 
       let onDisconnect = function () {
         commit("SET_RADIO_WS_CONNECTED", false);
+        commit("SET_RADIO_WS_CONNECTING", false);
       };
 
       ws.addEventListener("close", onDisconnect);

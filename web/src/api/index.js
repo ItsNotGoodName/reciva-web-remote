@@ -21,7 +21,7 @@ export default {
     return jsonResponse(fetch(API_URL + "/v1/preset", { method: "POST", body: JSON.stringify(preset) }))
   },
   discoverRadios() {
-    return emptyResponse(fetch(API_URL + "/v1/radios", { method: "POST" }))
+    return jsonResponse(fetch(API_URL + "/v1/radios", { method: "POST" }))
   },
   listRadios() {
     return jsonResponse(fetch(API_URL + "/v1/radios"))

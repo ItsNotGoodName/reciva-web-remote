@@ -1,21 +1,18 @@
 {
-  "name": "reciva-web-remote-vue",
+  "name": "web",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview --host"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "primeflex": "^3.1.0",
-    "primeicons": "^5.0.0",
-    "primevue": "^3.8.2",
-    "vue": "^3.2.16",
+    "vue": "^3.2.25",
     "vuex": "^4.0.2"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^1.9.3",
-    "vite": "^2.6.4",
-    "vite-plugin-pwa": "^0.11.3"
+    "@vitejs/plugin-vue": "^2.0.0",
+    "vite": "^2.7.2",
+    "vite-plugin-pwa": "^0.11.12"
   }
 }

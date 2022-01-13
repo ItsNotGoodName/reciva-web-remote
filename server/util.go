@@ -8,8 +8,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type RenderJSON struct {
+	Ok     bool        `json:"ok"`
+	Code   int         `json:"code"`
+	Result interface{} `json:"result,omitempty"`
+	Error  string      `json:"error,omitempty"`
+}
+
 func renderError(c *gin.Context, code int, err error) {
-	c.JSON(code, gin.H{"err": err.Error()})
+	c.JSON(code, RenderJSON{
+		Ok:    false,
+		Code:  code,
+		Error: err.Error(),
+	})
+}
+
+func renderJSON(c *gin.Context, code int, result interface{}) {
+	c.JSON(code, RenderJSON{
+		Ok:     true,
+		Code:   code,
+		Result: result,
+	})
 }
 
 // getPresetURLS returns all urls for presets.

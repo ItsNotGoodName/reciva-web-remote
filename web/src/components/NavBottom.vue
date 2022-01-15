@@ -1,8 +1,8 @@
 <template>
   <nav
-    class="navbar is-fixed-bottom"
+    class="navbar is-fixed-bottom p-2"
     role="navigation"
-    aria-label="main navigation"
+    aria-label="bottom navigation"
   >
     <div class="columns is-gapless" style="width: 100%">
       <div class="column m-2">

@@ -30,10 +30,10 @@ export default {
     return { loading: false };
   },
   computed: {
+    ...mapGetters(["radioLoaded"]),
     ...mapState({
       radio: (state) => state.r.radio,
     }),
-    ...mapGetters(["radioLoaded"]),
   },
   methods: {
     setVolume() {

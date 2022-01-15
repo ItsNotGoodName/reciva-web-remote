@@ -3,8 +3,8 @@
     <RadioVolumeChange icon="fa-volume-off" title="Volume Down" :change="-5" />
     <RadioVolume />
     <RadioVolumeChange icon="fa-volume-up" title="Volume Up" :change="5" />
-    <RadioPower class="is-flex-grow-1" />
     <RadioRefresh />
+    <RadioPower class="is-flex-grow-1" />
   </div>
 </template>
 

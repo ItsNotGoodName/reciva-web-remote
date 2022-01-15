@@ -1,12 +1,13 @@
 <template>
   <button
-    title="Volume"
+    :title="'Volume ' + (radio.isMuted ? 'Muted' : radio.volume)"
     class="button"
     :class="{
       'is-loading': radioVolumeRefreshing || !radioLoaded,
     }"
     :disabled="radioVolumeRefreshing || !radioLoaded"
     @click="refreshRadioVolume"
+    style="min-width: 4rem"
   >
     <span v-if="radio.isMuted" class="icon">
       <i class="fas fa-volume-off"></i>

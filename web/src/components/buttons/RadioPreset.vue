@@ -1,47 +1,44 @@
 <template>
   <button
-    v-if="radio.preset == preset.number"
-    :title="preset.name"
-    class="button is-flex is-info"
-    :class="{ 'is-loading': loading }"
     @click="setPreset"
+    class="is-fullwidth wrap-button-text"
+    :title="preset.name"
+    :class="[
+      { 'is-loading': this.loading },
+      selected ? 'button is-info' : 'button',
+    ]"
+    :disabled="loading"
   >
-    <span class="tag is-white">{{ preset.number }}</span>
-    <span class="is-flex-grow-1">
-      {{ preset.name }}
+    <span class="mr-2" :class="selected ? 'tag is-white' : 'tag is-info'">
+      {{ preset.number }}
     </span>
-  </button>
-  <button
-    v-else
-    :title="preset.name"
-    class="button is-flex"
-    :class="{ 'is-loading': loading }"
-    @click="setPreset"
-  >
-    <span class="tag is-info">{{ preset.number }}</span>
-    <span class="is-flex-grow-1">
+    <span class="is-flex-grow-1" style="word-break: break-all">
       {{ preset.name }}
     </span>
   </button>
 </template>
 
 <script>
-import { mapState } from "vuex";
-
 export default {
   data() {
-    return { loading: false };
+    return {
+      loading: false,
+    };
   },
   props: {
     preset: {
       type: Object,
       required: true,
     },
+    radio: {
+      type: Object,
+      required: true,
+    },
   },
   computed: {
-    ...mapState({
-      radio: (state) => state.r.radio,
-    }),
+    selected() {
+      return this.radio.preset == this.preset.number;
+    },
   },
   methods: {
     setPreset() {
@@ -55,4 +52,9 @@ export default {
 };
 </script>
 
-<style></style>
+<style scoped>
+.wrap-button-text {
+  height: 100%;
+  white-space: normal;
+}
+</style>

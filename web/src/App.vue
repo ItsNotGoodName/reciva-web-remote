@@ -2,7 +2,7 @@
   <div>
     <NavTop />
     <NavBottom />
-    <div style="margin-bottom: 4rem; margin-top: 1rem">
+    <div style="margin-bottom: 6rem; margin-top: 1rem">
       <RadioPreset />
     </div>
   </div>

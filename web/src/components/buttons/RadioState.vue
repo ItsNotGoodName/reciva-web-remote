@@ -1,14 +1,12 @@
 <template>
   <button
-    title="State"
     class="button is-rounded is-info"
     :class="{ 'is-loading': !radioLoaded }"
+    style="width: 0%"
+    :title="state.title"
   >
     <span class="icon">
-      <i v-if="radio.state == 'Playing'" class="fas ml-1 fa fa-play" />
-      <i v-else-if="radio.state == 'Connecting'" class="fas fa-sync fa-pulse" />
-      <i v-else-if="radio.state == 'Stopped'" class="fas fa-pause" />
-      <i v-else class="fas fa-question" />
+      <i :class="state.iconClass" />
     </span>
   </button>
 </template>
@@ -22,6 +20,17 @@ export default {
     ...mapState({
       radio: (state) => state.r.radio,
     }),
+    state() {
+      if (this.radio.state == "Playing") {
+        return { iconClass: "fas ml-1 fa fa-play", title: "Playing" };
+      } else if (this.radio.state == "Connecting") {
+        return { iconClass: "fas fa-sync fa-pulse", title: "Connecting" };
+      } else if (this.radio.state == "Stopped") {
+        return { iconClass: "fas fa-pause", title: "Stopped" };
+      } else {
+        return { iconClass: "fas fa-question", title: "Unknown" };
+      }
+    },
   },
 };
 </script>

@@ -1,19 +1,15 @@
 <template>
   <button
-    title="Power"
     class="button"
-    :class="{
-      'is-loading': loading || !radioLoaded,
-      'is-success': radio.power,
-      'is-danger': !radio.power,
-    }"
+    :title="power.title"
+    :class="[{ 'is-loading': loading || !radioLoaded }, power.class]"
     :disabled="loading || !radioLoaded"
     @click="togglePower"
   >
     <span class="icon is-small mr-1">
       <i class="fas fa-power-off"></i>
     </span>
-    {{ radio.power ? "ON" : "OFF" }}
+    {{ power.text }}
   </button>
 </template>
 <script>
@@ -24,10 +20,25 @@ export default {
     return { loading: false };
   },
   computed: {
+    ...mapGetters(["radioLoaded"]),
     ...mapState({
       radio: (state) => state.r.radio,
     }),
-    ...mapGetters(["radioLoaded"]),
+    power() {
+      if (this.radio.power) {
+        return {
+          text: "ON",
+          title: "Powered ON",
+          class: "is-success",
+        };
+      } else {
+        return {
+          text: "OFF",
+          title: "Powered OFF",
+          class: "is-danger",
+        };
+      }
+    },
   },
   methods: {
     togglePower() {

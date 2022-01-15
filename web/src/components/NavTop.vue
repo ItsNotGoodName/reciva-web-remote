@@ -2,7 +2,7 @@
   <nav
     class="navbar is-fixed-top is-flex p-2"
     role="navigation"
-    aria-label="main navigation"
+    aria-label="top navigation"
     v-if="radioSelected"
   >
     <RadioState class="mr-2" />

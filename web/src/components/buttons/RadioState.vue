@@ -1,7 +1,7 @@
 <template>
   <button
-    class="button is-rounded is-info"
-    :class="{ 'is-loading': !radioLoaded }"
+    class="button is-rounded"
+    :class="[{ 'is-loading': !radioLoaded }, state.buttonClass]"
     style="width: 0%"
     :title="state.title"
   >
@@ -22,13 +22,29 @@ export default {
     }),
     state() {
       if (this.radio.state == "Playing") {
-        return { iconClass: "fas ml-1 fa fa-play", title: "Playing" };
+        return {
+          buttonClass: "is-success",
+          iconClass: "fas ml-1 fa fa-play",
+          title: "Playing",
+        };
       } else if (this.radio.state == "Connecting") {
-        return { iconClass: "fas fa-sync fa-pulse", title: "Connecting" };
+        return {
+          buttonClass: "is-warning",
+          iconClass: "fas fa-sync fa-pulse",
+          title: "Connecting",
+        };
       } else if (this.radio.state == "Stopped") {
-        return { iconClass: "fas fa-pause", title: "Stopped" };
+        return {
+          buttonClass: "is-danger",
+          iconClass: "fas fa-pause",
+          title: "Stopped",
+        };
       } else {
-        return { iconClass: "fas fa-question", title: "Unknown" };
+        return {
+          buttonClass: "is-info",
+          iconClass: "fas fa-question",
+          title: "Unknown",
+        };
       }
     },
   },

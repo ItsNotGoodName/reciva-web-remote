@@ -33,6 +33,8 @@ func handlePresetList(presetStore core.PresetStore) gin.HandlerFunc {
 			return
 		}
 
+		sortPresets(presets)
+
 		renderJSON(c, http.StatusOK, presets)
 	}
 }

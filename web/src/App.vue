@@ -1,10 +1,10 @@
 <template>
   <div>
     <NavTop />
+    <NavMargin>
+      <MainBody />
+    </NavMargin>
     <NavBottom />
-    <div style="margin-bottom: 6rem; margin-top: 1rem">
-      <RadioPreset />
-    </div>
   </div>
 </template>
 
@@ -13,8 +13,9 @@ import { onBeforeMount } from "vue";
 import { useStore } from "vuex";
 
 import NavTop from "./components/NavTop.vue";
-import RadioPreset from "./components/RadioPreset.vue";
 import NavBottom from "./components/NavBottom.vue";
+import NavMargin from "./components/NavMargin.vue";
+import MainBody from "./components/MainBody.vue";
 
 const store = useStore();
 

@@ -1,6 +1,9 @@
 <template>
   <div class="field has-addons is-flex">
     <div class="control">
+      <Page />
+    </div>
+    <div class="control">
       <RadiosDiscover />
     </div>
     <div class="control is-flex-grow-1">
@@ -24,11 +27,13 @@ import { mapState } from "vuex";
 
 import RadiosDiscover from "./buttons/RadiosDiscover.vue";
 import RadiosList from "./buttons/RadiosList.vue";
+import Page from "./buttons/Page.vue";
 
 export default {
   components: {
     RadiosDiscover,
     RadiosList,
+    Page,
   },
   computed: {
     ...mapState({

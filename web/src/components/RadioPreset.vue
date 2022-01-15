@@ -1,7 +1,6 @@
 <template>
-  <div class="mx-auto columns is-multiline">
+  <div v-if="radioLoaded" class="mx-auto columns is-multiline">
     <div
-      v-if="radioLoaded"
       v-for="preset in radio.presets"
       :key="preset.number"
       class="column is-one-third"
@@ -9,6 +8,7 @@
       <RadioPreset :preset="preset" :radio="radio" />
     </div>
   </div>
+  <progress v-else-if="radioSelected" class="progress is-info" max="100" />
 </template>
 
 <script>
@@ -18,7 +18,7 @@ import RadioPreset from "./buttons/RadioPreset.vue";
 
 export default {
   computed: {
-    ...mapGetters(["radioLoaded"]),
+    ...mapGetters(["radioLoaded", "radioSelected"]),
     ...mapState({
       radio: (state) => state.r.radio,
     }),

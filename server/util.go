@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"log"
+	"sort"
+	"strings"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/gin-gonic/gin"
@@ -44,4 +46,10 @@ func getPresetURLS(p core.PresetStore) []string {
 	}
 
 	return urls
+}
+
+func sortPresets(presets []core.Preset) {
+	sort.Slice(presets, func(i, j int) bool {
+		return strings.Compare(presets[i].URL, presets[j].URL) < 0
+	})
 }

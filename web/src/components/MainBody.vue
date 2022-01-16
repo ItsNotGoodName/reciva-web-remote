@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container px-2" style="margin-top: 1rem; margin-bottom: 6rem">
     <PresetPlay v-if="page == 'play'" />
     <PresetEdit v-else />
   </div>
@@ -22,4 +22,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

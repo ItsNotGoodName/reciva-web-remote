@@ -1,7 +1,11 @@
 <template>
   <div class="field has-addons is-flex">
     <div class="control">
-      <b-button title="Toggle Page" @click="togglePage">
+      <b-button
+        title="Toggle Page"
+        :class="{ 'is-info': page === 'play' }"
+        @click="togglePage"
+      >
         <b-icon icon="fa-bars" />
       </b-button>
     </div>
@@ -57,6 +61,7 @@ export default {
       radios: (state) => state.r.radios,
       radiosLoading: (state) => state.r.radiosLoading,
       radiosDiscovering: (state) => state.r.radiosDiscovering,
+      page: (state) => state.page,
     }),
     radioUUID: {
       get() {
@@ -70,4 +75,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

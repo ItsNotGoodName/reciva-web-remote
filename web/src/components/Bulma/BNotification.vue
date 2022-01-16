@@ -1,7 +1,8 @@
 <template>
-  <span class="tag">
+  <div class="notification">
+    <button class="delete" @click="$emit('close')"></button>
     <slot></slot>
-  </span>
+  </div>
 </template>
 
 <script>

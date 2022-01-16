@@ -1,8 +1,9 @@
 <template>
   <div>
     <NavTop />
+    <Notifications />
     <MainBody />
-    <NavBot />
+    <NavBottom />
   </div>
 </template>
 
@@ -12,7 +13,8 @@ import { useStore } from "vuex";
 
 import NavTop from "./components/NavTop/index.vue";
 import MainBody from "./components/MainBody.vue";
-import NavBot from "./components/NavBot/index.vue";
+import NavBottom from "./components/NavBottom/index.vue";
+import Notifications from "./components/Notifications.vue";
 
 const store = useStore();
 
@@ -21,4 +23,4 @@ onBeforeMount(() => {
 });
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

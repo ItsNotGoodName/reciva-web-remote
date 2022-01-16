@@ -4,16 +4,16 @@
     :class="{ 'is-active': isActive }"
     @mouseleave="isActive = false"
   >
-    <div class="dropdown-trigger">
+    <div class="dropdown-trigger is-flex-grow-1">
       <b-button
         :title="radio.title"
-        :loading="!radioLoaded"
-        class="is-info"
+        :loading="!radioLoaded && radioSelected"
+        class="is-info is-justify-content-flex-start is-fullwidth"
         aria-haspopup="true"
         aria-controls="title-dropdown-menu"
         @click="isActive = !isActive"
       >
-        <b-tag class="mr-2">{{ radio.preset }}</b-tag>
+        <b-tag class="mr-2">{{ radio.preset || 0 }}</b-tag>
         <span>
           {{ radio.title }}
         </span>
@@ -61,7 +61,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["radioLoaded"]),
+    ...mapGetters(["radioLoaded", "radioSelected"]),
     ...mapState({
       radio: (state) => state.r.radio,
     }),
@@ -69,4 +69,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

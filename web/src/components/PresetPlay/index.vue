@@ -1,7 +1,11 @@
 <template>
-  <div v-if="radioLoaded">
-    <div v-for="preset in radio.presets" :key="preset.number">
-      <RadioPreset :preset="preset" :radio="radio" />
+  <div v-if="radioLoaded" class="columns is-multiline">
+    <div
+      v-for="preset in radio.presets"
+      :key="preset.number"
+      class="column is-one-third"
+    >
+      <RadioPreset class="is-fullwidth" :preset="preset" :radio="radio" />
     </div>
   </div>
   <progress v-else-if="radioSelected" class="progress is-info" max="100" />
@@ -23,4 +27,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

@@ -1,34 +1,34 @@
 <template>
-  <div>
-    <div v-if="!presetsLoading" class="table-container">
-      <table class="table is-striped is-hoverable">
-        <tbody>
-          <tr>
-            <th>Edit</th>
-            <th>URL</th>
-            <th>New Name</th>
-            <th>New URL</th>
-          </tr>
-          <tr
-            v-for="preset in presets"
-            :key="preset.url"
-            :class="{ 'is-info': radio.url == preset.url }"
-          >
-            <td>
-              <preset-edit :preset="preset" />
-            </td>
-            <td>
-              {{ preset.url }}
-            </td>
-            <td>{{ preset.newName }}</td>
-            <td>{{ preset.newUrl }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <progress v-else class="progress is-success" max="100" />
-    <preset-form />
+  <div v-if="!presetsLoading" class="is-flex">
+    <table class="table is-bordered is-striped is-narrow is-hoverable mx-auto">
+      <thead>
+        <tr>
+          <th>Edit</th>
+          <th>URL</th>
+          <th>New Name</th>
+          <th>New URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="preset in presets"
+          :key="preset.url"
+          :class="{ 'is-info': radio.url == preset.url }"
+        >
+          <td>
+            <preset-edit :preset="preset" />
+          </td>
+          <td>
+            {{ preset.url }}
+          </td>
+          <td>{{ preset.newName }}</td>
+          <td>{{ preset.newUrl }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+  <progress v-else class="progress is-success" max="100" />
+  <preset-form />
 </template>
 
 <script>
@@ -55,4 +55,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

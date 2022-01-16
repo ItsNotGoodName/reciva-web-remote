@@ -1,13 +1,14 @@
 <template>
   <b-button
-    :class="{ 'button is-info': selected }"
+    class="is-justify-content-flex-start is-clipped"
+    :class="{ 'is-info': selected }"
     :loading="loading"
     :title="preset.name"
     @click="setPreset"
   >
-    <span class="mr-2" :class="selected ? 'tag is-white' : 'tag is-info'">
+    <b-tag class="mr-2" :class="selected ? 'is-white' : 'is-info'">
       {{ preset.number }}
-    </span>
+    </b-tag>
     <span class="is-flex-grow-1">
       {{ preset.name }}
     </span>
@@ -16,10 +17,12 @@
 
 <script>
 import BButton from "../Bulma/BButton.vue";
+import BTag from "../Bulma/BTag.vue";
 
 export default {
   components: {
     BButton,
+    BTag,
   },
   data() {
     return {
@@ -53,4 +56,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

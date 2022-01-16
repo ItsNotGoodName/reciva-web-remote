@@ -1,17 +1,15 @@
 <template>
   <nav
-    class="navbar is-fixed-top"
+    class="navbar is-fixed-top is-flex p-2"
     role="navigation"
     aria-label="top navigation"
   >
-    <RadioState />
-    <RadioTitle />
+    <RadioState class="mr-2" />
+    <RadioTitle class="is-flex-grow-1" />
   </nav>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-
 import RadioState from "./RadioState.vue";
 import RadioTitle from "./RadioTitle.vue";
 
@@ -20,12 +18,11 @@ export default {
     RadioState,
     RadioTitle,
   },
-  computed: {
-    ...mapGetters({
-      radioSelected: "radioSelected",
-    }),
-  },
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped>
+nav {
+  border-bottom: 1px solid #ddd;
+}
+</style>

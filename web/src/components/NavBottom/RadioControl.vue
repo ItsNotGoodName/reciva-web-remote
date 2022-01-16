@@ -1,5 +1,5 @@
 <template>
-  <div v-if="radioSelected" class="buttons has-addons is-flex">
+  <div class="buttons has-addons is-flex">
     <RadioVolumeChange title="Volume Down" :change="-5" icon="fa-volume-down" />
     <RadioVolume />
     <RadioVolumeChange title="Volume Up" :change="5" icon="fa-volume-up" />
@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { mapState } from "vuex";
 
 import BButton from "../Bulma/BButton.vue";
 import BIcon from "../Bulma/BIcon.vue";
@@ -28,7 +28,6 @@ export default {
     RadioVolumeChange,
   },
   computed: {
-    ...mapGetters(["radioSelected"]),
     ...mapState({
       radiosLoading: (state) => state.r.radiosLoading,
     }),
@@ -36,4 +35,4 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped></style>

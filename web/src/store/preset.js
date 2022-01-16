@@ -1,4 +1,5 @@
 import api from "../api";
+import { MESSAGE_ERROR, MESSAGE_SUCCESS } from "../constants";
 
 export default {
   state: () => ({
@@ -44,28 +45,31 @@ export default {
     },
   },
   actions: {
-    listPresets({ commit, state }) {
+    listPresets({ commit, dispatch, state }) {
       if (state.presetsLoading) {
         return Promise.resolve();
       }
 
       commit("SET_PRESETS_LOADING", true);
+      commit("SET_PRESETS", []);
       return api.listPresets()
         .then(({ ok, result, error }) => {
           if (ok) {
             commit("SET_PRESETS", result);
           } else {
             console.error(error);
+            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
           }
         })
-        .catch(err => {
-          console.error(err);
+        .catch(error => {
+          console.error(error);
+          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
         })
         .finally(() => {
           commit("SET_PRESETS_LOADING", false);
         })
     },
-    submitPreset({ commit, state }) {
+    submitPreset({ commit, dispatch, state }) {
       if (state.presetLoading) {
         return Promise.resolve();
       }
@@ -76,18 +80,21 @@ export default {
           if (ok) {
             commit("MERGE_PRESET", result);
             commit("SET_PRESET_VISIBLE", false);
+            dispatch("addMessage", { type: MESSAGE_SUCCESS, text: "preset updated" });
           } else {
             console.error(error);
+            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
           }
         })
-        .catch(err => {
-          console.error(err);
+        .catch(error => {
+          console.error(error);
+          dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
         })
         .finally(() => {
           commit("SET_PRESET_LOADING", false);
         })
     },
-    showPreset({ commit, state }, url) {
+    showPreset({ commit, dispatch, state }, url) {
       if (state.presetLoading) {
         return Promise.resolve();
       }
@@ -100,10 +107,12 @@ export default {
             commit("SET_PRESET_VISIBLE", true);
           } else {
             console.error(error);
+            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
           }
         })
-        .catch(err => {
-          console.error(err);
+        .catch(error => {
+          console.error(error);
+          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
         })
         .finally(() => {
           commit("SET_PRESET_LOADING", false);

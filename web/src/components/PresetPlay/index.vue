@@ -1,10 +1,6 @@
 <template>
-  <div v-if="radioLoaded" class="mx-auto columns is-multiline">
-    <div
-      v-for="preset in radio.presets"
-      :key="preset.number"
-      class="column is-one-third"
-    >
+  <div v-if="radioLoaded">
+    <div v-for="preset in radio.presets" :key="preset.number">
       <RadioPreset :preset="preset" :radio="radio" />
     </div>
   </div>
@@ -14,7 +10,7 @@
 <script>
 import { mapState, mapGetters } from "vuex";
 
-import RadioPreset from "./buttons/RadioPreset.vue";
+import RadioPreset from "./RadioPreset.vue";
 
 export default {
   computed: {

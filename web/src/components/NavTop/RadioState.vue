@@ -1,20 +1,24 @@
 <template>
-  <button
-    class="button is-rounded"
-    :class="[{ 'is-loading': !radioLoaded }, state.buttonClass]"
-    style="width: 0%"
+  <b-button
+    :class="state.buttonClass"
+    :loading="!radioLoaded"
     :title="state.title"
   >
-    <span class="icon">
-      <i :class="state.iconClass" />
-    </span>
-  </button>
+    <b-icon :icon="state.iconClass" />
+  </b-button>
 </template>
 
 <script>
 import { mapState, mapGetters } from "vuex";
 
+import BButton from "../Bulma/BButton.vue";
+import BIcon from "../Bulma/BIcon.vue";
+
 export default {
+  components: {
+    BButton,
+    BIcon,
+  },
   computed: {
     ...mapGetters(["radioLoaded"]),
     ...mapState({
@@ -24,25 +28,25 @@ export default {
       if (this.radio.state == "Playing") {
         return {
           buttonClass: "is-success",
-          iconClass: "fas ml-1 fa fa-play",
+          iconClass: "ml-1 fa-play",
           title: "Playing",
         };
       } else if (this.radio.state == "Connecting") {
         return {
           buttonClass: "is-warning",
-          iconClass: "fas fa-sync fa-pulse",
+          iconClass: "fa-sync fa-pulse",
           title: "Connecting",
         };
       } else if (this.radio.state == "Stopped") {
         return {
           buttonClass: "is-danger",
-          iconClass: "fas fa-pause",
+          iconClass: "fa-pause",
           title: "Stopped",
         };
       } else {
         return {
           buttonClass: "is-info",
-          iconClass: "fas fa-question",
+          iconClass: "fa-question",
           title: "Unknown",
         };
       }

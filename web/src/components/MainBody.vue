@@ -1,28 +1,23 @@
 <template>
   <div class="container">
-    <RadioPreset v-if="page == 'play'" />
-    <PresetTable v-else />
+    <PresetPlay v-if="page == 'play'" />
+    <PresetEdit v-else />
   </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
 
-import RadioPreset from "./RadioPreset.vue";
-import PresetTable from "./PresetTable.vue";
+import PresetPlay from "./PresetPlay/index.vue";
+import PresetEdit from "./PresetEdit/index.vue";
 
 export default {
-  data() {
-    return {
-      loading: false,
-    };
-  },
   computed: {
     ...mapState(["page"]),
   },
   components: {
-    RadioPreset,
-    PresetTable,
+    PresetPlay,
+    PresetEdit,
   },
 };
 </script>

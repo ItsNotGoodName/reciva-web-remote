@@ -1,28 +1,26 @@
 <template>
-  <button
-    :title="'Volume ' + (radio.isMuted ? 'Muted' : radio.volume)"
-    class="button"
-    :class="{
-      'is-loading': radioVolumeRefreshing || !radioLoaded,
-    }"
-    :disabled="radioVolumeRefreshing || !radioLoaded"
+  <b-button
+    :title="'Volume ' + (this.radio.isMuted ? 'Muted' : this.radio.volume)"
+    :loading="radioVolumeRefreshing || !radioLoaded"
     @click="refreshRadioVolume"
-    style="min-width: 4rem"
   >
-    <span v-if="radio.isMuted" class="icon">
-      <i class="fas fa-volume-off"></i>
-    </span>
+    <b-icon v-if="radio.isMuted" icon="fa-volume-mute" />
     <span v-else>
       {{ radio.volume }}
     </span>
-  </button>
+  </b-button>
 </template>
+
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 
+import BButton from "../Bulma/BButton.vue";
+import BIcon from "../Bulma/BIcon.vue";
+
 export default {
-  data() {
-    return { loading: false };
+  components: {
+    BButton,
+    BIcon,
   },
   computed: {
     ...mapState({
@@ -36,4 +34,5 @@ export default {
   },
 };
 </script>
+
 <style></style>

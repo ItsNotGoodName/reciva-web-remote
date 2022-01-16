@@ -1,38 +1,40 @@
 <template>
   <div
-    class="dropdown is-flex"
+    class="dropdown"
     :class="{ 'is-active': isActive }"
     @mouseleave="isActive = false"
   >
-    <div class="dropdown-trigger is-flex-grow-1">
-      <button
+    <div class="dropdown-trigger">
+      <b-button
         :title="radio.title"
-        class="button is-info has-text-left is-fullwidth"
-        :class="{ 'is-loading': !radioLoaded }"
+        :loading="!radioLoaded"
+        class="is-info"
         aria-haspopup="true"
         aria-controls="title-dropdown-menu"
         @click="isActive = !isActive"
       >
-        <span class="tag mr-2 is-white">{{ radio.preset }}</span>
-        <span class="is-flex-grow-1">
+        <b-tag class="mr-2">{{ radio.preset }}</b-tag>
+        <span>
           {{ radio.title }}
         </span>
-      </button>
+      </b-button>
     </div>
     <div class="dropdown-menu" id="title-dropdown-menu" role="menu">
       <div class="dropdown-content">
         <div class="dropdown-item">
-          <span class="tag mr-2 is-rounded is-warning">Metadata</span>
-          {{ radio.metadata }}
+          <b-tag class="is-warning mr-2">Metadata</b-tag>
+          <span>
+            {{ radio.metadata }}
+          </span>
         </div>
         <div class="dropdown-item">
-          <span class="tag mr-2 is-rounded is-info">URL</span>
+          <b-tag class="is-info mr-2">URL</b-tag>
           <a :href="radio.url">
             {{ radio.url }}
           </a>
         </div>
         <div class="dropdown-item">
-          <span class="tag mr-2 is-rounded is-success">New URL</span>
+          <b-tag class="is-success mr-2">New URL</b-tag>
           <a :href="radio.newURL">
             {{ radio.newURL }}
           </a>
@@ -45,7 +47,14 @@
 <script>
 import { mapState, mapGetters } from "vuex";
 
+import BButton from "../Bulma/BButton.vue";
+import BTag from "../Bulma/BTag.vue";
+
 export default {
+  components: {
+    BButton,
+    BTag,
+  },
   data() {
     return {
       isActive: false,
@@ -60,8 +69,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.button.has-text-left {
-  justify-content: flex-start;
-}
-</style>
+<style></style>

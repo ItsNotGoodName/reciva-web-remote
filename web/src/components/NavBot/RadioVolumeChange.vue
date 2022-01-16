@@ -1,21 +1,20 @@
 <template>
-  <button
-    class="button"
-    :class="{
-      'is-loading': loading || !radioLoaded,
-    }"
-    :disabled="loading || !radioLoaded"
-    @click="setVolume"
-  >
-    <span class="icon">
-      <i class="fas" :class="icon"></i>
-    </span>
-  </button>
+  <b-button :loading="loading" @click="setVolume">
+    <b-icon :icon="icon" />
+  </b-button>
 </template>
+
 <script>
-import { mapState, mapGetters } from "vuex";
+import { mapState } from "vuex";
+
+import BButton from "../Bulma/BButton.vue";
+import BIcon from "../Bulma/BIcon.vue";
 
 export default {
+  components: {
+    BButton,
+    BIcon,
+  },
   props: {
     icon: {
       type: String,
@@ -30,7 +29,6 @@ export default {
     return { loading: false };
   },
   computed: {
-    ...mapGetters(["radioLoaded"]),
     ...mapState({
       radio: (state) => state.r.radio,
     }),
@@ -48,4 +46,5 @@ export default {
   },
 };
 </script>
+
 <style></style>

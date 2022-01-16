@@ -1,20 +1,25 @@
 <template>
-  <button
+  <b-button
     title="Refresh"
-    class="button"
-    :class="{ 'is-loading': radioRefreshing, 'is-danger': !radioWSConnected }"
-    :disabled="radioRefreshing"
+    :placeholder="radioRefreshing"
+    :class="{ 'is-danger': !radioWSConnected }"
     @click="refreshRadio"
   >
-    <span class="icon is-small">
-      <i class="fas fa-redo"></i>
-    </span>
-  </button>
+    <b-icon icon="fa-redo" />
+  </b-button>
 </template>
+
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 
+import BButton from "../Bulma/BButton.vue";
+import BIcon from "../Bulma/BIcon.vue";
+
 export default {
+  components: {
+    BButton,
+    BIcon,
+  },
   computed: {
     ...mapState({
       radioRefreshing: (state) => state.r.radioRefreshing,
@@ -27,4 +32,5 @@ export default {
   },
 };
 </script>
+
 <style></style>

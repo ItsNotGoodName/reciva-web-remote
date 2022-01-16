@@ -1,25 +1,26 @@
 <template>
-  <button
-    @click="setPreset"
-    class="is-fullwidth wrap-button-text"
+  <b-button
+    :class="{ 'button is-info': selected }"
+    :loading="loading"
     :title="preset.name"
-    :class="[
-      { 'is-loading': this.loading },
-      selected ? 'button is-info' : 'button',
-    ]"
-    :disabled="loading"
+    @click="setPreset"
   >
     <span class="mr-2" :class="selected ? 'tag is-white' : 'tag is-info'">
       {{ preset.number }}
     </span>
-    <span class="is-flex-grow-1" style="word-break: break-all">
+    <span class="is-flex-grow-1">
       {{ preset.name }}
     </span>
-  </button>
+  </b-button>
 </template>
 
 <script>
+import BButton from "../Bulma/BButton.vue";
+
 export default {
+  components: {
+    BButton,
+  },
   data() {
     return {
       loading: false,
@@ -52,9 +53,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.wrap-button-text {
-  height: 100%;
-  white-space: normal;
-}
-</style>
+<style></style>

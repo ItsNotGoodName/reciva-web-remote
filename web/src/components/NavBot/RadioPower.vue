@@ -1,21 +1,28 @@
 <template>
-  <button
-    class="button"
+  <b-button
     :title="power.title"
-    :class="[{ 'is-loading': loading || !radioLoaded }, power.class]"
-    :disabled="loading || !radioLoaded"
+    :loading="loading || !radioLoaded"
+    :class="power.class"
     @click="togglePower"
   >
-    <span class="icon is-small mr-1">
-      <i class="fas fa-power-off"></i>
+    <b-icon icon="fa-power-off" />
+    <span>
+      {{ power.text }}
     </span>
-    {{ power.text }}
-  </button>
+  </b-button>
 </template>
+
 <script>
 import { mapGetters, mapState } from "vuex";
 
+import BButton from "../Bulma/BButton.vue";
+import BIcon from "../Bulma/BIcon.vue";
+
 export default {
+  components: {
+    BButton,
+    BIcon,
+  },
   data() {
     return { loading: false };
   },
@@ -51,4 +58,5 @@ export default {
   },
 };
 </script>
+
 <style></style>

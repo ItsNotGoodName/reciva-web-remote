@@ -1,10 +1,8 @@
 <template>
   <div>
     <NavTop />
-    <NavMargin>
-      <MainBody />
-    </NavMargin>
-    <NavBottom />
+    <MainBody />
+    <NavBot />
   </div>
 </template>
 
@@ -12,10 +10,9 @@
 import { onBeforeMount } from "vue";
 import { useStore } from "vuex";
 
-import NavTop from "./components/NavTop.vue";
-import NavBottom from "./components/NavBottom.vue";
-import NavMargin from "./components/NavMargin.vue";
+import NavTop from "./components/NavTop/index.vue";
 import MainBody from "./components/MainBody.vue";
+import NavBot from "./components/NavBot/index.vue";
 
 const store = useStore();
 

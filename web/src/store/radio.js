@@ -1,5 +1,7 @@
 import api from '../api'
 import { MESSAGE_SUCCESS, MESSAGE_ERROR } from '../constants'
+import { call, radioCall } from './util'
+
 
 export default {
   state() {
@@ -43,7 +45,6 @@ export default {
       } else if (volume > 100) {
         state.radio.volume = 100
       } else {
-
         state.radio.volume = volume
       }
     },
@@ -62,12 +63,6 @@ export default {
     },
     SET_RADIOS(state, radios) {
       state.radios = radios
-      for (let i in radios) {
-        if (state.radios[i].uuid == state.radioUUID) {
-          return
-        }
-      }
-      state.radioUUID = ''
     },
     SET_RADIOS_DISCOVERING(state, radiosDiscovering) {
       state.radiosDiscovering = radiosDiscovering
@@ -86,149 +81,69 @@ export default {
     }
   },
   actions: {
-    initRadio({ dispatch, state }) {
+    initRadio({ dispatch }) {
+      let lastRadioUUID = localStorage.lastRadioUUID
       return dispatch('listRadios').then(() => {
-        if (localStorage.lastRadioUUID) {
-          for (let radio of state.radios) {
-            if (radio.uuid == localStorage.lastRadioUUID) {
-              dispatch('setRadioUUID', radio.uuid);
-              return
-            }
-          }
-        }
+        dispatch("setRadioUUID", lastRadioUUID)
       })
     },
-    discoverRadios({ commit, state, dispatch }) {
-      commit("SET_RADIOS_DISCOVERING", true);
-      return api.discoverRadios()
-        .then(({ ok, error }) => {
-          if (ok) {
-            return new Promise((resolve) => {
-              dispatch("listRadios")
-                .then(() => dispatch("addMessage", { type: MESSAGE_SUCCESS, text: "discovered " + state.radios.length + " radios" }))
-                .finally(() => resolve())
-            })
-          } else {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        })
-        .finally(() => {
-          commit("SET_RADIOS_DISCOVERING", false)
+    listRadios({ commit, dispatch, state }) {
+      return call({ commit, dispatch, promise: api.listRadios(), loadingMutation: "SET_RADIOS_LOADING" })
+        .then(({ result }) => {
+          commit('SET_RADIOS', result)
+          dispatch("setRadioUUID", state.radioUUID)
         })
     },
-    listRadios({ commit, dispatch }) {
-      commit("SET_RADIOS_LOADING", true)
-      return api.listRadios()
-        .then(({ ok, result, error }) => {
-          if (ok) {
-            commit('SET_RADIOS', result)
-          } else {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        })
-        .finally(() => {
-          commit("SET_RADIOS_LOADING", false)
-        })
+    discoverRadios({ commit, dispatch }) {
+      return call({ commit, dispatch, promise: api.discoverRadios(), loadingMutation: "SET_RADIOS_DISCOVERING" })
+        .then(() => dispatch("listRadios"))
     },
     refreshRadio({ commit, dispatch, state }) {
-      commit("SET_RADIO_REFRESHING", true)
-      dispatch("refreshRadioWS")
-      return api.refreshRadio(state.radioUUID)
-        .then(({ ok, error }) => {
-          if (!ok) {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-            return
-          }
-          dispatch("addMessage", { type: MESSAGE_SUCCESS, text: "refreshed radio" });
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        })
-        .finally(() => {
-          commit("SET_RADIO_REFRESHING", false)
-        })
+      return radioCall({ commit, dispatch, promise: api.refreshRadio(state.radioUUID), loadingMutation: "SET_RADIO_REFRESHING" })
+        .then(() => dispatch("addMessage", { type: MESSAGE_SUCCESS, text: "refreshed radio" }))
     },
     refreshRadioVolume({ commit, dispatch, state }) {
-      commit("SET_RADIO_VOLUME_REFRESHING", true)
-      return api.refreshRadioVolume(state.radioUUID)
-        .then(({ ok, error }) => {
-          if (!ok) {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        })
-        .finally(() => {
-          commit("SET_RADIO_VOLUME_REFRESHING", false)
-        })
+      return radioCall({ commit, dispatch, promise: api.refreshRadioVolume(state.radioUUID), loadingMutation: "SET_RADIO_VOLUME_REFRESHING" })
     },
     toggleRadioPower({ commit, dispatch, state }) {
       let power = !state.radio.power
-      return api.patchRadio(state.radioUUID, { power })
-        .then(({ ok, error }) => {
-          if (ok) {
-            commit('SET_RADIO_POWER', power)
-          } else {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
+      return radioCall({ commit, dispatch, promise: api.patchRadio(state.radioUUID, { power }) })
+        .then(() => {
+          commit('SET_RADIO_POWER', power)
         })
     },
     setRadioVolume({ state, commit, dispatch }, volume) {
       commit("CHANGE_RADIO_VOLUME_CHANGING", 1)
       commit("SET_RADIO_VOLUME", volume)
-      return api.patchRadio(state.radioUUID, { volume })
-        .then(({ ok, error }) => {
-          if (!ok) {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        }).finally(() => {
+      return radioCall({ commit, dispatch, promise: api.patchRadio(state.radioUUID, { volume }) })
+        .finally(() => {
           commit("CHANGE_RADIO_VOLUME_CHANGING", -1)
         })
     },
     setRadioPreset({ commit, state, dispatch }, preset) {
-      return api.patchRadio(state.radioUUID, { preset })
-        .then(({ ok, error }) => {
-          if (ok) {
-            commit('MERGE_RADIO', { preset })
-          } else {
-            console.error(error)
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error)
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
+      return radioCall({ commit, dispatch, promise: api.patchRadio(state.radioUUID, { preset }) })
+        .then(() => {
+          commit('MERGE_RADIO', { preset })
         })
     },
-    setRadioUUID({ commit, dispatch }, uuid) {
-      commit('SET_RADIO_UUID', uuid)
+    setRadioUUID({ commit, dispatch, state }, uuid) {
+      for (let radio of state.radios) {
+        if (radio.uuid == uuid) {
+          commit('SET_RADIO_UUID', uuid)
+          commit("SET_RADIO", {})
+          dispatch('refreshRadioWS')
+          return
+        }
+      }
+
+      commit('SET_RADIO_UUID', "")
       commit("SET_RADIO", {})
-      dispatch('refreshRadioWS')
+      dispatch('closeRadioWS')
+    },
+    closeRadioWS({ state }) {
+      if (state.radioWSConnected) {
+        state.radioWS.close()
+      }
     },
     refreshRadioWS({ commit, state, getters }) {
       if (state.radioWSConnecting || !getters.radioSelected) {
@@ -262,14 +177,8 @@ export default {
       ws.addEventListener("message", onFirstMessage);
 
       let onDisconnect = function () {
-        let wasConnected = state.radioWSConnected;
-
         commit("SET_RADIO_WS_CONNECTED", false);
         commit("SET_RADIO_WS_CONNECTING", false);
-
-        if (wasConnected) {
-          dispatch("refreshRadioWS")
-        }
       };
 
       ws.addEventListener("close", onDisconnect);

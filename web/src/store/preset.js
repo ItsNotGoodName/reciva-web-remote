@@ -1,5 +1,6 @@
 import api from "../api";
-import { MESSAGE_ERROR, MESSAGE_SUCCESS } from "../constants";
+import { MESSAGE_SUCCESS } from "../constants";
+import { call } from "./util"
 
 export default {
   state: () => ({
@@ -45,77 +46,29 @@ export default {
     },
   },
   actions: {
-    listPresets({ commit, dispatch, state }) {
-      if (state.presetsLoading) {
-        return Promise.resolve();
-      }
-
-      commit("SET_PRESETS_LOADING", true);
-      commit("SET_PRESETS", []);
-      return api.listPresets()
-        .then(({ ok, result, error }) => {
-          if (ok) {
-            commit("SET_PRESETS", result);
-          } else {
-            console.error(error);
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        })
-        .finally(() => {
-          commit("SET_PRESETS_LOADING", false);
+    listPresets({ commit, dispatch }) {
+      return call({ commit, dispatch, promise: api.listPresets(), loadingMutation: "SET_PRESETS_LOADING" })
+        .then(({ result }) => {
+          commit("SET_PRESETS", result)
         })
     },
     submitPreset({ commit, dispatch, state }) {
-      if (state.presetLoading) {
-        return Promise.resolve();
-      }
-
-      commit("SET_PRESET_LOADING", true);
-      return api.updatePreset(state.preset)
-        .then(({ ok, result, error }) => {
-          if (ok) {
-            commit("MERGE_PRESET", result);
-            commit("SET_PRESET_VISIBLE", false);
-            dispatch("addMessage", { type: MESSAGE_SUCCESS, text: "preset updated" });
-          } else {
-            console.error(error);
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-        })
-        .finally(() => {
-          commit("SET_PRESET_LOADING", false);
+      return call({ commit, dispatch, promise: api.updatePreset(state.preset), loadingMutation: "SET_PRESET_LOADING" })
+        .then(({ result }) => {
+          commit("MERGE_PRESET", result);
+          dispatch("hidePreset", false);
+          dispatch("addMessage", { type: MESSAGE_SUCCESS, text: "preset updated" });
         })
     },
     showPreset({ commit, dispatch, state }, url) {
       if (state.presetLoading) {
-        return Promise.resolve();
+        return
       }
 
-      commit("SET_PRESET_LOADING", true);
-      return api.getPreset(url)
-        .then(({ ok, result, error }) => {
-          if (ok) {
-            commit("SET_PRESET", result);
-            commit("SET_PRESET_VISIBLE", true);
-          } else {
-            console.error(error);
-            dispatch("addMessage", { type: MESSAGE_ERROR, text: error });
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          dispatch("addMessage", { type: MESSAGE_ERROR, text: error.message });
-        })
-        .finally(() => {
-          commit("SET_PRESET_LOADING", false);
+      return call({ commit, dispatch, promise: api.getPreset(url), loadingMutation: "SET_PRESET_LOADING", })
+        .then(({ result }) => {
+          commit("SET_PRESET", result);
+          commit("SET_PRESET_VISIBLE", true);
         })
     },
     hidePreset({ commit }) {

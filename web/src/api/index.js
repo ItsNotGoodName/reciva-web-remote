@@ -1,6 +1,6 @@
-import { WS_URL, API_URL } from "../constants"
+import { WS_URL, API_URL } from "../constants";
 
-const jsonResponse = (req) => req.then((res) => res.json())
+const jsonResponse = (req) => req.then((res) => res.json());
 
 //const emptyResponse = (req) => {
 //return new Promise((resolve, reject) => {
@@ -12,33 +12,47 @@ const jsonResponse = (req) => req.then((res) => res.json())
 
 export default {
   listPresets() {
-    return jsonResponse(fetch(API_URL + "/v1/presets"))
+    return jsonResponse(fetch(API_URL + "/v1/presets"));
   },
   getPreset(url) {
-    return jsonResponse(fetch(API_URL + "/v1/preset?url=" + url))
+    return jsonResponse(fetch(API_URL + "/v1/preset?url=" + url));
   },
   updatePreset(preset) {
-    return jsonResponse(fetch(API_URL + "/v1/preset", { method: "POST", body: JSON.stringify(preset) }))
+    return jsonResponse(
+      fetch(API_URL + "/v1/preset", {
+        method: "POST",
+        body: JSON.stringify(preset),
+      })
+    );
   },
   discoverRadios() {
-    return jsonResponse(fetch(API_URL + "/v1/radios", { method: "POST" }))
+    return jsonResponse(fetch(API_URL + "/v1/radios", { method: "POST" }));
   },
   listRadios() {
-    return jsonResponse(fetch(API_URL + "/v1/radios"))
+    return jsonResponse(fetch(API_URL + "/v1/radios"));
   },
   refreshRadio(uuid) {
-    return jsonResponse(fetch(API_URL + "/v1/radio/" + uuid, { method: "POST" }))
+    return jsonResponse(
+      fetch(API_URL + "/v1/radio/" + uuid, { method: "POST" })
+    );
   },
   refreshRadioVolume(uuid) {
-    return jsonResponse(fetch(API_URL + "/v1/radio/" + uuid + "/volume", { method: "POST" }))
+    return jsonResponse(
+      fetch(API_URL + "/v1/radio/" + uuid + "/volume", { method: "POST" })
+    );
   },
   patchRadio(uuid, state) {
-    return jsonResponse(fetch(API_URL + "/v1/radio/" + uuid, { method: "PATCH", body: JSON.stringify(state) }))
+    return jsonResponse(
+      fetch(API_URL + "/v1/radio/" + uuid, {
+        method: "PATCH",
+        body: JSON.stringify(state),
+      })
+    );
   },
   getRadioWS(uuid) {
     if (uuid == undefined || uuid == "") {
-      return new WebSocket(WS_URL + "/v1/radio/ws")
+      return new WebSocket(WS_URL + "/v1/radio/ws");
     }
-    return new WebSocket(WS_URL + "/v1/radio/ws?uuid=" + uuid)
-  }
-}
+    return new WebSocket(WS_URL + "/v1/radio/ws?uuid=" + uuid);
+  },
+};

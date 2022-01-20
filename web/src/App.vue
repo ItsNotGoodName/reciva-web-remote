@@ -14,8 +14,8 @@ import { onMounted } from "vue";
 import NavTop from "./components/NavTop/index.vue";
 import NavBottom from "./components/NavBottom/index.vue";
 
-import Home from "./views/Home.vue"
-import Edit from "./views/Edit.vue"
+import Home from "./views/Home.vue";
+import Edit from "./views/Edit.vue";
 
 const store = useStore();
 

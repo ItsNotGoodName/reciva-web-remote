@@ -35,7 +35,7 @@ export default {
         return;
 
       this.loading = true;
-      this.$store.dispatch("refresh")
+      this.$store.dispatch("refreshRadioAll")
         .finally(() => {
           this.loading = false
         })

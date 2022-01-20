@@ -1,19 +1,10 @@
-import { createApp } from 'vue'
-import PrimeVue from 'primevue/config';
-import ToastService from 'primevue/toastservice';
-import BadgeDirective from 'primevue/badgedirective';
+import { createApp } from "vue";
 
-import App from './App.vue'
-import store from "./store"
+import "./scss/index.scss";
 
-import "primevue/resources/themes/saga-blue/theme.css"
-import "primevue/resources/primevue.min.css"
-import "primeicons/primeicons.css"
-import "/node_modules/primeflex/primeflex.css"
+import Toast from "vue-toastification";
 
-createApp(App)
-    .use(PrimeVue)
-    .use(ToastService)
-    .directive('badge', BadgeDirective)
-    .use(store)
-    .mount('#app');
+import App from "./App.vue";
+import store from "./store";
+
+createApp(App).use(Toast).use(store).mount("#app");

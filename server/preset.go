@@ -20,7 +20,7 @@ func handlePresetGet(presetStore core.PresetStore) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, preset)
+		renderJSON(c, http.StatusOK, preset)
 	}
 }
 
@@ -33,7 +33,9 @@ func handlePresetList(presetStore core.PresetStore) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, presets)
+		sortPresets(presets)
+
+		renderJSON(c, http.StatusOK, presets)
 	}
 }
 
@@ -56,7 +58,7 @@ func handlePresetUpdate(presetStore core.PresetStore) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, preset)
+		renderJSON(c, http.StatusOK, preset)
 	}
 }
 

@@ -1,4 +1,34 @@
+# API
+
+## Example Responses
+
+```json
+{
+  "ok": true,
+  "code": 200
+}
+```
+
+```json
+{
+  "ok": true,
+  "code": 200,
+  "result": {
+    "uuid": "fb38cb47-a74b-42d5-bb9c-89dcc6a3d960"
+  }
+}
+```
+
+```json
+{
+  "ok": false,
+  "code": 404,
+  "error": "radio not found"
+}
+```
+
 ## Radio API
+
 ### Discover radios
 
 ```
@@ -19,7 +49,7 @@ GET http://localhost:8080/v1/radio/:uuid
 
 ### Get radio state via websocket
 
-Client must send `uuid` after they connect or specify it in the `GET` parameter in order to receive state. The first message sent to client is always the full state. After that, only state changes are sent to the client. The `uuid` is always sent to the client. The connection will terminate if the client sends an invalid `uuid`.
+Client must send `uuid` after they connect or specify it in the `GET` url parameter in order to start receiving state. The first message sent to client is always the full state. After that, only state changes are sent to the client. The `uuid` is always sent to the client in each message. The connection will terminate if the client sends an invalid `uuid`.
 
 ```
 GET ws://localhost:8080/v1/radio/ws?uuid=:uuid
@@ -53,6 +83,7 @@ POST http://localhost:8080/v1/radio/:uuid/volume
 ```
 POST http://localhost:8080/v1/radio/:uuid
 ```
+
 ## Preset API
 
 ### Get presets

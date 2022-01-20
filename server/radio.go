@@ -22,13 +22,13 @@ func handleRadioGet() func(c *gin.Context) {
 		}
 
 		// Return Radio
-		c.JSON(http.StatusOK, state)
+		renderJSON(c, http.StatusOK, state)
 	}
 }
 
 func handleRadioList(h *radio.Hub) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, h.GetRadioStates(c))
+		renderJSON(c, http.StatusOK, h.GetRadioStates(c))
 	}
 }
 
@@ -95,6 +95,8 @@ func handleRadioPatch() func(c *gin.Context) {
 				return
 			}
 		}
+
+		renderJSON(c, http.StatusOK, nil)
 	}
 }
 
@@ -104,6 +106,8 @@ func handleRadioRefresh() func(c *gin.Context) {
 		rd := c.MustGet("radio").(*radio.Radio)
 
 		rd.Refresh()
+
+		renderJSON(c, http.StatusOK, nil)
 	}
 }
 
@@ -117,6 +121,8 @@ func handleRadioVolumeRefresh() func(c *gin.Context) {
 			renderError(c, http.StatusServiceUnavailable, err)
 			return
 		}
+
+		renderJSON(c, http.StatusOK, nil)
 	}
 }
 
@@ -126,5 +132,7 @@ func handleRadioDiscover(h *radio.Hub) func(c *gin.Context) {
 			renderError(c, http.StatusConflict, err)
 			return
 		}
+
+		renderJSON(c, http.StatusOK, nil)
 	}
 }

@@ -1,45 +1,32 @@
-<script>
-import { mapGetters, mapState } from "vuex";
-
-import Message from "primevue/message";
-import Toast from "primevue/toast";
-
-import PresetEditor from "./components/preset/PresetEditor.vue";
-import PresetPlayer from "./components/radio/PresetList.vue";
-import RadioPlayer from "./components/radio/RadioPlayer.vue";
-
-export default {
-  components: {
-    Message,
-    PresetEditor,
-    PresetPlayer,
-    RadioPlayer,
-    Toast,
-  },
-  created() {
-    this.$store.dispatch("init");
-  },
-  computed: {
-    ...mapGetters(["radioReady"]),
-    ...mapState(["page", "message"]),
-  },
-};
-</script>
-
 <template>
-  <div class="md:w-11 xl:w-9 mx-auto">
-    <radio-player class="mb-3" />
-    <Message v-if="message" :severity="message.severity" :closable="false">
-      {{ message.content }}
-    </Message>
-    <preset-player v-if="page == 'player' && radioReady" />
-    <preset-editor v-else-if="page == 'edit'" />
-    <Toast
-      :breakpoints="{ '480px': { width: '100%', right: '0', left: '0' } }"
-      position="bottom-right"
-    />
+  <NavTop />
+  <div class="container nav-margin px-2">
+    <Edit v-if="store.state.page == 'edit'" />
+    <Home v-else />
   </div>
+  <NavBottom />
 </template>
 
-<style>
+<script setup>
+import { useStore } from "vuex";
+import { onMounted } from "vue";
+
+import NavTop from "./components/NavTop/index.vue";
+import NavBottom from "./components/NavBottom/index.vue";
+
+import Home from "./views/Home.vue";
+import Edit from "./views/Edit.vue";
+
+const store = useStore();
+
+onMounted(() => {
+  store.dispatch("initRadio");
+});
+</script>
+
+<style lang="scss" scoped>
+.nav-margin {
+  margin-top: 1rem;
+  margin-bottom: 6rem;
+}
 </style>

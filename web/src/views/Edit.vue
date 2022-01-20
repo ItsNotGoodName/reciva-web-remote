@@ -14,9 +14,13 @@
           <td>
             <preset-edit-button :preset="preset" />
           </td>
-          <td>{{ preset.url }}</td>
+          <td>
+            <a :href="preset.url">{{ preset.url }}</a>
+          </td>
           <td :class="{ 'is-info': radio.url == preset.url }">{{ preset.newName }}</td>
-          <td>{{ preset.newUrl }}</td>
+          <td>
+            <a :href="preset.newUrl">{{ preset.newUrl }}</a>
+          </td>
         </tr>
       </tbody>
     </table>

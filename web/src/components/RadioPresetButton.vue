@@ -6,18 +6,14 @@
     :title="preset.name"
     @click="setPreset"
   >
-    <b-tag class="mr-2" :class="selected ? 'is-white' : 'is-info'">
-      {{ preset.number }}
-    </b-tag>
-    <span class="is-flex-grow-1">
-      {{ preset.name }}
-    </span>
+    <b-tag class="mr-2" :class="selected ? 'is-white' : 'is-info'">{{ preset.number }}</b-tag>
+    <span class="is-flex-grow-1">{{ preset.name }}</span>
   </b-button>
 </template>
 
 <script>
-import BButton from "../Bulma/BButton.vue";
-import BTag from "../Bulma/BTag.vue";
+import BButton from "./Bulma/BButton.vue";
+import BTag from "./Bulma/BTag.vue";
 
 export default {
   components: {

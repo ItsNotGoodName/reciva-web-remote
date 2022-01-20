@@ -1,59 +1,49 @@
 import { createStore } from "vuex";
-
-import { MAX_MESSAGES } from "../constants";
+import { useToast } from "vue-toastification";
 
 import p from "./preset";
 import r from "./radio";
 
-const generateID = (function () {
-  let id = 0;
-  return () => {
-    id += 1;
-    return id;
-  };
-})();
+const toast = useToast();
 
 export default createStore({
-  state() {
+  data() {
     return {
-      page: "play",
-      messages: [],
-      popups: {},
+      page: "",
     };
   },
   mutations: {
     SET_PAGE(state, page) {
       state.page = page;
     },
-    ADD_MESSAGE(state, message) {
-      state.messages.push(message);
-      if (state.messages.length > MAX_MESSAGES) {
-        state.messages.shift();
-      }
-    },
-    ADD_POPUP(state, popup) {
-      state.popups[popup.id] = popup;
-    },
-    DELETE_POPUP(state, id) {
-      delete state.popups[id];
-    },
   },
   actions: {
-    togglePage({ commit, state }) {
-      commit("SET_PAGE", state.page == "play" ? "preset" : "play");
+    togglePage({ state, commit }) {
+      commit("SET_PAGE", state.page ? "" : "edit");
     },
-    addMessage({ commit }, { type, text }) {
-      let msg = { id: generateID(), type, text };
+    _call({ commit }, { promise, loadingMutation }) {
+      return new Promise((resolve, reject) => {
+        promise
+          .then((res) => {
+            if (!res.ok) {
+              toast.error(res.error);
+              reject(res);
+            } else {
+              resolve(res);
+            }
+          })
+          .catch((error) => {
+            toast.error(error.message);
+            reject({ error: error.message });
+          });
 
-      commit("ADD_MESSAGE", msg);
-      commit("ADD_POPUP", msg);
-
-      setTimeout(() => {
-        commit("DELETE_POPUP", msg.id);
-      }, 5000);
-    },
-    deletePopup({ commit }, id) {
-      commit("DELETE_POPUP", id);
+        if (loadingMutation) {
+          commit(loadingMutation, true);
+          promise.finally(() => {
+            commit(loadingMutation, false);
+          });
+        }
+      });
     },
   },
   modules: {

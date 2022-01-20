@@ -10,37 +10,31 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="preset in presets"
-          :key="preset.url"
-          :class="{ 'is-info': radio.url == preset.url }"
-        >
+        <tr v-for="preset in presets" :key="preset.url">
           <td>
-            <preset-edit :preset="preset" />
+            <preset-edit-button :preset="preset" />
           </td>
-          <td>
-            {{ preset.url }}
-          </td>
-          <td>{{ preset.newName }}</td>
+          <td>{{ preset.url }}</td>
+          <td :class="{ 'is-info': radio.url == preset.url }">{{ preset.newName }}</td>
           <td>{{ preset.newUrl }}</td>
         </tr>
       </tbody>
     </table>
   </div>
   <progress v-else class="progress is-success" max="100" />
-  <preset-form />
+  <preset-form-modal />
 </template>
 
 <script>
 import { mapState } from "vuex";
 
-import PresetForm from "./PresetForm.vue";
-import PresetEdit from "./PresetEdit.vue";
+import PresetFormModal from "../components/PresetFormModal.vue";
+import PresetEditButton from "../components/PresetEditButton.vue";
 
 export default {
   components: {
-    PresetForm,
-    PresetEdit,
+    PresetFormModal,
+    PresetEditButton,
   },
   beforeMount() {
     this.$store.dispatch("listPresets");

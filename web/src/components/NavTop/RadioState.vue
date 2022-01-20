@@ -1,10 +1,9 @@
 <template>
   <b-button
     :class="state.buttonClass"
-    :loading="!radioLoaded && radioSelected"
+    :loading="!radioReady && radioSelected"
     :title="state.title"
     class="is-rounded"
-    style="width: 0%"
   >
     <b-icon :icon="state.iconClass" />
   </b-button>
@@ -22,7 +21,7 @@ export default {
     BIcon,
   },
   computed: {
-    ...mapGetters(["radioLoaded", "radioSelected"]),
+    ...mapGetters(["radioReady", "radioSelected"]),
     ...mapState({
       radio: (state) => state.r.radio,
     }),
@@ -57,4 +56,8 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+button {
+  width: 0%;
+}
+</style>

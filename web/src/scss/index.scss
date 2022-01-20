@@ -1,3 +1,11 @@
-@charset "utf-8";
 @import "@fortawesome/fontawesome-free/css/all.css";
+
 @import "bulma/bulma.sass";
+
+@import "vue-toastification/src/scss/variables";
+@import "vue-toastification/src/scss/toastContainer";
+@import "vue-toastification/src/scss/toast";
+@import "vue-toastification/src/scss/closeButton";
+@import "vue-toastification/src/scss/progressBar";
+@import "vue-toastification/src/scss/icon";
+@import "vue-toastification/src/scss/animations/_bounce";

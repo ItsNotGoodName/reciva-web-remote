@@ -3,7 +3,7 @@
     <div class="control">
       <b-button
         title="Toggle Page"
-        :class="{ 'is-info': page === 'play' }"
+        :class="[(page ? 'is-success' : 'is-info')]"
         @click="togglePage"
       >
         <b-icon icon="fa-bars" />
@@ -20,21 +20,13 @@
       </b-button>
     </div>
     <div class="control is-flex-grow-1">
-      <b-select
-        class="is-fullwidth"
-        v-model="radioUUID"
-        :loading="radiosLoading"
-      >
-        <option selected disabled hidden value="">Select Radio</option>
-        <option v-for="radio in radios" :value="radio.uuid">
-          {{ radio.name }}
-        </option>
+      <b-select class="is-fullwidth" v-model="radioUUID" :loading="radiosLoading">
+        <option selected disabled hidden value>Select Radio</option>
+        <option v-for="radio in radios" :value="radio.uuid">{{ radio.name }}</option>
       </b-select>
     </div>
     <div class="control">
-      <b-button title="List" :loading="radiosLoading" @click="listRadios">
-        <b-icon icon="fa-arrow-down"></b-icon>
-      </b-button>
+      <radio-refresh-button />
     </div>
   </div>
 </template>
@@ -46,22 +38,25 @@ import BButton from "../Bulma/BButton.vue";
 import BIcon from "../Bulma/BIcon.vue";
 import BSelect from "../Bulma/BSelect.vue";
 
+import RadioRefreshButton from "../RadioRefreshButton.vue";
+
 export default {
   components: {
     BButton,
     BIcon,
     BSelect,
+    RadioRefreshButton
   },
   methods: {
-    ...mapActions(["togglePage", "discoverRadios", "listRadios"]),
+    ...mapActions(["discoverRadios", "togglePage"]),
   },
   computed: {
     ...mapGetters(["radioSelected"]),
     ...mapState({
+      page: (state) => state.page,
       radios: (state) => state.r.radios,
       radiosLoading: (state) => state.r.radiosLoading,
       radiosDiscovering: (state) => state.r.radiosDiscovering,
-      page: (state) => state.page,
     }),
     radioUUID: {
       get() {

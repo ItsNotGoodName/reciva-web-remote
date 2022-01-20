@@ -1,6 +1,8 @@
+import { useToast } from "vue-toastification";
+
 import api from "../api";
-import { MESSAGE_SUCCESS } from "../constants";
-import { call } from "./util";
+
+const toast = useToast();
 
 export default {
   state: () => ({
@@ -35,7 +37,7 @@ export default {
     SET_PRESETS_LOADING(state, presetsLoading) {
       state.presetsLoading = presetsLoading;
     },
-    MERGE_PRESET(state, preset) {
+    MERGE_PRESETS(state, preset) {
       for (let i = 0; i < state.presets.length; i++) {
         if (state.presets[i].url == preset.url) {
           state.presets[i] = preset;
@@ -47,9 +49,7 @@ export default {
   },
   actions: {
     listPresets({ commit, dispatch }) {
-      return call({
-        commit,
-        dispatch,
+      return dispatch("_call", {
         promise: api.listPresets(),
         loadingMutation: "SET_PRESETS_LOADING",
       }).then(({ result }) => {
@@ -57,18 +57,13 @@ export default {
       });
     },
     submitPreset({ commit, dispatch, state }) {
-      return call({
-        commit,
-        dispatch,
+      return dispatch("_call", {
         promise: api.updatePreset(state.preset),
         loadingMutation: "SET_PRESET_LOADING",
       }).then(({ result }) => {
-        commit("MERGE_PRESET", result);
-        dispatch("hidePreset", false);
-        dispatch("addMessage", {
-          type: MESSAGE_SUCCESS,
-          text: "preset updated",
-        });
+        commit("MERGE_PRESETS", result);
+        dispatch("hidePreset");
+        toast.success("preset updated");
       });
     },
     showPreset({ commit, dispatch, state }, url) {
@@ -76,9 +71,7 @@ export default {
         return;
       }
 
-      return call({
-        commit,
-        dispatch,
+      return dispatch("_call", {
         promise: api.getPreset(url),
         loadingMutation: "SET_PRESET_LOADING",
       }).then(({ result }) => {

@@ -4,36 +4,21 @@
       <div class="field">
         <label class="label">URL</label>
         <div class="control">
-          <input
-            :value="preset.url"
-            class="input"
-            type="text"
-            placeholder="URL"
-            disabled
-          />
+          <input :value="preset.url" class="input" type="text" placeholder="URL" disabled />
         </div>
       </div>
 
       <div class="field">
         <label class="label">New Name</label>
         <div class="control">
-          <input
-            v-model="newName"
-            class="input"
-            type="text"
-            placeholder="New Name"
-          />
+          <input v-model="newName" class="input" type="text" placeholder="New Name" />
         </div>
       </div>
 
       <div class="field">
         <label class="label">New URL</label>
         <div class="control">
-          <textarea
-            v-model="newUrl"
-            class="textarea"
-            placeholder="New URL"
-          ></textarea>
+          <textarea v-model="newUrl" class="textarea" placeholder="New URL"></textarea>
         </div>
       </div>
     </template>
@@ -41,17 +26,10 @@
     <template v-slot:footer>
       <div class="field is-grouped">
         <div class="control">
-          <b-button
-            @click="submitPreset"
-            :loading="presetLoading"
-            class="is-link"
-            >Submit</b-button
-          >
+          <b-button @click="submitPreset" :loading="presetLoading" class="is-link">Submit</b-button>
         </div>
         <div class="control">
-          <b-button class="is-link is-light" @click="hidePreset"
-            >Cancel</b-button
-          >
+          <b-button class="is-link is-light" @click="hidePreset">Cancel</b-button>
         </div>
       </div>
     </template>
@@ -61,8 +39,8 @@
 <script>
 import { mapActions, mapState } from "vuex";
 
-import BModal from "../Bulma/BModal.vue";
-import BButton from "../Bulma/BButton.vue";
+import BModal from "./Bulma/BModal.vue";
+import BButton from "./Bulma/BButton.vue";
 
 export default {
   computed: {

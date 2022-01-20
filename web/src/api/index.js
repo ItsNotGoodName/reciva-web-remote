@@ -50,9 +50,9 @@ export default {
     );
   },
   getRadioWS(uuid) {
-    if (uuid == undefined || uuid == "") {
-      return new WebSocket(WS_URL + "/v1/radio/ws");
+    if (uuid) {
+      return new WebSocket(WS_URL + "/v1/radio/ws?uuid=" + uuid);
     }
-    return new WebSocket(WS_URL + "/v1/radio/ws?uuid=" + uuid);
+    return new WebSocket(WS_URL + "/v1/radio/ws");
   },
 };

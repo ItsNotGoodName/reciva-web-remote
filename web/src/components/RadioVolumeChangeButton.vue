@@ -7,8 +7,8 @@
 <script>
 import { mapActions, mapState } from "vuex";
 
-import BButton from "../Bulma/BButton.vue";
-import BIcon from "../Bulma/BIcon.vue";
+import BButton from "./Bulma/BButton.vue";
+import BIcon from "./Bulma/BIcon.vue";
 
 export default {
   components: {

@@ -1,6 +1,8 @@
+import { useToast, TYPE } from "vue-toastification";
+
 import api from "../api";
-import { MESSAGE_SUCCESS } from "../constants";
-import { call, radioCall } from "./util";
+
+const toast = useToast();
 
 export default {
   state() {
@@ -20,9 +22,9 @@ export default {
   },
   getters: {
     radioSelected(state) {
-      return state.radioUUID != "";
+      return !!state.radioUUID;
     },
-    radioLoaded(state) {
+    radioReady(state) {
       return state.radio.uuid == state.radioUUID && state.radioWSConnected;
     },
   },
@@ -46,6 +48,9 @@ export default {
       } else {
         state.radio.volume = volume;
       }
+    },
+    SET_RADIO_PRESET(state, preset) {
+      state.radio.preset = preset;
     },
     CHANGE_RADIO_VOLUME_CHANGING(state, radioVolumeChanging) {
       state.radioVolumeChanging += radioVolumeChanging;
@@ -80,57 +85,66 @@ export default {
     },
   },
   actions: {
+    _radioCall({ dispatch }, opts) {
+      return dispatch("_call", opts).catch((res) => {
+        if (res.code == 404) {
+          dispatch("listRadios");
+        }
+      });
+    },
+    refresh({ dispatch, getters }) {
+      let proms = [dispatch("listRadios"), dispatch("connectRadioWS")];
+      if (getters.radioSelected) {
+        proms.push(
+          dispatch("refreshRadio").then(() => dispatch("refreshRadioVolume"))
+        );
+      }
+      return Promise.all(proms).then(() => {
+        toast.success("refreshed");
+      });
+    },
     initRadio({ dispatch }) {
       let lastRadioUUID = localStorage.lastRadioUUID;
+      dispatch("connectRadioWS");
       return dispatch("listRadios").then(() => {
         dispatch("setRadioUUID", lastRadioUUID);
       });
     },
+    discoverRadios({ dispatch, state }) {
+      return dispatch("_call", {
+        promise: api.discoverRadios(),
+        loadingMutation: "SET_RADIOS_DISCOVERING",
+      })
+        .then(() => dispatch("listRadios"))
+        .then(() =>
+          toast.success("discovered " + state.radios.length + " radios")
+        );
+    },
     listRadios({ commit, dispatch, state }) {
-      return call({
-        commit,
-        dispatch,
+      return dispatch("_call", {
         promise: api.listRadios(),
         loadingMutation: "SET_RADIOS_LOADING",
       }).then(({ result }) => {
         commit("SET_RADIOS", result);
-        dispatch("setRadioUUID", state.radioUUID);
+        return dispatch("setRadioUUID", state.radioUUID);
       });
     },
-    discoverRadios({ commit, dispatch }) {
-      return call({
-        commit,
-        dispatch,
-        promise: api.discoverRadios(),
-        loadingMutation: "SET_RADIOS_DISCOVERING",
-      }).then(() => dispatch("listRadios"));
-    },
-    refreshRadio({ commit, dispatch, state }) {
-      return radioCall({
-        commit,
-        dispatch,
+
+    refreshRadio({ dispatch, state }) {
+      return dispatch("_radioCall", {
         promise: api.refreshRadio(state.radioUUID),
         loadingMutation: "SET_RADIO_REFRESHING",
-      }).then(() =>
-        dispatch("addMessage", {
-          type: MESSAGE_SUCCESS,
-          text: "refreshed radio",
-        })
-      );
+      });
     },
-    refreshRadioVolume({ commit, dispatch, state }) {
-      return radioCall({
-        commit,
-        dispatch,
+    refreshRadioVolume({ dispatch, state }) {
+      return dispatch("_radioCall", {
         promise: api.refreshRadioVolume(state.radioUUID),
         loadingMutation: "SET_RADIO_VOLUME_REFRESHING",
       });
     },
     toggleRadioPower({ commit, dispatch, state }) {
       let power = !state.radio.power;
-      return radioCall({
-        commit,
-        dispatch,
+      return dispatch("_radioCall", {
         promise: api.patchRadio(state.radioUUID, { power }),
       }).then(() => {
         commit("SET_RADIO_POWER", power);
@@ -139,79 +153,76 @@ export default {
     setRadioVolume({ state, commit, dispatch }, volume) {
       commit("CHANGE_RADIO_VOLUME_CHANGING", 1);
       commit("SET_RADIO_VOLUME", volume);
-      return radioCall({
-        commit,
-        dispatch,
-        promise: api.patchRadio(state.radioUUID, { volume }),
+      return dispatch("_radioCall", {
+        promise: api.patchRadio(state.radioUUID, { volume: state.volume }),
       }).finally(() => {
         commit("CHANGE_RADIO_VOLUME_CHANGING", -1);
       });
     },
     setRadioPreset({ commit, state, dispatch }, preset) {
-      return radioCall({
-        commit,
-        dispatch,
+      return dispatch("_radioCall", {
         promise: api.patchRadio(state.radioUUID, { preset }),
       }).then(() => {
         commit("MERGE_RADIO", { preset });
       });
     },
-    setRadioUUID({ commit, dispatch, state }, uuid) {
+    setRadioUUID({ commit, state, getters }, newUUID) {
+      let uuid = "";
       for (let radio of state.radios) {
-        if (radio.uuid == uuid) {
-          commit("SET_RADIO_UUID", uuid);
-          commit("SET_RADIO", {});
-          dispatch("refreshRadioWS");
-          return;
+        if (radio.uuid == newUUID) {
+          uuid = radio.uuid;
         }
       }
 
-      commit("SET_RADIO_UUID", "");
+      commit("SET_RADIO_UUID", uuid);
       commit("SET_RADIO", {});
-      dispatch("closeRadioWS");
-    },
-    closeRadioWS({ state }) {
-      if (state.radioWSConnected) {
-        state.radioWS.close();
-      }
-    },
-    refreshRadioWS({ commit, state, getters }) {
-      if (state.radioWSConnecting || !getters.radioSelected) {
+      if (!(state.radioWSConnected && getters.radioSelected)) {
         return;
       }
 
-      if (state.radioWSConnected) {
-        state.radioWS.send(state.radioUUID);
+      state.radioWS.send(state.radioUUID);
+    },
+    connectRadioWS({ commit, dispatch, state }) {
+      if (state.radioWSConnecting || state.radioWSConnected) {
         return;
       }
 
       commit("SET_RADIO_WS_CONNECTING", true);
-      let ws = api.getRadioWS(state.radioUUID);
 
-      let onMessage = function (event) {
-        let radio = JSON.parse(event.data);
-        if (radio.uuid != state.radioUUID) return;
-        commit("MERGE_RADIO", radio);
-      };
+      let toastID = toast("connecting...", { timeout: false });
 
-      let onFirstMessage = function (event) {
-        onMessage(event);
+      let ws = api.getRadioWS();
 
+      ws.addEventListener("open", () => {
         commit("SET_RADIO_WS_CONNECTED", true);
         commit("SET_RADIO_WS_CONNECTING", false);
 
-        ws.removeEventListener("message", onFirstMessage);
-        ws.addEventListener("message", onMessage);
-      };
+        toast.clear();
 
-      ws.addEventListener("message", onFirstMessage);
+        if (state.radioUUID) {
+          ws.send(state.radioUUID);
+        }
+      });
 
-      let onDisconnect = function () {
+      ws.addEventListener("message", (event) => {
+        let radio = JSON.parse(event.data);
+        if (radio.uuid != state.radioUUID) return;
+        commit("MERGE_RADIO", radio);
+      });
+
+      ws.addEventListener("close", () => {
         commit("SET_RADIO_WS_CONNECTED", false);
         commit("SET_RADIO_WS_CONNECTING", false);
-      };
 
-      ws.addEventListener("close", onDisconnect);
+        dispatch("listRadios");
+
+        toast.dismiss(toastID);
+        toast.error("disconnected, reconnecting in 10 seconds", {
+          timeout: 9000,
+        });
+
+        setTimeout(() => dispatch("connectRadioWS"), 10000);
+      });
 
       commit("SET_RADIO_WS", ws);
     },

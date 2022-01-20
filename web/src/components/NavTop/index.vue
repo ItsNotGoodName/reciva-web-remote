@@ -1,11 +1,7 @@
 <template>
-  <nav
-    class="navbar is-fixed-top is-flex p-2"
-    role="navigation"
-    aria-label="top navigation"
-  >
-    <RadioState class="mr-2" />
-    <RadioTitle class="is-flex-grow-1" />
+  <nav class="navbar is-fixed-top is-flex p-2" role="navigation" aria-label="top navigation">
+    <radio-state class="mr-2" />
+    <radio-title class="is-flex-grow-1" />
   </nav>
 </template>
 

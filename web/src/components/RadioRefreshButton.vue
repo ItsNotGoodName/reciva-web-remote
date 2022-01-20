@@ -18,7 +18,7 @@ export default {
   data() {
     return {
       loading: false,
-    }
+    };
   },
   components: {
     BButton,
@@ -26,20 +26,18 @@ export default {
   },
   computed: {
     ...mapState({
-      radioWSConnected: (state) => state.r.radioWSConnected
-    })
+      radioWSConnected: (state) => state.r.radioWSConnected,
+    }),
   },
   methods: {
     refresh() {
-      if (this.loading)
-        return;
+      if (this.loading) return;
 
       this.loading = true;
-      this.$store.dispatch("refreshRadioAll")
-        .finally(() => {
-          this.loading = false
-        })
-    }
+      this.$store.dispatch("refreshRadioAll").finally(() => {
+        this.loading = false;
+      });
+    },
   },
 };
 </script>

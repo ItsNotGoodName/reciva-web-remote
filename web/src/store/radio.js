@@ -1,4 +1,4 @@
-import { useToast, TYPE } from "vue-toastification";
+import { useToast } from "vue-toastification";
 
 import api from "../api";
 

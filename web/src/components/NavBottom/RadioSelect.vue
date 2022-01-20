@@ -1,11 +1,7 @@
 <template>
   <div class="field has-addons is-flex">
     <div class="control">
-      <b-button
-        title="Toggle Page"
-        :class="[(page ? 'is-success' : 'is-info')]"
-        @click="togglePage"
-      >
+      <b-button title="Toggle Page" :class="[page ? 'is-success' : 'is-info']" @click="togglePage">
         <b-icon icon="fa-bars" />
       </b-button>
     </div>
@@ -45,7 +41,7 @@ export default {
     BButton,
     BIcon,
     BSelect,
-    RadioRefreshButton
+    RadioRefreshButton,
   },
   methods: {
     ...mapActions(["discoverRadios", "togglePage"]),

@@ -1,9 +1,6 @@
 <template>
   <div class="select" :class="{ 'is-loading': loading }">
-    <select
-      :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
-    >
+    <select :value="modelValue" @input="$emit('update:modelValue', $event.target.value)">
       <slot></slot>
     </select>
   </div>

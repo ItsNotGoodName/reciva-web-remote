@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!presetsLoading" class="is-flex">
+  <div v-if="!presetsLoading" class="is-flex mx-2">
     <table class="table is-bordered is-striped is-narrow is-hoverable mx-auto">
       <thead>
         <tr>

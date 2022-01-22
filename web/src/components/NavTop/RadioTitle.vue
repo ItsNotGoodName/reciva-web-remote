@@ -4,7 +4,7 @@
       <b-button
         :title="radio.title"
         :loading="!radioReady && radioSelected"
-        class="is-info is-justify-content-flex-start is-fullwidth"
+        class="is-info is-justify-content-flex-start is-fullwidth is-clipped"
         aria-haspopup="true"
         aria-controls="title-dropdown-menu"
         @click="isActive = !isActive"
@@ -57,4 +57,8 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.dropdown-trigger {
+  width: 0px;
+}
+</style>

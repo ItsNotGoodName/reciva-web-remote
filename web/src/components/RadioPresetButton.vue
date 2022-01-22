@@ -6,7 +6,7 @@
     :title="preset.name"
     @click="setPreset"
   >
-    <b-tag class="mr-2" :class="selected ? 'is-white' : 'is-info'">{{ preset.number }}</b-tag>
+    <b-tag class="mr-2" :class="selected || 'is-info'">{{ preset.number }}</b-tag>
     <span class="is-flex-grow-1">{{ preset.name }}</span>
   </b-button>
 </template>

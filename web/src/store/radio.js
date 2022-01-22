@@ -11,7 +11,7 @@ export default {
       radio: {},
       radioRefreshing: false,
       radioVolumeRefreshing: false,
-      radioVolumeChanging: 0,
+      radioVolumeDiff: 0,
       radioUUID: "",
       radios: [],
       radiosDiscovering: false,
@@ -44,20 +44,11 @@ export default {
     SET_RADIO_POWER(state, power) {
       state.radio.power = power;
     },
-    SET_RADIO_VOLUME(state, volume) {
-      if (volume < 0) {
-        state.radio.volume = 0;
-      } else if (volume > 100) {
-        state.radio.volume = 100;
-      } else {
-        state.radio.volume = volume;
-      }
-    },
     SET_RADIO_PRESET(state, preset) {
       state.radio.preset = preset;
     },
-    CHANGE_RADIO_VOLUME_CHANGING(state, radioVolumeChanging) {
-      state.radioVolumeChanging += radioVolumeChanging;
+    SET_RADIO_VOLUME_DIFF(state, radioVolumeDiff) {
+      state.radioVolumeDiff = radioVolumeDiff;
     },
     SET_RADIO_VOLUME_REFRESHING(state, radioVolumeRefreshing) {
       state.radioVolumeRefreshing = radioVolumeRefreshing;
@@ -163,13 +154,14 @@ export default {
         commit("SET_RADIO_POWER", power);
       });
     },
-    setRadioVolume({ state, commit, dispatch }, volume) {
-      commit("CHANGE_RADIO_VOLUME_CHANGING", 1);
-      commit("SET_RADIO_VOLUME", volume);
+    changeRadioVolume({ state, commit, dispatch }, change) {
+      commit("SET_RADIO_VOLUME_DIFF", state.radioVolumeDiff + change);
       return dispatch("_callRadio", {
-        promise: api.patchRadio(state.radioUUID, { volume: state.volume }),
+        promise: api.patchRadio(state.radioUUID, {
+          volume: state.radio.volume + state.radioVolumeDiff,
+        }),
       }).finally(() => {
-        commit("CHANGE_RADIO_VOLUME_CHANGING", -1);
+        commit("SET_RADIO_VOLUME_DIFF", state.radioVolumeDiff - change);
       });
     },
     setRadioPreset({ commit, state, dispatch }, preset) {

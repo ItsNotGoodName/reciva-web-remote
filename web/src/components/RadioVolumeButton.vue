@@ -1,7 +1,7 @@
 <template>
   <b-button
     :title="'Volume ' + (this.radio.isMuted ? 'Muted' : this.radio.volume)"
-    :loading="radioVolumeChanging != 0 || radioVolumeRefreshing || !radioReady"
+    :loading="radioVolumeDiff != 0 || radioVolumeRefreshing || !radioReady"
     @click="refreshRadioVolume"
   >
     <b-icon v-if="radio.isMuted" icon="fa-volume-mute" />
@@ -24,7 +24,7 @@ export default {
     ...mapState({
       radio: (state) => state.r.radio,
       radioVolumeRefreshing: (state) => state.r.radioVolumeRefreshing,
-      radioVolumeChanging: (state) => state.r.radioVolumeChanging,
+      radioVolumeDiff: (state) => state.r.radioVolumeDiff,
     }),
     ...mapGetters(["radioReady"]),
   },

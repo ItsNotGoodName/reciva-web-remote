@@ -1,5 +1,5 @@
 <template>
-  <b-button @click="setRadioVolume(this.radio.volume + this.change)">
+  <b-button @click="changeRadioVolume(this.change)">
     <b-icon :icon="icon" />
   </b-button>
 </template>
@@ -31,7 +31,7 @@ export default {
     }),
   },
   methods: {
-    ...mapActions(["setRadioVolume"]),
+    ...mapActions(["changeRadioVolume"]),
   },
 };
 </script>

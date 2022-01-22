@@ -1,6 +1,6 @@
 <template>
   <NavTop />
-  <div class="container nav-margin px-2">
+  <div class="container nav-margin">
     <Edit v-if="store.state.page == 'edit'" />
     <Home v-else />
   </div>

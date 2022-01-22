@@ -1,5 +1,5 @@
 <template>
-  <div v-if="radioReady" class="columns is-multiline">
+  <div v-if="radioReady" class="columns is-multiline m-0">
     <div v-for="preset in radio.presets" :key="preset.number" class="column is-one-third">
       <radio-preset-button class="is-fullwidth" :preset="preset" :radio="radio" />
     </div>

@@ -3,31 +3,37 @@ package router
 import (
 	"io/fs"
 	"log"
+	"mime"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+func init() {
+	mime.AddExtensionType(".js", "application/javascript")
+}
 
 // handleFS adds GET handlers for all files and folders using the given filesystem.
 func handleFS(r *gin.Engine, fS fs.FS) {
 	httpFS := http.FS(fS)
 	dirHandler := handleDir(httpFS)
 
-	if files, err := fs.ReadDir(fS, "."); err == nil {
-		for _, f := range files {
-			name := f.Name()
-			if f.IsDir() {
-				r.GET("/"+name+"/*"+name, dirHandler)
-			} else if name == "index.html" {
-				indexHandler := handleIndex(httpFS)
-				r.GET("/", indexHandler)
-				r.GET("/index.html", indexHandler)
-			} else {
-				r.GET("/"+name, dirHandler)
-			}
-		}
-	} else {
+	files, err := fs.ReadDir(fS, ".")
+	if err != nil {
 		log.Fatal("router.handleFS:", err)
+	}
+
+	for _, f := range files {
+		name := f.Name()
+		if f.IsDir() {
+			r.GET("/"+name+"/*"+name, dirHandler)
+		} else if name == "index.html" {
+			indexHandler := handleIndex(httpFS)
+			r.GET("/", indexHandler)
+			r.GET("/index.html", indexHandler)
+		} else {
+			r.GET("/"+name, dirHandler)
+		}
 	}
 }
 

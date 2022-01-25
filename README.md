@@ -5,9 +5,10 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 ![Desktop Demo](/assets/desktop-demo.png)
 
 ## Features
+
 - Discover radios on your local network via UPnP
 - Toggle radio's power
-- Change radio's volume 
+- Change radio's volume
 - Play presets that are on the radio
 - Host playlists for radios
 
@@ -36,6 +37,7 @@ It needs port `8058` for UPnP notify requests. It can be changed by setting the 
 ```
 
 It looks for `reciva-web-remote.json` in the current folder by default. It can be changed with the `config` flag.
+
 ```
 ./reciva-web-remote -config test.json
 ```
@@ -48,18 +50,18 @@ Open `reciva-web-remote.json` and add the following content before running the p
 
 ```json
 {
-	"presets": [
-		{
-			"url": "http://example.com/01.m3u"
-		},
-		{
-			"url": "http://example.com/02.m3u"
-		}
-	]
+  "presets": [
+    {
+      "url": "http://example.com/01.m3u"
+    },
+    {
+      "url": "http://example.com/02.m3u"
+    }
+  ]
 }
 ```
 
-The program will host the m3u playlists on `/01.m3u` and `/02.m3u`. 
+The program will host the m3u playlists on `/01.m3u` and `/02.m3u`.
 
 The contents of the playlists can be changed in the web interface.
 
@@ -96,3 +98,9 @@ Run backend.
 ```
 make dev-backend
 ```
+
+## Todo
+
+- Dark mode
+- Volume slider
+- Refresh volume on an interval

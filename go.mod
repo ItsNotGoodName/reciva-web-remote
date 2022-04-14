@@ -3,7 +3,7 @@ module github.com/ItsNotGoodName/reciva-web-remote
 go 1.17
 
 require (
-	github.com/ItsNotGoodName/go-upnpsub v0.4.0
+	github.com/ItsNotGoodName/go-upnpsub v0.5.0
 	github.com/avast/retry-go/v3 v3.1.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/gorilla/websocket v1.4.2

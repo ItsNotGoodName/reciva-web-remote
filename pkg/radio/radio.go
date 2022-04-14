@@ -10,17 +10,17 @@ import (
 )
 
 type Radio struct {
-	DoneC      chan struct{}         // Channel to signal that the radio is done.
-	UUID       string                // UUID of the radio.
-	client     goupnp.ServiceClient  // client is the SOAP client.
-	getStateC  chan State            // getStateC is used to read the state.
-	mutateC    chan struct{}         // mutateC is used to signal that mutator has changed.
-	pub        *Pub                  // pub is where state change events are sent.
-	setVolumeC chan int              // setVolumeC is used to set the volume.
-	sub        *upnpsub.Subscription // sub that belongs to this Radio.
+	DoneC      chan struct{}        // Channel to signal that the radio is done.
+	UUID       string               // UUID of the radio.
+	client     goupnp.ServiceClient // client is the SOAP client.
+	getStateC  chan State           // getStateC is used to read the state.
+	mutateC    chan struct{}        // mutateC is used to signal that mutator has changed.
+	pub        *Pub                 // pub is where state change events are sent.
+	setVolumeC chan int             // setVolumeC is used to set the volume.
+	sub        upnpsub.Subscription // sub that belongs to this Radio.
 }
 
-func newRadio(uuid string, client goupnp.ServiceClient, sub *upnpsub.Subscription, pub *Pub) *Radio {
+func newRadio(uuid string, client goupnp.ServiceClient, sub upnpsub.Subscription, pub *Pub) *Radio {
 	return &Radio{
 		UUID:       uuid,
 		DoneC:      make(chan struct{}),
@@ -129,7 +129,7 @@ func (rd *Radio) start(ctx context.Context, state State, mutator MutatorPort) {
 	for {
 		select {
 		case <-ctx.Done():
-			<-rd.sub.Done
+			<-rd.sub.Done()
 			close(rd.DoneC)
 			log.Println("Radio.start: stopped radio", rd.UUID)
 			return
@@ -147,7 +147,7 @@ func (rd *Radio) start(ctx context.Context, state State, mutator MutatorPort) {
 				state.Volume = &newVolume
 				rd.publish(&State{Volume: &newVolume})
 			}
-		case event := <-rd.sub.Event:
+		case event := <-rd.sub.Events():
 			diffState := State{}
 			changed := false
 

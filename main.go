@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -48,8 +49,10 @@ func main() {
 	mutator := store.NewMutator(presetStore)
 
 	// Create and start control point
-	cp := upnpsub.NewControlPointWithPort(cfg.CPort)
-	go cp.Start()
+	cp := upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort))
+	go func() {
+		log.Fatalln(upnpsub.ListenAndServe("", cp))
+	}()
 
 	// Create and start hub
 	hub := radio.NewHubWithMutator(cp, mutator)

@@ -11,21 +11,21 @@ import (
 )
 
 type Hub struct {
-	DoneC     chan struct{}         // DoneC is closed when all radios are stopped.
-	Pub       *Pub                  // Pub is the state change event publisher
-	mutator   MutatorPort           // mutator is used to mutate the state of the radio.
-	cp        *upnpsub.ControlPoint // cp is used to create subscriptions.
-	discoverC chan chan error       // discoverC is used to discover radios.
+	DoneC     chan struct{}        // DoneC is closed when all radios are stopped.
+	Pub       *Pub                 // Pub is the state change event publisher
+	mutator   MutatorPort          // mutator is used to mutate the state of the radio.
+	cp        upnpsub.ControlPoint // cp is used to create subscriptions.
+	discoverC chan chan error      // discoverC is used to discover radios.
 
 	radiosMu sync.RWMutex      // radiosMu is used to protect radios map.
 	radios   map[string]*Radio // radios is used to store all the Radios.
 }
 
-func NewHub(cp *upnpsub.ControlPoint) *Hub {
+func NewHub(cp upnpsub.ControlPoint) *Hub {
 	return NewHubWithMutator(cp, NewMutator())
 }
 
-func NewHubWithMutator(cp *upnpsub.ControlPoint, mutator MutatorPort) *Hub {
+func NewHubWithMutator(cp upnpsub.ControlPoint, mutator MutatorPort) *Hub {
 	return &Hub{
 		DoneC:     make(chan struct{}),
 		Pub:       newPub(),
@@ -225,7 +225,7 @@ func (h *Hub) discover(ctx context.Context) ([]*Radio, error) {
 
 func (h *Hub) newRadio(ctx context.Context, client goupnp.ServiceClient) (*Radio, error) {
 	// Create sub
-	sub, err := h.cp.NewSubscription(ctx, &client.Service.EventSubURL.URL)
+	sub, err := h.cp.Subscribe(ctx, &client.Service.EventSubURL.URL)
 	if err != nil {
 		return nil, err
 	}

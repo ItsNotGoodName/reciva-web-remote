@@ -1,21 +1,18 @@
 package state
 
 import (
-	"fmt"
 	"sync"
 )
 
-var ErrSubClosed = fmt.Errorf("sub closed")
-
 type PubImpl struct {
 	subsMu sync.Mutex
-	subs   map[*SubImpl]struct{}
+	subs   map[*SubImpl]string
 }
 
 func NewPub() *PubImpl {
 	return &PubImpl{
 		subsMu: sync.Mutex{},
-		subs:   make(map[*SubImpl]struct{}),
+		subs:   make(map[*SubImpl]string),
 	}
 }
 
@@ -26,63 +23,57 @@ func (p *PubImpl) Unsubscribe(sub *SubImpl) {
 	p.subsMu.Unlock()
 }
 
-func (p *PubImpl) Subscribe(buffer int) (*SubImpl, error) {
+func (p *PubImpl) Subscribe(buffer int, uuid string) *SubImpl {
 	sub := newSub(buffer)
 
-	var err error
 	p.subsMu.Lock()
-	if sub.open {
-		p.subs[sub] = struct{}{}
-	} else {
-		err = ErrSubClosed
-	}
+	p.subs[sub] = uuid
 	p.subsMu.Unlock()
 
-	return sub, err
+	return sub
 }
 
 func (p *PubImpl) Publish(f Fragment) {
 	p.subsMu.Lock()
-	for sub := range p.subs {
-		if !sub.send(&f) {
-			delete(p.subs, sub)
-			sub.close()
+	for sub, uuid := range p.subs {
+		if uuid == f.UUID || uuid == "" {
+			if !sub.send(&f) {
+				delete(p.subs, sub)
+				sub.close()
+			}
 		}
 	}
 	p.subsMu.Unlock()
 }
 
 type SubImpl struct {
-	ch   chan *Fragment
-	open bool
+	channel chan *Fragment
+	open    bool
 }
 
 func newSub(buffer int) *SubImpl {
 	return &SubImpl{
-		ch:   make(chan *Fragment, buffer),
-		open: true,
+		channel: make(chan *Fragment, buffer),
+		open:    true,
 	}
 }
 
-// Channel returns the sub's channel.
 func (s *SubImpl) Channel() <-chan *Fragment {
-	return s.ch
+	return s.channel
 }
 
-// send sends fragment to subscriber.
 func (s *SubImpl) send(f *Fragment) bool {
 	select {
-	case s.ch <- f:
+	case s.channel <- f:
 		return true
 	default:
 		return false
 	}
 }
 
-// close the sub.
 func (s *SubImpl) close() {
 	if s.open {
-		close(s.ch)
+		close(s.channel)
 		s.open = false
 	}
 }

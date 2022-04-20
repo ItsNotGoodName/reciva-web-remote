@@ -19,10 +19,7 @@ func main() {
 
 	pub := state.NewPub()
 
-	sub, err := pub.Subscribe(8)
-	if err != nil {
-		log.Fatal("could not sub:", err)
-	}
+	sub := pub.Subscribe(8, "")
 
 	go func() {
 		for s := range sub.Channel() {

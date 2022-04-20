@@ -19,7 +19,7 @@ func NewRunService(fragmentPub state.FragmentPub) *RunServiceImpl {
 }
 
 func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
-	mergeAndPublish := func(f state.Fragment) {
+	handle := func(f state.Fragment) {
 		if frag, changed := s.Merge(f); changed {
 			rs.fragmentPub.Publish(frag)
 		}
@@ -31,11 +31,11 @@ func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
 			return
 		case radio.readC <- s:
 		case fragment := <-radio.updateC:
-			mergeAndPublish(fragment)
+			handle(fragment)
 		case event := <-radio.subscription.Events():
 			fragment := state.NewFragment(radio.UUID)
 			parseEvent(event, &fragment)
-			mergeAndPublish(fragment)
+			handle(fragment)
 		}
 	}
 }

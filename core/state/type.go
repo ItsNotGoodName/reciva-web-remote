@@ -30,7 +30,6 @@ type (
 		Volume       int      `json:"volume"`        // Volume of the radio.
 	}
 
-	// Fragment is the fragment of the state that changes.
 	Fragment struct {
 		AudioSource  *string  `json:"audio_source,omitempty"`
 		IsMuted      *bool    `json:"is_muted,omitempty"`

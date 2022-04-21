@@ -92,6 +92,26 @@ func PlayPreset(ctx context.Context, client goupnp.ServiceClient, preset int) er
 	return nil
 }
 
+func SetAudioSource(ctx context.Context, client goupnp.ServiceClient, audioSource string) error {
+	// Create request
+	request := &struct {
+		NewAudioSourceValue string
+	}{
+		NewAudioSourceValue: audioSource,
+	}
+	response := interface{}(nil)
+
+	// Send request
+	err := retry.Do(func() error {
+		return client.SOAPClient.PerformActionCtx(ctx, client.Service.ServiceType, "SetAudioSource", request, response)
+	}, retry.Context(ctx))
+	if err != nil {
+		return fmt.Errorf("could not set audio source: %w", err)
+	}
+
+	return nil
+}
+
 func GetAudioSources(ctx context.Context, client goupnp.ServiceClient) ([]string, error) {
 	// Create request
 	request := interface{}(nil)

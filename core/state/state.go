@@ -13,6 +13,16 @@ func (s *State) ValidPresetNumber(preset int) error {
 	return nil
 }
 
+func (s *State) ValidAudioSource(audioSource string) error {
+	for _, source := range s.AudioSources {
+		if source == audioSource {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("invalid audio source: %s", audioSource)
+}
+
 func (s *State) SetPresets(presets []Preset) {
 	s.Presets = presets
 	s.SetTitle(s.Title)
@@ -38,14 +48,13 @@ func (s *State) SetAudioSources(audioSources []string) {
 }
 
 func (s *State) SetAudioSource(audioSource string) error {
-	for _, source := range s.AudioSources {
-		if source == audioSource {
-			s.AudioSource = audioSource
-			return nil
-		}
+	if err := s.ValidAudioSource(audioSource); err != nil {
+		return err
 	}
 
-	return fmt.Errorf("invalid audio source: %s", audioSource)
+	s.AudioSource = audioSource
+
+	return nil
 }
 
 // Merge fragment into state and return a fragment that has the merged changes.

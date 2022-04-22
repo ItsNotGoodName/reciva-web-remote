@@ -69,3 +69,16 @@ func (rs *RadioServiceImpl) Refresh(ctx context.Context, radio Radio) error {
 func (rs *RadioServiceImpl) GetState(ctx context.Context, radio Radio) (*state.State, error) {
 	return radio.read(ctx)
 }
+
+func (rs *RadioServiceImpl) SetAudioSource(ctx context.Context, radio Radio, audioSource string) error {
+	s, err := rs.GetState(ctx, radio)
+	if err != nil {
+		return err
+	}
+
+	if err := s.ValidAudioSource(audioSource); err != nil {
+		return err
+	}
+
+	return upnp.SetAudioSource(ctx, radio.client, audioSource)
+}

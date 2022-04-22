@@ -33,6 +33,7 @@ type (
 		PlayPreset(ctx context.Context, radio Radio, preset int) error
 		Refresh(ctx context.Context, radio Radio) error
 		RefreshVolume(ctx context.Context, radio Radio) error
+		SetAudioSource(ctx context.Context, radio Radio, audioSource string) error
 		SetPower(ctx context.Context, radio Radio, power bool) error
 		SetVolume(ctx context.Context, radio Radio, volume int) error
 	}

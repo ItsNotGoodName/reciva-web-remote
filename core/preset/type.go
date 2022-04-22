@@ -24,7 +24,7 @@ type (
 	}
 )
 
-func NewPreset(urL, newTitle, newURL string) (*Preset, error) {
+func ParsePreset(urL, newTitle, newURL string) (*Preset, error) {
 	urlObj, err := url.ParseRequestURI(urL)
 	if err != nil {
 		return nil, err

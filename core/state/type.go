@@ -1,5 +1,7 @@
 package state
 
+import "fmt"
+
 const (
 	StatusConnecting = "Connecting"
 	StatusPlaying    = "Playing"
@@ -12,6 +14,11 @@ type (
 		Publish(Fragment)
 	}
 
+	Middleware interface {
+		Fragment(*Fragment)
+		FragmentFromState(State) Fragment
+	}
+
 	State struct {
 		AudioSource  string   `json:"audio_source"`  // AudioSource is the audio source.
 		AudioSources []string `json:"audio_sources"` // AudioSources is the list of available audio sources.
@@ -20,6 +27,8 @@ type (
 		ModelName    string   `json:"model_name"`    // ModelName is the model name of the device.
 		ModelNumber  string   `json:"model_number"`  // ModelNumber is the model number of the device.
 		Name         string   `json:"name"`          // Name of the radio.
+		NewTitle     string   `json:"new_title"`     // NewTitle is the overriden title.
+		NewURL       string   `json:"new_url"`       // NewURL is the overriden URL.
 		Power        bool     `json:"power"`         // Power represents if the radio is not in standby.
 		PresetNumber int      `json:"preset_number"` // PresetNumber is the current preset that is playing.
 		Presets      []Preset `json:"presets"`       // Presets of the radio.
@@ -34,6 +43,8 @@ type (
 		AudioSource  *string  `json:"audio_source,omitempty"`
 		IsMuted      *bool    `json:"is_muted,omitempty"`
 		Metadata     *string  `json:"metadata,omitempty"`
+		NewTitle     *string  `json:"new_title,omitempty"`
+		NewURL       *string  `json:"new_url,omitempty"`
 		Power        *bool    `json:"power,omitempty"`
 		PresetNumber *int     `json:"preset_number,omitempty"`
 		Presets      []Preset `json:"presets,omitempty"`
@@ -45,13 +56,24 @@ type (
 	}
 
 	Preset struct {
-		Number int    `json:"number"` // Number is the preset number.
-		Title  string `json:"title"`  // Title of the preset.
-		URL    string `json:"url"`    // URL of the preset.
+		Number   int    `json:"number"`    // Number is the preset number.
+		Title    string `json:"title"`     // Title of the preset.
+		NewTitle string `json:"new_title"` // NewTitle is the overriden title.
+		URL      string `json:"url"`       // URL of the preset.
 	}
 
 	Status string
 )
+
+func New(uuid, name, modelName, modelNumber string) State {
+	return State{
+		ModelName:   modelName,
+		ModelNumber: modelNumber,
+		Name:        name,
+		Status:      StatusUnknown,
+		UUID:        uuid,
+	}
+}
 
 func NewFragment(uuid string) Fragment {
 	return Fragment{
@@ -64,5 +86,38 @@ func NewPreset(number int, title, url string) Preset {
 		Number: number,
 		Title:  title,
 		URL:    url,
+	}
+}
+
+func NormalizeVolume(volume int) int {
+	if volume < 0 {
+		return 0
+	}
+	if volume > 100 {
+		return 100
+	}
+
+	return volume
+}
+
+func ParsePresetsCount(presetsCount int) (int, error) {
+	presetsCount = presetsCount - 2
+	if presetsCount < 1 {
+		return 0, fmt.Errorf("invalid presets count: %d", presetsCount)
+	}
+
+	return presetsCount, nil
+}
+
+func ParseStatus(status string) Status {
+	switch {
+	case status == StatusConnecting:
+		return StatusConnecting
+	case status == StatusPlaying:
+		return StatusPlaying
+	case status == StatusStopped:
+		return StatusStopped
+	default:
+		return StatusUnknown
 	}
 }

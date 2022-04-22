@@ -33,7 +33,7 @@ func readConfig(file string) (map[string]preset.Preset, error) {
 	// Create map from config
 	presets := make(map[string]preset.Preset, len(cfg.Presets))
 	for _, p := range cfg.Presets {
-		pp, err := preset.NewPreset(p.URL, p.NewName, p.NewURL)
+		pp, err := preset.ParsePreset(p.URL, p.NewName, p.NewURL)
 		if err != nil {
 			return nil, err
 		}

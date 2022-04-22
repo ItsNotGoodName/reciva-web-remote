@@ -5,49 +5,6 @@ import (
 	"log"
 )
 
-func New(uuid, name, modelName, modelNumber string) State {
-	return State{
-		ModelName:   modelName,
-		ModelNumber: modelNumber,
-		Name:        name,
-		Status:      StatusUnknown,
-		UUID:        uuid,
-	}
-}
-
-func NormalizeVolume(volume int) int {
-	if volume < 0 {
-		return 0
-	}
-	if volume > 100 {
-		return 100
-	}
-
-	return volume
-}
-
-func ParsePresetsCount(presetsCount int) (int, error) {
-	presetsCount = presetsCount - 2
-	if presetsCount < 1 {
-		return 0, fmt.Errorf("invalid presets count: %d", presetsCount)
-	}
-
-	return presetsCount, nil
-}
-
-func ParseStatus(status string) Status {
-	switch {
-	case status == StatusConnecting:
-		return StatusConnecting
-	case status == StatusPlaying:
-		return StatusPlaying
-	case status == StatusStopped:
-		return StatusStopped
-	default:
-		return StatusUnknown
-	}
-}
-
 func (s *State) ValidPresetNumber(preset int) error {
 	if preset < 1 || preset > len(s.Presets) {
 		return fmt.Errorf("invalid preset number: %d", preset)
@@ -67,13 +24,13 @@ func (s *State) SetVolume(volume int) {
 
 func (s *State) SetTitle(title string) {
 	s.Title = title
+	s.PresetNumber = 0
 	for _, preset := range s.Presets {
 		if preset.Title == title {
 			s.PresetNumber = preset.Number
 			return
 		}
 	}
-	s.PresetNumber = 0
 }
 
 func (s *State) SetAudioSources(audioSources []string) {
@@ -91,7 +48,7 @@ func (s *State) SetAudioSource(audioSource string) error {
 	return fmt.Errorf("invalid audio source: %s", audioSource)
 }
 
-// Merge fragment into state and return a fragment of what changed.
+// Merge fragment into state and return a fragment that has the merged changes.
 func (s *State) Merge(f Fragment) (Fragment, bool) {
 	changed := false
 	if f.AudioSource != nil {
@@ -152,6 +109,14 @@ func (s *State) Merge(f Fragment) (Fragment, bool) {
 			newPresetNumber := s.PresetNumber
 			f.PresetNumber = &newPresetNumber
 		}
+	}
+	if f.NewTitle != nil && *f.NewTitle != s.NewTitle {
+		s.NewTitle = *f.NewTitle
+		changed = true
+	}
+	if f.NewURL != nil && *f.NewURL != s.NewURL {
+		s.NewURL = *f.NewURL
+		changed = true
 	}
 	if f.URL != nil && *f.URL != s.URL {
 		s.URL = *f.URL

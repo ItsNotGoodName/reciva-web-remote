@@ -27,7 +27,7 @@ func (rs *RadioServiceImpl) SetVolume(ctx context.Context, radio Radio, volume i
 }
 
 func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset int) error {
-	s, err := radio.read(ctx)
+	s, err := rs.GetState(ctx, radio)
 	if err != nil {
 		return err
 	}

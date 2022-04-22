@@ -1,26 +1,27 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/middleware"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/sig"
+	"github.com/ItsNotGoodName/reciva-web-remote/right/mock"
 )
 
 func main() {
 	controlPoint := upnpsub.NewControlPoint()
 	go upnpsub.ListenAndServe("", controlPoint)
 
-	pub := state.NewPub()
-
-	sub := pub.Subscribe(8, "")
-
+	// Subscribe to all radios
+	fragmentPub := pubsub.NewPub()
+	sub := fragmentPub.Subscribe(8, "")
 	go func() {
 		for s := range sub.Channel() {
 			j, err := json.MarshalIndent(s, "", "  ")
@@ -34,7 +35,13 @@ func main() {
 		log.Println("channel closed")
 	}()
 
-	runService := radio.NewRunService(pub)
+	middlewarePub := sig.NewPub()
+
+	runService := radio.NewRunService(
+		fragmentPub,
+		middleware.NewPreset(middlewarePub, mock.NewPresetStore()),
+		middlewarePub,
+	)
 	createService := radio.NewCreateService(controlPoint, runService)
 
 	clients, _, err := upnp.Discover()
@@ -43,18 +50,12 @@ func main() {
 	}
 	if len(clients) == 0 {
 		log.Fatal("no radios found")
-		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-	radio, err := createService.Create(ctx, clients[0])
+	radio, err := createService.Create(interrupt.Context(), clients[0])
 	if err != nil {
 		log.Fatal("failed to create radio:", err)
 	}
 
-	time.Sleep(10 * time.Second)
-
-	cancel()
 	<-radio.Done()
 }

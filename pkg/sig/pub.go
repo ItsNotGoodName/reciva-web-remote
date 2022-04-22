@@ -1,5 +1,5 @@
-// Packages signal is a pubsub that notifies subscribers in other goroutines.
-package signal
+// Package sig is a signal pubsub that notifies subscribers in other goroutines.
+package sig
 
 import "sync"
 

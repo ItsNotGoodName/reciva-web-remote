@@ -1,4 +1,4 @@
-package signal
+package sig
 
 type Sub struct {
 	ch chan struct{}

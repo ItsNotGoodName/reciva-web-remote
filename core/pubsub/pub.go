@@ -35,11 +35,11 @@ func (p *Pub) Subscribe(buffer int, uuid string) *Sub {
 	return sub
 }
 
-func (p *Pub) Publish(f state.Fragment) {
+func (p *Pub) Publish(frag state.Fragment) {
 	p.subsMu.Lock()
 	for sub, uuid := range p.subs {
-		if uuid == f.UUID || uuid == "" {
-			if !sub.send(&f) {
+		if uuid == frag.UUID || uuid == "" {
+			if !sub.send(&frag) {
 				delete(p.subs, sub)
 				sub.close()
 			}

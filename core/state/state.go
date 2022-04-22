@@ -51,30 +51,68 @@ func (s *State) SetAudioSource(audioSource string) error {
 // Merge fragment into state and return a fragment that has the merged changes.
 func (s *State) Merge(f Fragment) (Fragment, bool) {
 	changed := false
+
 	if f.AudioSource != nil {
-		oldAudioSource := s.AudioSource
+		if *f.AudioSource != s.AudioSource {
+			oldAudioSource := s.AudioSource
 
-		if err := s.SetAudioSource(*f.AudioSource); err != nil {
-			log.Println("state.State.Merge:", err)
-		} else if oldAudioSource != s.AudioSource {
-			changed = true
+			if err := s.SetAudioSource(*f.AudioSource); err != nil {
+				log.Println("state.State.Merge:", err)
+			} else if oldAudioSource != s.AudioSource {
+				changed = true
 
-			newAudioSource := s.AudioSource
-			f.AudioSource = &newAudioSource
+				newAudioSource := s.AudioSource
+				f.AudioSource = &newAudioSource
+			}
+		} else {
+			f.AudioSource = nil
 		}
 	}
-	if f.IsMuted != nil && *f.IsMuted != s.IsMuted {
-		s.IsMuted = *f.IsMuted
-		changed = true
+
+	if f.IsMuted != nil {
+		if *f.IsMuted != s.IsMuted {
+			s.IsMuted = *f.IsMuted
+			changed = true
+		} else {
+			f.IsMuted = nil
+		}
 	}
-	if f.Metadata != nil && *f.Metadata != s.Metadata {
-		s.Metadata = *f.Metadata
-		changed = true
+
+	if f.Metadata != nil {
+		if *f.Metadata != s.Metadata {
+			s.Metadata = *f.Metadata
+			changed = true
+		} else {
+			f.Metadata = nil
+		}
 	}
-	if f.Power != nil && *f.Power != s.Power {
-		s.Power = *f.Power
-		changed = true
+
+	if f.NewTitle != nil {
+		if *f.NewTitle != s.NewTitle {
+			s.NewTitle = *f.NewTitle
+			changed = true
+		} else {
+			f.NewTitle = nil
+		}
 	}
+
+	if f.NewURL != nil {
+		if *f.NewURL != s.NewURL {
+			s.NewURL = *f.NewURL
+			changed = true
+		} else {
+			f.NewURL = nil
+		}
+	}
+	if f.Power != nil {
+		if *f.Power != s.Power {
+			s.Power = *f.Power
+			changed = true
+		} else {
+			f.Power = nil
+		}
+	}
+
 	if f.Presets != nil {
 		oldPresetNumber := s.PresetNumber
 		oldTitle := s.Title
@@ -93,44 +131,56 @@ func (s *State) Merge(f Fragment) (Fragment, bool) {
 			f.Title = &newTitle
 		}
 	}
-	if f.Status != nil && *f.Status != s.Status {
-		s.Status = *f.Status
-		changed = true
-	}
-	if f.Title != nil && *f.Title != s.Title {
-		oldPresetNumber := s.PresetNumber
 
-		s.SetTitle(*f.Title)
-		changed = true
-
-		newTitle := s.Title
-		f.Title = &newTitle
-		if oldPresetNumber != s.PresetNumber {
-			newPresetNumber := s.PresetNumber
-			f.PresetNumber = &newPresetNumber
+	if f.Status != nil {
+		if *f.Status != s.Status {
+			s.Status = *f.Status
+			changed = true
+		} else {
+			f.Status = nil
 		}
 	}
-	if f.NewTitle != nil && *f.NewTitle != s.NewTitle {
-		s.NewTitle = *f.NewTitle
-		changed = true
-	}
-	if f.NewURL != nil && *f.NewURL != s.NewURL {
-		s.NewURL = *f.NewURL
-		changed = true
-	}
-	if f.URL != nil && *f.URL != s.URL {
-		s.URL = *f.URL
-		changed = true
-	}
-	if f.Volume != nil {
-		oldVolume := s.Volume
 
-		s.SetVolume(*f.Volume)
-		if oldVolume != s.Volume {
+	if f.Title != nil {
+		if *f.Title != s.Title {
+			oldPresetNumber := s.PresetNumber
+
+			s.SetTitle(*f.Title)
 			changed = true
 
-			newVolume := s.Volume
-			f.Volume = &newVolume
+			newTitle := s.Title
+			f.Title = &newTitle
+			if oldPresetNumber != s.PresetNumber {
+				newPresetNumber := s.PresetNumber
+				f.PresetNumber = &newPresetNumber
+			}
+		} else {
+			f.Title = nil
+		}
+	}
+
+	if f.URL != nil {
+		if *f.URL != s.URL {
+			s.URL = *f.URL
+			changed = true
+		} else {
+			f.URL = nil
+		}
+	}
+
+	if f.Volume != nil {
+		if *f.Volume != s.Volume {
+			oldVolume := s.Volume
+
+			s.SetVolume(*f.Volume)
+			if oldVolume != s.Volume {
+				changed = true
+
+				newVolume := s.Volume
+				f.Volume = &newVolume
+			}
+		} else {
+			f.Volume = nil
 		}
 	}
 

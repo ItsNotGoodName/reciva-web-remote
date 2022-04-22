@@ -46,7 +46,6 @@ func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
 		case event := <-radio.subscription.Events():
 			fragment := state.NewFragment(radio.UUID)
 			parseEvent(event, &fragment)
-
 			handle(fragment)
 		}
 	}

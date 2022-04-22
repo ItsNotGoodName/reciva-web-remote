@@ -20,7 +20,7 @@ func main() {
 	go upnpsub.ListenAndServe("", controlPoint)
 
 	// Subscribe to all radios
-	fragmentPub := pubsub.NewPub()
+	fragmentPub := pubsub.NewFragmentPub()
 	sub := fragmentPub.Subscribe(8, "")
 	go func() {
 		for s := range sub.Channel() {

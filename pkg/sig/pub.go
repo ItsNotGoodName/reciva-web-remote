@@ -4,44 +4,47 @@ package sig
 import "sync"
 
 type Pub struct {
-	subsMapMu sync.RWMutex
-	subsMap   map[*Sub]struct{}
+	subsMapMu sync.Mutex
+	subsMap   map[*chan struct{}]struct{}
 }
 
 func NewPub() *Pub {
 	return &Pub{
-		subsMap: make(map[*Sub]struct{}),
+		subsMap: make(map[*chan struct{}]struct{}),
 	}
 }
 
 func (p *Pub) Publish() {
-	p.subsMapMu.RLock()
+	p.subsMapMu.Lock()
 
 	for sub := range p.subsMap {
 		select {
-		case sub.ch <- struct{}{}:
+		case *sub <- struct{}{}:
 		default:
 		}
 	}
 
-	p.subsMapMu.RUnlock()
+	p.subsMapMu.Unlock()
 }
 
-func (p *Pub) Subscribe() *Sub {
+func (p *Pub) Subscribe() (<-chan struct{}, func()) {
 	p.subsMapMu.Lock()
 
-	sub := newSub()
-	p.subsMap[sub] = struct{}{}
+	sub := make(chan struct{}, 1)
+	p.subsMap[&sub] = struct{}{}
 
 	p.subsMapMu.Unlock()
 
-	return sub
+	return sub, p.unsubscribeFunc(&sub)
+
 }
 
-func (p *Pub) Unsubscribe(sub *Sub) {
-	p.subsMapMu.Lock()
+func (p *Pub) unsubscribeFunc(ch *chan struct{}) func() {
+	return func() {
+		p.subsMapMu.Lock()
 
-	delete(p.subsMap, sub)
+		delete(p.subsMap, ch)
 
-	p.subsMapMu.Unlock()
+		p.subsMapMu.Unlock()
+	}
 }

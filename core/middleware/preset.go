@@ -38,7 +38,7 @@ func (m *Preset) Update(ctx context.Context, preset *preset.Preset) error {
 	return nil
 }
 
-func (m *Preset) Fragment(frag *state.Fragment) {
+func (m *Preset) Apply(frag *state.Fragment) {
 	ctx := context.Background()
 
 	if frag.Presets != nil {
@@ -48,24 +48,6 @@ func (m *Preset) Fragment(frag *state.Fragment) {
 	if frag.URL != nil || frag.Title != nil {
 		m.fragmentTitleAndURL(ctx, frag)
 	}
-}
-
-func (m *Preset) FragmentFromState(s state.State) state.Fragment {
-	title := s.Title
-	url := s.URL
-	var presets []state.Preset
-	copy(presets, s.Presets)
-
-	frag := state.NewFragment(s.UUID)
-	frag.Title = &title
-	frag.URL = &url
-	frag.Presets = presets
-
-	ctx := context.Background()
-	m.fragmentPresets(ctx, &frag)
-	m.fragmentTitleAndURL(ctx, &frag)
-
-	return frag
 }
 
 func (m *Preset) fragmentPresets(ctx context.Context, frag *state.Fragment) {

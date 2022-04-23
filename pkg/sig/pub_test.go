@@ -6,43 +6,44 @@ import (
 
 func TestPub(t *testing.T) {
 	pub := NewPub()
-	sub := pub.Subscribe()
+	sub, unsub := pub.Subscribe()
+	defer unsub()
 
 	select {
-	case <-sub.Channel():
-		t.Error("sub.Channel() should not have received a signal")
+	case <-sub:
+		t.Error("sub should not have received a signal")
 	default:
 	}
 
 	pub.Publish()
 
 	select {
-	case <-sub.Channel():
+	case <-sub:
 	default:
-		t.Error("sub.Channel() should have received a signal")
+		t.Error("sub should have received a signal")
 	}
 
 	pub.Publish()
 	pub.Publish()
 
 	select {
-	case <-sub.Channel():
+	case <-sub:
 	default:
-		t.Error("sub.Channel() should have received a signal")
+		t.Error("sub should have received a signal")
 	}
 
 	select {
-	case <-sub.Channel():
-		t.Error("sub.Channel() should not have received a signal")
+	case <-sub:
+		t.Error("sub should not have received a signal")
 	default:
 	}
 
-	pub.Unsubscribe(sub)
+	unsub()
 	pub.Publish()
 
 	select {
-	case <-sub.Channel():
-		t.Error("sub.Channel() should not have received a signal")
+	case <-sub:
+		t.Error("sub should not have received a signal")
 	default:
 	}
 }

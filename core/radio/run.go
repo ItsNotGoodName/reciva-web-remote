@@ -6,40 +6,38 @@ import (
 )
 
 type RunServiceImpl struct {
-	fragmentPub   state.FragmentPub
+	statePub      state.StatePub
 	middleware    state.Middleware
 	middlewarePub *sig.Pub
 }
 
-func NewRunService(fragmentPub state.FragmentPub, middleware state.Middleware, middlewarePub *sig.Pub) *RunServiceImpl {
+func NewRunService(statePub state.StatePub, middleware state.Middleware, middlewarePub *sig.Pub) *RunServiceImpl {
 	return &RunServiceImpl{
-		fragmentPub:   fragmentPub,
+		statePub:      statePub,
 		middleware:    middleware,
 		middlewarePub: middlewarePub,
 	}
 }
 
 func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
-	handleWithoutMiddleware := func(frag state.Fragment) {
-		if f, changed := s.Merge(frag); changed {
-			rs.fragmentPub.Publish(f)
+	handle := func(frag state.Fragment) {
+		rs.middleware.Apply(&frag)
+		if s.Merge(frag) {
+			rs.statePub.Publish(s)
 		}
 	}
-	handle := func(frag state.Fragment) {
-		rs.middleware.Fragment(&frag)
-		handleWithoutMiddleware(frag)
-	}
+	handle(s.Fragment())
 
-	s.Merge(rs.middleware.FragmentFromState(s))
-	middlewareSub := rs.middlewarePub.Subscribe()
+	// Middleware signal
+	middlewareSub, middlewareUnsub := rs.middlewarePub.Subscribe()
+	defer middlewareUnsub()
 
 	for {
 		select {
 		case <-radio.Done():
-			rs.middlewarePub.Unsubscribe(middlewareSub)
 			return
-		case <-middlewareSub.Channel():
-			handleWithoutMiddleware(rs.middleware.FragmentFromState(s))
+		case <-middlewareSub:
+			handle(s.Fragment())
 		case radio.readC <- s:
 		case fragment := <-radio.updateC:
 			handle(fragment)

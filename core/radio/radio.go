@@ -32,7 +32,7 @@ func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset 
 		return err
 	}
 
-	if err := s.ValidPresetNumber(preset); err != nil {
+	if err := state.ValidPresetNumber(s, preset); err != nil {
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (rs *RadioServiceImpl) SetAudioSource(ctx context.Context, radio Radio, aud
 		return err
 	}
 
-	if err := s.ValidAudioSource(audioSource); err != nil {
+	if err := state.ValidAudioSource(s, audioSource); err != nil {
 		return err
 	}
 

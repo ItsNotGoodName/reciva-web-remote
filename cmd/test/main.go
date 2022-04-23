@@ -20,8 +20,8 @@ func main() {
 	go upnpsub.ListenAndServe("", controlPoint)
 
 	// Subscribe to all radios
-	fragmentPub := pubsub.NewFragmentPub()
-	sub := fragmentPub.Subscribe(8, "")
+	statePub := pubsub.NewStatePub()
+	sub := statePub.Subscribe(8, "")
 	go func() {
 		for s := range sub.Channel() {
 			j, err := json.MarshalIndent(s, "", "  ")
@@ -38,7 +38,7 @@ func main() {
 	middlewarePub := sig.NewPub()
 
 	runService := radio.NewRunService(
-		fragmentPub,
+		statePub,
 		middleware.NewPreset(middlewarePub, mock.NewPresetStore()),
 		middlewarePub,
 	)

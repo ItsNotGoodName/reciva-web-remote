@@ -10,13 +10,12 @@ const (
 )
 
 type (
-	FragmentPub interface {
-		Publish(Fragment)
+	StatePub interface {
+		Publish(State)
 	}
 
 	Middleware interface {
-		Fragment(*Fragment)
-		FragmentFromState(State) Fragment
+		Apply(*Fragment)
 	}
 
 	State struct {
@@ -40,19 +39,18 @@ type (
 	}
 
 	Fragment struct {
-		AudioSource  *string  `json:"audio_source,omitempty"`
-		IsMuted      *bool    `json:"is_muted,omitempty"`
-		Metadata     *string  `json:"metadata,omitempty"`
-		NewTitle     *string  `json:"new_title,omitempty"`
-		NewURL       *string  `json:"new_url,omitempty"`
-		Power        *bool    `json:"power,omitempty"`
-		PresetNumber *int     `json:"preset_number,omitempty"`
-		Presets      []Preset `json:"presets,omitempty"`
-		Status       *Status  `json:"status,omitempty"`
-		Title        *string  `json:"title,omitempty"`
-		URL          *string  `json:"url,omitempty"`
-		UUID         string   `json:"uuid"`
-		Volume       *int     `json:"volume,omitempty"`
+		AudioSource *string
+		IsMuted     *bool
+		Metadata    *string
+		NewTitle    *string
+		NewURL      *string
+		Power       *bool
+		Presets     []Preset
+		Status      *Status
+		Title       *string
+		URL         *string
+		UUID        string
+		Volume      *int
 	}
 
 	Preset struct {
@@ -75,18 +73,30 @@ func New(uuid, name, modelName, modelNumber string) State {
 	}
 }
 
-func NewFragment(uuid string) Fragment {
-	return Fragment{
-		UUID: uuid,
-	}
-}
-
 func NewPreset(number int, title, url string) Preset {
 	return Preset{
 		Number: number,
 		Title:  title,
 		URL:    url,
 	}
+}
+
+func ValidPresetNumber(s *State, preset int) error {
+	if preset < 1 || preset > len(s.Presets) {
+		return fmt.Errorf("invalid preset number: %d", preset)
+	}
+
+	return nil
+}
+
+func ValidAudioSource(s *State, audioSource string) error {
+	for _, source := range s.AudioSources {
+		if source == audioSource {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("invalid audio source: %s", audioSource)
 }
 
 func NormalizeVolume(volume int) int {

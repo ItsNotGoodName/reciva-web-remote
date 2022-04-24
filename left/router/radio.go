@@ -46,7 +46,7 @@ func GetRadios(hub radio.HubService, radioService radio.RadioService) presenter.
 		radios := hub.List()
 
 		// List states
-		var states []state.State
+		states := make([]state.State, 0, len(radios))
 		for _, rd := range radios {
 			state, err := radioService.GetState(r.Context(), rd)
 			if err != nil {

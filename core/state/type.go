@@ -32,8 +32,8 @@ type (
 		ModelName    string   `json:"model_name"`    // ModelName is the model name of the device.
 		ModelNumber  string   `json:"model_number"`  // ModelNumber is the model number of the device.
 		Name         string   `json:"name"`          // Name of the radio.
-		NewTitle     string   `json:"new_title"`     // NewTitle is the overriden title.
-		NewURL       string   `json:"new_url"`       // NewURL is the overriden URL.
+		NewTitle     string   `json:"new_title"`     // NewTitle is the overridden title.
+		NewURL       string   `json:"new_url"`       // NewURL is the overridden URL.
 		Power        bool     `json:"power"`         // Power represents if the radio is not in standby.
 		PresetNumber int      `json:"preset_number"` // PresetNumber is the current preset that is playing.
 		Presets      []Preset `json:"presets"`       // Presets of the radio.
@@ -62,7 +62,7 @@ type (
 	Preset struct {
 		Number   int    `json:"number"`    // Number is the preset number.
 		Title    string `json:"title"`     // Title of the preset.
-		NewTitle string `json:"new_title"` // NewTitle is the overriden title.
+		NewTitle string `json:"new_title"` // NewTitle is the overridden title.
 		URL      string `json:"url"`       // URL of the preset.
 	}
 

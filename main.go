@@ -1,19 +1,20 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/radio"
-	"github.com/ItsNotGoodName/reciva-web-remote/router"
-	"github.com/ItsNotGoodName/reciva-web-remote/server"
-	"github.com/ItsNotGoodName/reciva-web-remote/store"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/background"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/middleware"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/pubsub"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/json"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/router"
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
+	"github.com/ItsNotGoodName/reciva-web-remote/right/file"
 )
 
 var (
@@ -39,49 +40,31 @@ func main() {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Backgrounds
+	var backgrounds []background.Background
 
-	// Create and start preset store
-	presetStore := store.New(cfg.ConfigFile)
-	go presetStore.Start(ctx)
+	// Right
+	presetStore, err := file.NewPresetStore(cfg.ConfigFile)
+	if err != nil {
+		log.Fatal("Failed to create preset store:", err)
+	}
 
-	// Create Mutator
-	mutator := store.NewMutator(presetStore)
+	// Core
+	middlewarePub := pubsub.NewSignalPub()
+	middlewareAndPresetStore := middleware.NewPreset(middlewarePub, presetStore)
+	statePub := pubsub.NewStatePub()
+	runService := radio.NewRunService(statePub, middlewareAndPresetStore, middlewarePub)
+	radioService := radio.NewRadioService()
+	controlpoint := upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort))
+	createService := radio.NewCreateService(controlpoint, runService)
+	backgrounds = append(backgrounds, createService)
+	hubService := radio.NewHubService(createService)
+	backgrounds = append(backgrounds, hubService)
 
-	// Create and start control point
-	cp := upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort))
-	go func() {
-		log.Fatalln(upnpsub.ListenAndServe("", cp))
-	}()
+	// Left
+	router := router.New(cfg.PortStr, presenter.New(json.Render), hubService, radioService)
+	backgrounds = append(backgrounds, router)
 
-	// Create and start hub
-	hub := radio.NewHubWithMutator(cp, mutator)
-	go hub.Start(ctx)
-
-	// Create engine
-	engine := router.NewEngine()
-
-	// Create WS upgrader
-	upgrader := router.NewUpgrader()
-
-	// Create routes
-	server.Route(
-		engine,
-		upgrader,
-		hub,
-		presetStore,
-	)
-
-	// Start engine
-	go router.Start(engine, cfg.PortStr)
-
-	// Listen for interrupt
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-
-	// Stop hub and store
-	cancel()
-	<-hub.DoneC
-	<-presetStore.DoneC
+	// Run backgrounds
+	background.Run(interrupt.Context(), backgrounds)
 }

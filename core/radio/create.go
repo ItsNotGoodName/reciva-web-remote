@@ -2,6 +2,7 @@ package radio
 
 import (
 	"context"
+	"log"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
@@ -19,6 +20,17 @@ func NewCreateService(controlPoint upnpsub.ControlPoint, radioService RunService
 		controlPoint: controlPoint,
 		radioService: radioService,
 	}
+}
+
+func (cs *CreateServiceImpl) Background(ctx context.Context, doneC chan<- struct{}) {
+	go func() {
+		if err := upnpsub.ListenAndServe("", cs.controlPoint); err != nil {
+			log.Fatal("Failed to start control point:", err)
+		}
+	}()
+
+	<-ctx.Done()
+	doneC <- struct{}{}
 }
 
 func (cs *CreateServiceImpl) Create(ctx context.Context, client goupnp.ServiceClient) (Radio, error) {

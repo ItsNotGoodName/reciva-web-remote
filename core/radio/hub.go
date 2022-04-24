@@ -115,7 +115,7 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 			}
 			hs.radioMapMu.RUnlock()
 
-			close(doneC)
+			doneC <- struct{}{}
 			return
 		case resC := <-hs.discoverC:
 			count, err := discover()

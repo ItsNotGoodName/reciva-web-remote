@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/background"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/middleware"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
@@ -15,6 +16,8 @@ import (
 )
 
 func main() {
+	ctx := interrupt.Context()
+
 	// Dependencies
 	statePub := pubsub.NewStatePub()
 	middlewarePub := pubsub.NewSignalPub()
@@ -24,10 +27,10 @@ func main() {
 		middlewarePub,
 	)
 	controlPoint := upnpsub.NewControlPoint()
-	go upnpsub.ListenAndServe("", controlPoint)
 	createService := radio.NewCreateService(controlPoint, runService)
+	go background.Run(ctx, []background.Background{createService})
 
-	// Discover radios:w
+	// Discover radios
 	clients, _, err := upnp.Discover()
 	if err != nil {
 		log.Fatal("failed to discover radios:", err)
@@ -37,7 +40,7 @@ func main() {
 	}
 
 	// Create radio
-	radio, err := createService.Create(interrupt.Context(), clients[0])
+	radio, err := createService.Create(ctx, clients[0])
 	if err != nil {
 		log.Fatal("failed to create radio:", err)
 	}

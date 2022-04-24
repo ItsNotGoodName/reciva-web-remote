@@ -3,17 +3,23 @@ package web
 import (
 	"embed"
 	"io/fs"
+	"log"
+	"mime"
 )
 
 //go:generate npm run build
+
+func init() {
+	mime.AddExtensionType(".js", "application/javascript")
+}
 
 //go:embed dist
 var dist embed.FS
 
 func FS() fs.FS {
-	subFS, err := fs.Sub(dist, "dist")
+	f, err := fs.Sub(dist, "dist")
 	if err != nil {
-		panic(err)
+		log.Fatal("web.FS:", err)
 	}
-	return subFS
+	return f
 }

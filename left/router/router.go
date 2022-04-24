@@ -19,7 +19,7 @@ type Router struct {
 	r    chi.Router
 }
 
-func New(port string, h presenter.Presenter, hub radio.HubService, radioService radio.RadioService) *Router {
+func New(port string, h presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService) *Router {
 	r := chi.NewRouter()
 	upgrader := websocket.Upgrader{}
 
@@ -49,14 +49,12 @@ func New(port string, h presenter.Presenter, hub radio.HubService, radioService 
 		})
 	})
 
+	mountFS(r, fs)
+
 	return &Router{
 		port: port,
 		r:    r,
 	}
-}
-
-func (r *Router) MountFS(fs fs.FS) {
-	mountFS(r.r, fs)
 }
 
 func (r *Router) Start() {

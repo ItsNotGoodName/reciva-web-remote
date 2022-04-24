@@ -47,7 +47,7 @@ func mountFS(r chi.Router, f fs.FS) {
 				r.Get("/"+name, fsHandler.ServeHTTP)
 			}
 		}
-	} else {
+	} else if err != fs.ErrNotExist {
 		log.Fatal("router.mountFS:", err)
 	}
 }

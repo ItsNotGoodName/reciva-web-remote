@@ -13,6 +13,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/left/json"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/router"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/web"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
 	"github.com/ItsNotGoodName/reciva-web-remote/right/file"
 )
@@ -55,14 +56,13 @@ func main() {
 	statePub := pubsub.NewStatePub()
 	runService := radio.NewRunService(statePub, middlewareAndPresetStore, middlewarePub)
 	radioService := radio.NewRadioService()
-	controlpoint := upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort))
-	createService := radio.NewCreateService(controlpoint, runService)
+	createService := radio.NewCreateService(upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort)), runService)
 	backgrounds = append(backgrounds, createService)
 	hubService := radio.NewHubService(createService)
 	backgrounds = append(backgrounds, hubService)
 
 	// Left
-	router := router.New(cfg.PortStr, presenter.New(json.Render), hubService, radioService)
+	router := router.New(cfg.PortStr, presenter.New(json.Render), web.FS(), hubService, radioService)
 	backgrounds = append(backgrounds, router)
 
 	// Run backgrounds

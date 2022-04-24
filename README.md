@@ -44,7 +44,7 @@ It looks for `reciva-web-remote.json` in the current folder by default. It can b
 
 ### Host Playlists
 
-Playlists can be hosted on the program's web server, ex. `http://example.com/01.m3u`, `http://example.com/02.m3u`. This is only useful if you were able to point your presets to a domain that you own or an IP before Reciva shutdown it's services.
+Playlists can be hosted on the program's web server, ex. `http://example.com/01.m3u`, `http://example.com/02.m3u`. This is only useful if you were able to point your presets to a domain that you own or an IP before Reciva shutdown its services.
 
 Open `reciva-web-remote.json` and add the following content before running the program.
 

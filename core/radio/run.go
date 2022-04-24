@@ -2,16 +2,15 @@ package radio
 
 import (
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/sig"
 )
 
 type RunServiceImpl struct {
 	statePub      state.StatePub
 	middleware    state.Middleware
-	middlewarePub *sig.Pub
+	middlewarePub state.MiddlewarePub
 }
 
-func NewRunService(statePub state.StatePub, middleware state.Middleware, middlewarePub *sig.Pub) *RunServiceImpl {
+func NewRunService(statePub state.StatePub, middleware state.Middleware, middlewarePub state.MiddlewarePub) *RunServiceImpl {
 	return &RunServiceImpl{
 		statePub:      statePub,
 		middleware:    middleware,

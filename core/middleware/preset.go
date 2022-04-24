@@ -5,15 +5,14 @@ import (
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/sig"
 )
 
 type Preset struct {
-	pub   *sig.Pub
+	pub   state.MiddlewarePub
 	store preset.PresetStore
 }
 
-func NewPreset(pub *sig.Pub, presetStore preset.PresetStore) *Preset {
+func NewPreset(pub state.MiddlewarePub, presetStore preset.PresetStore) *Preset {
 	return &Preset{
 		pub:   pub,
 		store: presetStore,

@@ -7,74 +7,55 @@ import (
 )
 
 type StatePub struct {
-	subsMu sync.Mutex
-	subs   map[*StateSub]string
+	subMapMu sync.Mutex
+	subsMap  map[*chan state.State]string
 }
 
 func NewStatePub() *StatePub {
 	return &StatePub{
-		subs: make(map[*StateSub]string),
+		subsMap: make(map[*chan state.State]string),
 	}
 }
 
-func (sp *StatePub) Unsubscribe(ss *StateSub) {
-	sp.subsMu.Lock()
-	delete(sp.subs, ss)
-	ss.close()
-	sp.subsMu.Unlock()
+func (sp *StatePub) Subscribe(uuid string) (<-chan state.State, func()) {
+	sub := make(chan state.State, 1)
+
+	sp.subMapMu.Lock()
+
+	sp.subsMap[&sub] = uuid
+
+	sp.subMapMu.Unlock()
+
+	return sub, sp.unsubscribeFunc(&sub)
 }
 
-func (sp *StatePub) Subscribe(buffer int, uuid string) *StateSub {
-	sub := newFragmentSub(buffer)
+func (sp *StatePub) unsubscribeFunc(sub *chan state.State) func() {
+	return func() {
+		sp.subMapMu.Lock()
 
-	sp.subsMu.Lock()
-	sp.subs[sub] = uuid
-	sp.subsMu.Unlock()
+		delete(sp.subsMap, sub)
 
-	return sub
+		sp.subMapMu.Unlock()
+	}
 }
 
 func (sp *StatePub) Publish(s state.State) {
-	sp.subsMu.Lock()
-	for sub, uuid := range sp.subs {
-		if uuid == s.UUID || uuid == "" {
-			if !sub.send(&s) {
-				delete(sp.subs, sub)
-				sub.close()
+	sp.subMapMu.Lock()
+
+	for sub, uuid := range sp.subsMap {
+		if uuid == s.UUID {
+			// Send latest
+			select {
+			case *sub <- s:
+			default:
+				select {
+				case <-*sub:
+					*sub <- s
+				case *sub <- s:
+				}
 			}
 		}
 	}
-	sp.subsMu.Unlock()
-}
 
-type StateSub struct {
-	channel chan *state.State
-	open    bool
-}
-
-func newFragmentSub(buffer int) *StateSub {
-	return &StateSub{
-		channel: make(chan *state.State, buffer),
-		open:    true,
-	}
-}
-
-func (ss *StateSub) Channel() <-chan *state.State {
-	return ss.channel
-}
-
-func (ss *StateSub) send(st *state.State) bool {
-	select {
-	case ss.channel <- st:
-		return true
-	default:
-		return false
-	}
-}
-
-func (ss *StateSub) close() {
-	if ss.open {
-		close(ss.channel)
-		ss.open = false
-	}
+	sp.subMapMu.Unlock()
 }

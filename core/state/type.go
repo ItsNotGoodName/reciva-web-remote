@@ -12,10 +12,16 @@ const (
 type (
 	StatePub interface {
 		Publish(State)
+		Subscribe(uuid string) (<-chan State, func())
 	}
 
 	Middleware interface {
 		Apply(*Fragment)
+	}
+
+	MiddlewarePub interface {
+		Publish()
+		Subscribe() (<-chan struct{}, func())
 	}
 
 	State struct {

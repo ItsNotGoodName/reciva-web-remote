@@ -11,39 +11,23 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
-	"github.com/ItsNotGoodName/reciva-web-remote/pkg/sig"
 	"github.com/ItsNotGoodName/reciva-web-remote/right/mock"
 )
 
 func main() {
-	controlPoint := upnpsub.NewControlPoint()
-	go upnpsub.ListenAndServe("", controlPoint)
-
-	// Subscribe to all radios
+	// Dependencies
 	statePub := pubsub.NewStatePub()
-	sub := statePub.Subscribe(8, "")
-	go func() {
-		for s := range sub.Channel() {
-			j, err := json.MarshalIndent(s, "", "  ")
-			if err != nil {
-				log.Fatal("failed to marshal state:", err)
-			}
-
-			fmt.Println(string(j))
-		}
-
-		log.Println("channel closed")
-	}()
-
-	middlewarePub := sig.NewPub()
-
+	middlewarePub := pubsub.NewSignalPub()
 	runService := radio.NewRunService(
 		statePub,
 		middleware.NewPreset(middlewarePub, mock.NewPresetStore()),
 		middlewarePub,
 	)
+	controlPoint := upnpsub.NewControlPoint()
+	go upnpsub.ListenAndServe("", controlPoint)
 	createService := radio.NewCreateService(controlPoint, runService)
 
+	// Discover radios:w
 	clients, _, err := upnp.Discover()
 	if err != nil {
 		log.Fatal("failed to discover radios:", err)
@@ -52,10 +36,25 @@ func main() {
 		log.Fatal("no radios found")
 	}
 
+	// Create radio
 	radio, err := createService.Create(interrupt.Context(), clients[0])
 	if err != nil {
 		log.Fatal("failed to create radio:", err)
 	}
+
+	// Subscribe to state changes
+	sub, unsub := statePub.Subscribe(radio.UUID)
+	defer unsub()
+	go func() {
+		for s := range sub {
+			j, err := json.MarshalIndent(s, "", "  ")
+			if err != nil {
+				log.Fatal("failed to marshal state:", err)
+			}
+
+			fmt.Println(string(j))
+		}
+	}()
 
 	<-radio.Done()
 }

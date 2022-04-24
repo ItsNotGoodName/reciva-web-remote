@@ -1,11 +1,11 @@
-package sig
+package pubsub
 
 import (
 	"testing"
 )
 
-func TestPub(t *testing.T) {
-	pub := NewPub()
+func TestSignalPub(t *testing.T) {
+	pub := NewSignalPub()
 	sub, unsub := pub.Subscribe()
 	defer unsub()
 

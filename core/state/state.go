@@ -22,12 +22,12 @@ func (s *State) SetMetadata(metadata string) {
 	s.Metadata = metadata
 }
 
-func (s *State) SetNewTitle(newTitle string) {
-	s.NewTitle = newTitle
+func (s *State) SetTitleNew(titleNew string) {
+	s.TitleNew = titleNew
 }
 
-func (s *State) SetNewURL(newURL string) {
-	s.NewURL = newURL
+func (s *State) SetURLNew(urlNew string) {
+	s.URLNew = urlNew
 }
 
 func (s *State) SetPower(power bool) {

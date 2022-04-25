@@ -23,13 +23,13 @@ func (s *State) Fragment() Fragment {
 	metadata := s.Metadata
 	frag.Metadata = &metadata
 
-	// NewTitle
-	newTitle := s.NewTitle
-	frag.NewTitle = &newTitle
+	// TitleNew
+	titleNew := s.TitleNew
+	frag.TitleNew = &titleNew
 
-	// NewURL
-	newURL := s.NewURL
-	frag.NewURL = &newURL
+	// URLNew
+	urlNew := s.URLNew
+	frag.URLNew = &urlNew
 
 	// Power
 	power := s.Power
@@ -82,15 +82,15 @@ func (s *State) Merge(f Fragment) bool {
 		changed = true
 	}
 
-	// NewTitle
-	if f.NewTitle != nil && *f.NewTitle != s.NewTitle {
-		s.SetNewTitle(*f.NewTitle)
+	// TitleNew
+	if f.TitleNew != nil && *f.TitleNew != s.TitleNew {
+		s.SetTitleNew(*f.TitleNew)
 		changed = true
 	}
 
-	// NewURL
-	if f.NewURL != nil && *f.NewURL != s.NewURL {
-		s.SetNewURL(*f.NewURL)
+	// URLNew
+	if f.URLNew != nil && *f.URLNew != s.URLNew {
+		s.SetURLNew(*f.URLNew)
 		changed = true
 	}
 

@@ -12,9 +12,9 @@ type Config struct {
 }
 
 type Preset struct {
-	URL     string `json:"url"`
-	NewName string `json:"newName"`
-	NewURL  string `json:"newUrl"`
+	URL      string `json:"url"`
+	TitleNew string `json:"newName"`
+	URLNew   string `json:"newUrl"`
 }
 
 func readConfig(file string) (map[string]preset.Preset, error) {
@@ -33,7 +33,7 @@ func readConfig(file string) (map[string]preset.Preset, error) {
 	// Create map from config
 	presets := make(map[string]preset.Preset, len(cfg.Presets))
 	for _, p := range cfg.Presets {
-		pp, err := preset.ParsePreset(p.URL, p.NewName, p.NewURL)
+		pp, err := preset.ParsePreset(p.URL, p.TitleNew, p.URLNew)
 		if err != nil {
 			return nil, err
 		}
@@ -49,9 +49,9 @@ func writeConfig(file string, m map[string]preset.Preset) error {
 	presets := make([]Preset, 0, len(m))
 	for _, p := range m {
 		presets = append(presets, Preset{
-			URL:     p.URL,
-			NewName: p.NewTitle,
-			NewURL:  p.NewURL,
+			URL:      p.URL,
+			TitleNew: p.TitleNew,
+			URLNew:   p.URLNew,
 		})
 	}
 

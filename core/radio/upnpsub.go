@@ -19,8 +19,8 @@ func parseEvent(event *upnpsub.Event, frag *state.Fragment) {
 	for _, v := range event.Properties {
 		if v.Name == "PowerState" {
 			// Power change
-			newPower := v.Value == "On"
-			frag.Power = &newPower
+			power := v.Value == "On"
+			frag.Power = &power
 		} else if v.Name == "PlaybackXML" {
 			if v.Value == "" {
 				continue
@@ -33,28 +33,28 @@ func parseEvent(event *upnpsub.Event, frag *state.Fragment) {
 			}
 
 			// Status change
-			newStatus := state.ParseStatus(esXML.State)
-			frag.Status = &newStatus
+			status := state.ParseStatus(esXML.State)
+			frag.Status = &status
 
 			// Title change
-			newTitle := esXML.Title
-			frag.Title = &newTitle
+			title := esXML.Title
+			frag.Title = &title
 
-			// Url change
-			newURL := esXML.URL
-			frag.URL = &newURL
+			// URL change
+			url := esXML.URL
+			frag.URL = &url
 
 			// Metadata change
-			newMetadata := esXML.Metadata
-			frag.Metadata = &newMetadata
+			metadata := esXML.Metadata
+			frag.Metadata = &metadata
 		} else if v.Name == "IsMuted" {
 			// IsMuted change
-			newIsMuted := v.Value == "TRUE"
-			frag.IsMuted = &newIsMuted
+			isMuted := v.Value == "TRUE"
+			frag.IsMuted = &isMuted
 		} else if v.Name == "AudioSource" {
 			// AudioSource change
-			newAudioSource := v.Value
-			frag.AudioSource = &newAudioSource
+			audioSource := v.Value
+			frag.AudioSource = &audioSource
 		}
 	}
 }

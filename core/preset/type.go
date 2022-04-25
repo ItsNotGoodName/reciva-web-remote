@@ -12,9 +12,9 @@ var (
 
 type (
 	Preset struct {
+		TitleNew string
 		URL      string
-		NewTitle string
-		NewURL   string
+		URLNew   string
 	}
 
 	PresetStore interface {
@@ -24,7 +24,7 @@ type (
 	}
 )
 
-func ParsePreset(urL, newTitle, newURL string) (*Preset, error) {
+func ParsePreset(urL, titleNew, urlNew string) (*Preset, error) {
 	urlObj, err := url.ParseRequestURI(urL)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func ParsePreset(urL, newTitle, newURL string) (*Preset, error) {
 
 	return &Preset{
 		URL:      urL,
-		NewTitle: newTitle,
-		NewURL:   newURL,
+		TitleNew: titleNew,
+		URLNew:   urlNew,
 	}, nil
 }

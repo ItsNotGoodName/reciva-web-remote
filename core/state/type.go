@@ -33,24 +33,31 @@ type (
 		ModelName    string   `json:"model_name"`    // ModelName is the model name of the device.
 		ModelNumber  string   `json:"model_number"`  // ModelNumber is the model number of the device.
 		Name         string   `json:"name"`          // Name of the radio.
-		NewTitle     string   `json:"new_title"`     // NewTitle is the overridden title.
-		NewURL       string   `json:"new_url"`       // NewURL is the overridden URL.
 		Power        bool     `json:"power"`         // Power represents if the radio is not in standby.
 		PresetNumber int      `json:"preset_number"` // PresetNumber is the current preset that is playing.
 		Presets      []Preset `json:"presets"`       // Presets of the radio.
 		Status       Status   `json:"status"`        // Status is either playing, connecting, or stopped.
 		Title        string   `json:"title"`         // Title of the current playing stream.
+		TitleNew     string   `json:"title_new"`     // TitleNew is the overridden title.
 		URL          string   `json:"url"`           // URL of the stream that is currently selected.
+		URLNew       string   `json:"url_new"`       // URLNew is the overridden URL.
 		UUID         string   `json:"uuid"`          // UUID of the radio.
 		Volume       int      `json:"volume"`        // Volume of the radio.
+	}
+
+	Preset struct {
+		Number   int    `json:"number"`    // Number is the preset number.
+		Title    string `json:"title"`     // Title of the preset.
+		TitleNew string `json:"title_new"` // TitleNew is the overridden title.
+		URL      string `json:"url"`       // URL of the preset.
 	}
 
 	Fragment struct {
 		AudioSource *string
 		IsMuted     *bool
 		Metadata    *string
-		NewTitle    *string
-		NewURL      *string
+		TitleNew    *string
+		URLNew      *string
 		Power       *bool
 		Presets     []Preset
 		Status      *Status
@@ -58,13 +65,6 @@ type (
 		URL         *string
 		UUID        string
 		Volume      *int
-	}
-
-	Preset struct {
-		Number   int    `json:"number"`    // Number is the preset number.
-		Title    string `json:"title"`     // Title of the preset.
-		NewTitle string `json:"new_title"` // NewTitle is the overridden title.
-		URL      string `json:"url"`       // URL of the preset.
 	}
 
 	Status string

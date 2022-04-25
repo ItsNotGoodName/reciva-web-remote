@@ -3,6 +3,7 @@ package radio
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
@@ -77,6 +78,10 @@ func (cs *CreateServiceImpl) Create(dctx context.Context, client goupnp.ServiceC
 		return Radio{}, err
 	}
 	s.SetAudioSources(audioSources)
+
+	// Rate limit to prevent subscription from failing
+	// TODO: Find a better way to do this
+	time.Sleep(time.Second)
 
 	// Create subscription
 	eventURL := upnp.GetEventURL(client)

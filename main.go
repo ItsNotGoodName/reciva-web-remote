@@ -64,7 +64,7 @@ func main() {
 	application := app.New(hubService, radioService, statePub)
 
 	// Left
-	router := router.New(cfg.PortStr, presenter.New(json.Render), web.FS(), hubService, radioService, application, presetStore)
+	router := router.New(cfg.PortStr, presenter.New(json.Render), web.FS(), hubService, radioService, application, middlewareAndPresetStore)
 	backgrounds = append(backgrounds, router)
 
 	// Run backgrounds

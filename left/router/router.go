@@ -27,7 +27,7 @@ type Router struct {
 }
 
 func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService, application *app.App, presetStore preset.PresetStore) *Router {
-	r := newMux()
+	r := newRouter()
 	upgrader := newUpgrader()
 
 	// A good base middleware stack

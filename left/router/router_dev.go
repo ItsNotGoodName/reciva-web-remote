@@ -10,8 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func newMux() *chi.Mux {
-	r := chi.NewMux()
+func newRouter() chi.Router {
+	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},

@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func newMux() *chi.Mux {
-	return chi.NewMux()
+func newRouter() chi.Router {
+	return chi.NewRouter()
 }
 
 func newUpgrader() *websocket.Upgrader {

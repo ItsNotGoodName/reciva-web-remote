@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core/app"
 	"github.com/gorilla/websocket"
 )
 
@@ -22,21 +23,23 @@ const (
 	maxMessageSize = 512
 )
 
-// HandleWrite writes json to websocket connection.
-func HandleWrite(ctx context.Context, conn *websocket.Conn) <-chan interface{} {
-	writeC := make(chan interface{})
+func HandleWrite(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn) chan<- app.Command {
+	writeC := make(chan app.Command)
 	go func() {
 		ticker := time.NewTicker(pingPeriod)
-		defer ticker.Stop()
+		defer func() {
+			cancel()
+			ticker.Stop()
+		}()
 
 		for {
 			select {
 			case <-ctx.Done():
+				// Send close message and end
 				conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			case msg := <-writeC:
-				// Set 10 second deadline
-				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+				conn.SetWriteDeadline(time.Now().Add(writeWait))
 
 				// Send msg or end on error
 				if err := conn.WriteJSON(msg); err != nil {
@@ -45,7 +48,10 @@ func HandleWrite(ctx context.Context, conn *websocket.Conn) <-chan interface{} {
 				}
 			case <-ticker.C:
 				conn.SetWriteDeadline(time.Now().Add(writeWait))
+
+				// Send ping or end on error
 				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Printf("ws.handleWrite: could not write ping %s: %s", conn.RemoteAddr(), err)
 					return
 				}
 			}
@@ -54,28 +60,31 @@ func HandleWrite(ctx context.Context, conn *websocket.Conn) <-chan interface{} {
 	return writeC
 }
 
-// HandleRead reads string messages from websocket connection.
-func HandleRead(ctx context.Context, conn *websocket.Conn) <-chan interface{} {
-	readC := make(chan interface{})
+func HandleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn) <-chan app.Command {
+	readC := make(chan app.Command)
 	go func() {
+		defer cancel()
+
 		conn.SetReadLimit(maxMessageSize)
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 		for {
-			var msg interface{}
-			err := conn.ReadJSON(msg)
+			// Read message or end on error
+			var msg app.Command
+			err := conn.ReadJSON(&msg)
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					log.Printf("ws.handleRead: could not read from %s: %s", conn.RemoteAddr(), err)
+					log.Printf("ws.HandleRead: could not read from %s: %s", conn.RemoteAddr(), err)
 				}
-				close(readC)
 				return
 			}
 
+			// Send message
 			select {
 			case readC <- msg:
 			case <-ctx.Done():
+				return
 			}
 		}
 	}()

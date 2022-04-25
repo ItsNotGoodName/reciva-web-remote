@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core/app"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 	"github.com/go-chi/chi/v5"
@@ -19,7 +20,7 @@ type Router struct {
 	r    chi.Router
 }
 
-func New(port string, h presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService) *Router {
+func New(port string, h presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService, application *app.App) *Router {
 	r := chi.NewRouter()
 	upgrader := websocket.Upgrader{}
 
@@ -36,7 +37,7 @@ func New(port string, h presenter.Presenter, fs fs.FS, hub radio.HubService, rad
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
-		r.Get("/ws", GetWS(hub, upgrader))
+		r.Get("/ws", GetWS(upgrader, HandleWS(application)))
 
 		r.Get("/radios", h(GetRadios(hub, radioService)))
 		r.Post("/radios", h(PostRadios(hub)))

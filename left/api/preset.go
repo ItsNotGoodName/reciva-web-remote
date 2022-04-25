@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 )
@@ -25,6 +26,7 @@ func GetPreset(presetStore preset.PresetStore) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		url := r.URL.Query().Get("url")
 
+		// Get preset
 		p, err := presetStore.Get(r.Context(), url)
 		if err != nil {
 			return handlePresetError(err)
@@ -32,35 +34,30 @@ func GetPreset(presetStore preset.PresetStore) presenter.Requester {
 
 		return presenter.Response{
 			Code: http.StatusOK,
-			Data: p,
+			Data: dto.NewPreset(p),
 		}
 	}
 }
 
 func GetPresets(presetStore preset.PresetStore) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
-		ps, err := presetStore.List(r.Context())
+		// List presets
+		p, err := presetStore.List(r.Context())
 		if err != nil {
 			handlePresetError(err)
 		}
 
 		return presenter.Response{
 			Code: http.StatusOK,
-			Data: ps,
+			Data: dto.NewPresets(p),
 		}
 	}
 }
 
 func PostPreset(presetStore preset.PresetStore) presenter.Requester {
-	type request struct {
-		URL      string `json:"url"`
-		TitleNew string `json:"title_new"`
-		URLNew   string `json:"url_new"`
-	}
-
 	return func(r *http.Request) presenter.Response {
-		req := request{}
-		err := json.NewDecoder(r.Body).Decode(&req)
+		dtoPreset := &dto.Preset{}
+		err := json.NewDecoder(r.Body).Decode(dtoPreset)
 		if err != nil {
 			return presenter.Response{
 				Code:  http.StatusBadRequest,
@@ -68,7 +65,7 @@ func PostPreset(presetStore preset.PresetStore) presenter.Requester {
 			}
 		}
 
-		p, err := preset.ParsePreset(req.URL, req.TitleNew, req.URLNew)
+		p, err := dto.ConvertPreset(dtoPreset)
 		if err != nil {
 			return presenter.Response{
 				Code:  http.StatusBadRequest,
@@ -76,6 +73,7 @@ func PostPreset(presetStore preset.PresetStore) presenter.Requester {
 			}
 		}
 
+		// Update preset
 		if err := presetStore.Update(r.Context(), p); err != nil {
 			return handlePresetError(err)
 		}
@@ -88,12 +86,13 @@ func PostPreset(presetStore preset.PresetStore) presenter.Requester {
 
 func GetPresetURL(presetStore preset.PresetStore, url string) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		preset, err := presetStore.Get(r.Context(), url)
+		// Get preset
+		dtoPreset, err := presetStore.Get(r.Context(), url)
 		if err != nil {
 			http.Error(rw, err.Error(), handlePresetError(err).Code)
 			return
 		}
 
-		rw.Write([]byte(preset.URLNew))
+		rw.Write([]byte(dto.NewPreset(dtoPreset).URLNew))
 	}
 }

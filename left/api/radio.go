@@ -32,6 +32,7 @@ func RequireRadio(hub radio.HubService, next RadioRequester) presenter.Requester
 	return func(r *http.Request) presenter.Response {
 		uuid := chi.URLParam(r, "uuid")
 
+		// Get radio
 		rd, err := hub.Get(uuid)
 		if err != nil {
 			return handleRadioError(err)
@@ -111,7 +112,6 @@ func PatchRadio(radioService radio.RadioService) RadioRequester {
 	}
 
 	return func(r *http.Request, rd radio.Radio) presenter.Response {
-		// Parse body
 		var radioPatch RadioPatch
 		if err := json.NewDecoder(r.Body).Decode(&radioPatch); err != nil {
 			return presenter.Response{

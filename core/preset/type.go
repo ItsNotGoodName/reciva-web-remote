@@ -8,9 +8,9 @@ import (
 
 type (
 	Preset struct {
-		TitleNew string `json:"title_new"`
-		URL      string `json:"url"`
-		URLNew   string `json:"url_new"`
+		TitleNew string
+		URL      string
+		URLNew   string
 	}
 
 	PresetStore interface {

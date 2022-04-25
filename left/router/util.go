@@ -1,15 +1,48 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/api"
 	"github.com/go-chi/chi/v5"
 )
+
+// mountPresets mounts all presets from the given preset store.
+func mountPresets(r chi.Router, presetStore preset.PresetStore) {
+	presets, err := presetStore.List(context.Background())
+	if err != nil {
+		log.Fatalln("router.mountPresets:", err)
+	}
+
+	for _, p := range presets {
+		u, _ := url.Parse(p.URL)
+		route, url := u.Path, p.URL
+
+		if err := validRoute(u.Path); err != nil {
+			log.Fatalf("router.mountPresets: URL=%s route=%s: %s", url, route, err)
+		}
+
+		r.Get(route, api.GetPresetURL(presetStore, url))
+		log.Println("router.mountPresets: mounting url", url, "to", route)
+	}
+}
+
+// validRoute returns nil if the given chi route is valid.
+func validRoute(route string) error {
+	if !strings.HasPrefix(route, "/") {
+		return fmt.Errorf("route must start with /")
+	}
+
+	return nil
+}
 
 // printAddresses prints all listening addresses.
 func printAddresses(port string) {

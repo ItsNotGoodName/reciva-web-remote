@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/app"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
@@ -25,7 +26,7 @@ type Router struct {
 	r    chi.Router
 }
 
-func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService, application *app.App) *Router {
+func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService, application *app.App, presetStore preset.PresetStore) *Router {
 	r := newMux()
 	upgrader := newUpgrader()
 
@@ -52,9 +53,16 @@ func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, rad
 			r.Post("/", p(api.RequireRadio(hub, api.PostRadio(radioService))))
 			r.Post("/volume", p(api.RequireRadio(hub, api.PostRadioVolume(radioService))))
 		})
+
+		r.Get("/presets", p(api.GetPresets(presetStore)))
+
+		r.Get("/preset", p(api.GetPreset(presetStore)))
+		r.Post("/preset", p(api.PostPreset(presetStore)))
 	})
 
 	mountFS(r, fs)
+
+	mountPresets(r, presetStore)
 
 	return &Router{
 		port: port,

@@ -12,9 +12,9 @@ var (
 
 type (
 	Preset struct {
-		TitleNew string
-		URL      string
-		URLNew   string
+		TitleNew string `json:"title_new"`
+		URL      string `json:"url"`
+		URLNew   string `json:"url_new"`
 	}
 
 	PresetStore interface {

@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"sync"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 )
 
@@ -49,7 +50,7 @@ func (ps *PresetStore) Get(ctx context.Context, url string) (*preset.Preset, err
 	ps.presetsMapMu.RUnlock()
 
 	if !ok {
-		return nil, preset.ErrPresetNotFound
+		return nil, core.ErrPresetNotFound
 	}
 
 	return &p, nil
@@ -61,7 +62,7 @@ func (ps *PresetStore) Update(ctx context.Context, p *preset.Preset) error {
 
 	old, ok := ps.presetsMap[p.URL]
 	if !ok {
-		return preset.ErrPresetNotFound
+		return core.ErrPresetNotFound
 	}
 
 	ps.presetsMap[p.URL] = *p

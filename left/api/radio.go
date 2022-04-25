@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
@@ -15,9 +16,9 @@ type RadioRequester func(*http.Request, radio.Radio) presenter.Response
 
 func handleRadioError(err error) presenter.Response {
 	code := http.StatusInternalServerError
-	if err == radio.ErrRadioClosed {
+	if err == core.ErrRadioClosed {
 		code = http.StatusGone
-	} else if err == radio.ErrRadioNotFound {
+	} else if err == core.ErrRadioNotFound {
 		code = http.StatusNotFound
 	}
 
@@ -69,9 +70,9 @@ func PostRadios(hub radio.HubService) presenter.Requester {
 		count, err := hub.Discover()
 		if err != nil {
 			code := http.StatusInternalServerError
-			if err == radio.ErrHubDiscovering {
+			if err == core.ErrHubDiscovering {
 				code = http.StatusConflict
-			} else if err == radio.ErrHubServiceClosed {
+			} else if err == core.ErrHubServiceClosed {
 				code = http.StatusServiceUnavailable
 			}
 			return presenter.Response{

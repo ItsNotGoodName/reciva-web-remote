@@ -6,10 +6,6 @@ import (
 	"net/url"
 )
 
-var (
-	ErrPresetNotFound = fmt.Errorf("preset not found")
-)
-
 type (
 	Preset struct {
 		TitleNew string `json:"title_new"`

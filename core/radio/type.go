@@ -2,15 +2,11 @@ package radio
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
+	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/huin/goupnp"
-)
-
-var (
-	ErrRadioClosed = fmt.Errorf("radio closed")
 )
 
 type (
@@ -66,7 +62,7 @@ func (r *Radio) read(ctx context.Context) (*state.State, error) {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case <-r.Done():
-		return nil, ErrRadioClosed
+		return nil, core.ErrRadioClosed
 	case state := <-r.readC:
 		return &state, nil
 	}
@@ -77,7 +73,7 @@ func (r *Radio) update(ctx context.Context, frag state.Fragment) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-r.Done():
-		return ErrRadioClosed
+		return core.ErrRadioClosed
 	case r.updateC <- frag:
 		return nil
 	}

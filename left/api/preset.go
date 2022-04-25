@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 )
 
 func handlePresetError(err error) presenter.Response {
 	code := http.StatusInternalServerError
-	if err == preset.ErrPresetNotFound {
+	if err == core.ErrPresetNotFound {
 		code = http.StatusNotFound
 	}
 

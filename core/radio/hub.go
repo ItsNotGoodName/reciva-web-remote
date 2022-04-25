@@ -6,14 +6,11 @@ import (
 	"log"
 	"sync"
 
+	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
 )
 
-var (
-	ErrHubDiscovering   = fmt.Errorf("hub is discovering")
-	ErrHubServiceClosed = fmt.Errorf("hub service closed")
-	ErrRadioNotFound    = fmt.Errorf("radio not found")
-)
+var ()
 
 type HubServiceImpl struct {
 	discoverC    chan chan discoverResponse
@@ -45,9 +42,9 @@ func (hs *HubServiceImpl) Discover() (int, error) {
 		res := <-resC
 		return res.count, res.err
 	case <-hs.doneC:
-		return 0, ErrHubServiceClosed
+		return 0, core.ErrHubServiceClosed
 	default:
-		return 0, ErrHubDiscovering
+		return 0, core.ErrHubDiscovering
 	}
 }
 
@@ -137,7 +134,7 @@ func (hs *HubServiceImpl) Get(uuid string) (Radio, error) {
 	r, ok := hs.radiosMap[uuid]
 	hs.radioMapMu.RUnlock()
 	if !ok {
-		return Radio{}, ErrRadioNotFound
+		return Radio{}, core.ErrRadioNotFound
 	}
 
 	return r, nil

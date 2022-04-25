@@ -3,10 +3,11 @@ package state
 import "fmt"
 
 const (
-	StatusConnecting = "Connecting"
-	StatusPlaying    = "Playing"
-	StatusStopped    = "Stopped"
-	StatusUnknown    = ""
+	StatusConnecting         = "Connecting"
+	StatusPlaying            = "Playing"
+	StatusStopped            = "Stopped"
+	StatusUnknown            = ""
+	AudioSourceInternetRadio = "Internet radio"
 )
 
 type (

@@ -32,6 +32,13 @@ func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset 
 		return err
 	}
 
+	// Set to correct audio source if possible, TODO: return error if it cannot be set to correct source
+	if err := state.ValidAudioSource(s, state.AudioSourceInternetRadio); err == nil && s.AudioSource != state.AudioSourceInternetRadio {
+		if err := rs.SetAudioSource(ctx, radio, state.AudioSourceInternetRadio); err != nil {
+			return err
+		}
+	}
+
 	if err := state.ValidPresetNumber(s, preset); err != nil {
 		return err
 	}

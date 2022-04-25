@@ -50,6 +50,7 @@ type (
 		Title    string `json:"title"`     // Title of the preset.
 		TitleNew string `json:"title_new"` // TitleNew is the overridden title.
 		URL      string `json:"url"`       // URL of the preset.
+		URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
 	}
 
 	Fragment struct {

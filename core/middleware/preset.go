@@ -40,38 +40,41 @@ func (m *Preset) Update(ctx context.Context, preset *preset.Preset) error {
 func (m *Preset) Apply(frag *state.Fragment) {
 	ctx := context.Background()
 
-	if frag.Presets != nil {
-		m.fragmentPresets(ctx, frag)
-	}
+	m.fragmentPresets(ctx, frag)
 
-	if frag.URL != nil || frag.Title != nil {
-		m.fragmentTitleAndURL(ctx, frag)
-	}
+	m.fragmentTitleAndURL(ctx, frag)
 }
 
 func (m *Preset) fragmentPresets(ctx context.Context, frag *state.Fragment) {
-	for i := range frag.Presets {
-		titleNew := ""
+	if frag.Presets != nil {
+		for i := range frag.Presets {
+			titleNew := ""
+			urlNew := ""
 
-		preset, err := m.store.Get(ctx, frag.Presets[i].URL)
-		if err == nil && preset.TitleNew != "" {
-			titleNew = preset.TitleNew
+			preset, err := m.store.Get(ctx, frag.Presets[i].URL)
+			if err == nil {
+				titleNew = preset.TitleNew
+				urlNew = preset.URLNew
+			}
+
+			frag.Presets[i].TitleNew = titleNew
+			frag.Presets[i].URLNew = urlNew
 		}
-
-		frag.Presets[i].TitleNew = titleNew
 	}
 }
 
 func (m *Preset) fragmentTitleAndURL(ctx context.Context, frag *state.Fragment) {
-	urlNew := ""
-	titleNew := ""
+	if frag.URL != nil {
+		urlNew := ""
+		titleNew := ""
 
-	preset, err := m.store.Get(ctx, *frag.URL)
-	if err == nil {
-		urlNew = preset.URLNew
-		titleNew = preset.TitleNew
+		preset, err := m.store.Get(ctx, *frag.URL)
+		if err == nil {
+			urlNew = preset.URLNew
+			titleNew = preset.TitleNew
+		}
+
+		frag.TitleNew = &titleNew
+		frag.URLNew = &urlNew
 	}
-
-	frag.TitleNew = &titleNew
-	frag.URLNew = &urlNew
 }

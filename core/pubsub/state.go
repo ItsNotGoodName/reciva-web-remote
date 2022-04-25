@@ -8,17 +8,17 @@ import (
 
 type StatePub struct {
 	subMapMu sync.Mutex
-	subsMap  map[*chan state.State]string
+	subsMap  map[*chan state.Message]string
 }
 
 func NewStatePub() *StatePub {
 	return &StatePub{
-		subsMap: make(map[*chan state.State]string),
+		subsMap: make(map[*chan state.Message]string),
 	}
 }
 
-func (sp *StatePub) Subscribe(uuid string) (<-chan state.State, func()) {
-	sub := make(chan state.State, 1)
+func (sp *StatePub) Subscribe(uuid string) (<-chan state.Message, func()) {
+	sub := make(chan state.Message, 1)
 
 	sp.subMapMu.Lock()
 
@@ -29,7 +29,7 @@ func (sp *StatePub) Subscribe(uuid string) (<-chan state.State, func()) {
 	return sub, sp.unsubscribeFunc(&sub)
 }
 
-func (sp *StatePub) unsubscribeFunc(sub *chan state.State) func() {
+func (sp *StatePub) unsubscribeFunc(sub *chan state.Message) func() {
 	return func() {
 		sp.subMapMu.Lock()
 
@@ -39,19 +39,25 @@ func (sp *StatePub) unsubscribeFunc(sub *chan state.State) func() {
 	}
 }
 
-func (sp *StatePub) Publish(s state.State) {
+func (sp *StatePub) Publish(s state.State, changed int) {
 	sp.subMapMu.Lock()
 
+	msg := state.Message{
+		State: s,
+	}
 	for sub, uuid := range sp.subsMap {
 		if uuid == s.UUID {
+			msg.Changed = changed
+
 			// Send latest
 			select {
-			case *sub <- s:
+			case *sub <- msg:
 			default:
 				select {
-				case <-*sub:
-					*sub <- s
-				case *sub <- s:
+				case old := <-*sub:
+					msg.Changed |= old.Changed
+					*sub <- msg
+				case *sub <- msg:
 				}
 			}
 		}

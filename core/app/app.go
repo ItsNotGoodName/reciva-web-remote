@@ -11,10 +11,10 @@ import (
 type App struct {
 	hubService   radio.HubService
 	radioService radio.RadioService
-	statePub     state.StatePub
+	statePub     state.Pub
 }
 
-func New(hubService radio.HubService, radioService radio.RadioService, statePub state.StatePub) *App {
+func New(hubService radio.HubService, radioService radio.RadioService, statePub state.Pub) *App {
 	return &App{
 		hubService:   hubService,
 		radioService: radioService,
@@ -33,17 +33,20 @@ func (a *App) StateGet(ctx context.Context, uuid string) (*state.State, error) {
 
 func (a *App) Bus(ctx context.Context, readC <-chan Command, writeC chan<- Command) {
 	stateUUID := ""
-	stateSub, stateUnsub := make(<-chan state.State), func() {}
+	stateSub, stateUnsub := make(<-chan state.Message), func() {}
 	defer stateUnsub()
-	var stateLast *state.State
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case state := <-stateSub:
-			// Write state
-			writeCommand(ctx, writeC, NewStateCommand(&state))
+		case msg := <-stateSub:
+			// Write state or state partial
+			if state.IsChangedAll(msg.Changed) {
+				writeCommand(ctx, writeC, NewStateCommand(&msg.State))
+			} else {
+				writeCommand(ctx, writeC, NewStatePartialCommand(state.GetPartial(&msg.State, msg.Changed)))
+			}
 		case dto := <-readC:
 			switch dto.Type {
 			case TypeStateSubscribe:
@@ -58,15 +61,14 @@ func (a *App) Bus(ctx context.Context, readC <-chan Command, writeC chan<- Comma
 				stateSub, stateUnsub = a.statePub.Subscribe(stateUUID)
 
 				// Get state
-				var err error
-				stateLast, err = a.StateGet(ctx, stateUUID)
+				state, err := a.StateGet(ctx, stateUUID)
 				if err != nil {
 					writeCommand(ctx, writeC, NewErrorCommand(err))
 					continue
 				}
 
 				// Write state
-				writeCommand(ctx, writeC, NewStateCommand(stateLast))
+				writeCommand(ctx, writeC, NewStateCommand(state))
 			case TypeStateUnsubscribe:
 				// Unsubscribe from radio
 				stateUnsub()

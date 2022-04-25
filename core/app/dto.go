@@ -14,9 +14,17 @@ type Type string
 const (
 	TypeError            = Type("error")
 	TypeState            = Type("state")
+	TypeStatePartial     = Type("state.partial")
 	TypeStateSubscribe   = Type("state.subscribe")
 	TypeStateUnsubscribe = Type("state.unsubscribe")
 )
+
+func NewErrorCommand(err error) Command {
+	return Command{
+		Type: TypeError,
+		Slug: err.Error(),
+	}
+}
 
 func NewStateCommand(state *state.State) Command {
 	return Command{
@@ -25,9 +33,9 @@ func NewStateCommand(state *state.State) Command {
 	}
 }
 
-func NewErrorCommand(err error) Command {
+func NewStatePartialCommand(partial state.Partial) Command {
 	return Command{
-		Type: TypeError,
-		Slug: err.Error(),
+		Type: TypeStatePartial,
+		Slug: partial,
 	}
 }

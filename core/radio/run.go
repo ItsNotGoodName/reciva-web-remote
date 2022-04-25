@@ -12,10 +12,10 @@ type RunServiceImpl struct {
 	middleware    state.Middleware
 	middlewarePub state.MiddlewarePub
 	radioService  RadioService
-	statePub      state.StatePub
+	statePub      state.Pub
 }
 
-func NewRunService(middleware state.Middleware, middlewarePub state.MiddlewarePub, radioService RadioService, statePub state.StatePub) *RunServiceImpl {
+func NewRunService(middleware state.Middleware, middlewarePub state.MiddlewarePub, radioService RadioService, statePub state.Pub) *RunServiceImpl {
 	return &RunServiceImpl{
 		middleware:    middleware,
 		middlewarePub: middlewarePub,
@@ -25,13 +25,13 @@ func NewRunService(middleware state.Middleware, middlewarePub state.MiddlewarePu
 }
 
 func (rs *RunServiceImpl) Run(dctx context.Context, radio Radio, s state.State) {
-	handle := func(frag state.Fragment) {
+	handle := func(frag state.Fragment, changed int) {
 		rs.middleware.Apply(&frag)
-		if s.Merge(frag) {
-			rs.statePub.Publish(s)
+		if changed = s.Merge(frag) | changed; changed != 0 {
+			rs.statePub.Publish(s, changed)
 		}
 	}
-	handle(s.Fragment())
+	handle(s.Fragment(), state.ChangedAll)
 
 	middlewareSub, middlewareUnsub := rs.middlewarePub.Subscribe()
 	ticker := time.NewTicker(60 * time.Second)
@@ -51,14 +51,14 @@ func (rs *RunServiceImpl) Run(dctx context.Context, radio Radio, s state.State) 
 				}
 			}()
 		case <-middlewareSub:
-			handle(s.Fragment())
+			handle(s.Fragment(), 0)
 		case radio.readC <- s:
 		case frag := <-radio.updateC:
-			handle(frag)
+			handle(frag, 0)
 		case event := <-radio.subscription.Events():
-			fragment := state.NewFragment(radio.UUID)
-			parseEvent(event, &fragment)
-			handle(fragment)
+			frag := state.NewFragment(radio.UUID)
+			parseEvent(event, &frag)
+			handle(frag, 0)
 		}
 	}
 }

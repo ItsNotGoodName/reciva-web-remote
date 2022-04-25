@@ -3,17 +3,40 @@ package state
 import "fmt"
 
 const (
-	StatusConnecting         = "Connecting"
-	StatusPlaying            = "Playing"
-	StatusStopped            = "Stopped"
-	StatusUnknown            = ""
+	StatusConnecting = "Connecting"
+	StatusPlaying    = "Playing"
+	StatusStopped    = "Stopped"
+	StatusUnknown    = ""
+
 	AudioSourceInternetRadio = "Internet radio"
 )
 
+const (
+	ChangedAll = 1 << iota
+	ChangedAudioSource
+	ChangedIsMuted
+	ChangedMetadata
+	ChangedPower
+	ChangedPresetNumber
+	ChangedPresets
+	ChangedStatus
+	ChangedTitle
+	ChangedTitleNew
+	ChangedURL
+	ChangedURLNew
+	ChangedUUID
+	ChangedVolume
+)
+
 type (
-	StatePub interface {
-		Publish(State)
-		Subscribe(uuid string) (<-chan State, func())
+	Pub interface {
+		Publish(state State, changed int)
+		Subscribe(uuid string) (<-chan Message, func())
+	}
+
+	Message struct {
+		State   State
+		Changed int
 	}
 
 	Middleware interface {
@@ -23,6 +46,14 @@ type (
 	MiddlewarePub interface {
 		Publish()
 		Subscribe() (<-chan struct{}, func())
+	}
+
+	Preset struct {
+		Number   int    `json:"number"`    // Number is the preset number.
+		Title    string `json:"title"`     // Title of the preset.
+		TitleNew string `json:"title_new"` // TitleNew is the overridden title.
+		URL      string `json:"url"`       // URL of the preset.
+		URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
 	}
 
 	State struct {
@@ -45,31 +76,47 @@ type (
 		Volume       int      `json:"volume"`        // Volume of the radio.
 	}
 
-	Preset struct {
-		Number   int    `json:"number"`    // Number is the preset number.
-		Title    string `json:"title"`     // Title of the preset.
-		TitleNew string `json:"title_new"` // TitleNew is the overridden title.
-		URL      string `json:"url"`       // URL of the preset.
-		URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
+	Partial struct {
+		AudioSource  *string  `json:"audio_source,omitempty"`
+		IsMuted      *bool    `json:"is_muted,omitempty"`
+		Metadata     *string  `json:"metadata,omitempty"`
+		Power        *bool    `json:"power,omitempty"`
+		PresetNumber *int     `json:"preset_number,omitempty"`
+		Presets      []Preset `json:"presets,omitempty"`
+		Status       *Status  `json:"status,omitempty"`
+		Title        *string  `json:"title,omitempty"`
+		TitleNew     *string  `json:"title_new,omitempty"`
+		URL          *string  `json:"url,omitempty"`
+		URLNew       *string  `json:"url_new,omitempty"`
+		UUID         string   `json:"uuid"`
+		Volume       *int     `json:"volume,omitempty"`
 	}
 
 	Fragment struct {
 		AudioSource *string
 		IsMuted     *bool
 		Metadata    *string
-		TitleNew    *string
-		URLNew      *string
 		Power       *bool
 		Presets     []Preset
 		Status      *Status
 		Title       *string
+		TitleNew    *string
 		URL         *string
+		URLNew      *string
 		UUID        string
 		Volume      *int
 	}
 
 	Status string
 )
+
+func NewPreset(number int, title, url string) Preset {
+	return Preset{
+		Number: number,
+		Title:  title,
+		URL:    url,
+	}
+}
 
 func New(uuid, name, modelName, modelNumber string) State {
 	return State{
@@ -81,12 +128,20 @@ func New(uuid, name, modelName, modelNumber string) State {
 	}
 }
 
-func NewPreset(number int, title, url string) Preset {
-	return Preset{
-		Number: number,
-		Title:  title,
-		URL:    url,
+func NewPartial(uuid string) Partial {
+	return Partial{
+		UUID: uuid,
 	}
+}
+
+func NewFragment(uuid string) Fragment {
+	return Fragment{
+		UUID: uuid,
+	}
+}
+
+func IsChangedAll(changed int) bool {
+	return changed&ChangedAll == ChangedAll
 }
 
 func ValidPresetNumber(s *State, preset int) error {

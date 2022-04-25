@@ -48,7 +48,7 @@ func main() {
 	// Right
 	presetStore, err := file.NewPresetStore(cfg.ConfigFile)
 	if err != nil {
-		log.Fatal("Failed to create preset store:", err)
+		log.Fatalln("Failed to create preset store:", err)
 	}
 
 	// Core

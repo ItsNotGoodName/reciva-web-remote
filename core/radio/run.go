@@ -27,7 +27,6 @@ func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
 	}
 	handle(s.Fragment())
 
-	// Middleware signal
 	middlewareSub, middlewareUnsub := rs.middlewarePub.Subscribe()
 	defer middlewareUnsub()
 
@@ -38,8 +37,8 @@ func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
 		case <-middlewareSub:
 			handle(s.Fragment())
 		case radio.readC <- s:
-		case fragment := <-radio.updateC:
-			handle(fragment)
+		case frag := <-radio.updateC:
+			handle(frag)
 		case event := <-radio.subscription.Events():
 			fragment := state.NewFragment(radio.UUID)
 			parseEvent(event, &fragment)

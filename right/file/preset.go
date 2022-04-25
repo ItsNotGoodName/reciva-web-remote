@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
@@ -17,7 +18,8 @@ type PresetStore struct {
 func NewPresetStore(file string) (*PresetStore, error) {
 	presetsMap, err := readConfig(file)
 	if err != nil {
-		return nil, err
+		log.Println("file.NewPresetStore:", err)
+		presetsMap = make(map[string]preset.Preset)
 	}
 
 	return &PresetStore{

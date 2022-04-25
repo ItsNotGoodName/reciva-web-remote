@@ -30,7 +30,7 @@ func readConfig(file string) (map[string]preset.Preset, error) {
 		return nil, err
 	}
 
-	// Create map from config
+	// Create map from config struct
 	presets := make(map[string]preset.Preset, len(cfg.Presets))
 	for _, p := range cfg.Presets {
 		pp, err := preset.ParsePreset(p.URL, p.TitleNew, p.URLNew)
@@ -66,6 +66,6 @@ func writeConfig(file string, m map[string]preset.Preset) error {
 		return err
 	}
 
-	// Write config file
+	// Write cfg file
 	return os.WriteFile(file, b, 0644)
 }

@@ -48,7 +48,7 @@ func mountFS(r chi.Router, f fs.FS) {
 			}
 		}
 	} else if err != fs.ErrNotExist {
-		log.Fatal("router.mountFS:", err)
+		log.Fatalln("router.mountFS:", err)
 	}
 }
 
@@ -56,12 +56,12 @@ func mountFS(r chi.Router, f fs.FS) {
 func indexGet(httpFS http.FileSystem) http.HandlerFunc {
 	index, err := httpFS.Open("/index.html")
 	if err != nil {
-		log.Fatal("router.indexGet:", err)
+		log.Fatalln("router.indexGet:", err)
 	}
 
 	stat, err := index.Stat()
 	if err != nil {
-		log.Fatal("router.indexGet:", err)
+		log.Fatalln("router.indexGet:", err)
 	}
 
 	modtime := stat.ModTime()

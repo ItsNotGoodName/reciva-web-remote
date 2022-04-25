@@ -72,13 +72,13 @@ func (r *Radio) read(ctx context.Context) (*state.State, error) {
 	}
 }
 
-func (r *Radio) update(ctx context.Context, s state.Fragment) error {
+func (r *Radio) update(ctx context.Context, frag state.Fragment) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-r.Done():
 		return ErrRadioClosed
-	case r.updateC <- s:
+	case r.updateC <- frag:
 		return nil
 	}
 }

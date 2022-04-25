@@ -33,16 +33,16 @@ func main() {
 	// Discover radios
 	clients, _, err := upnp.Discover()
 	if err != nil {
-		log.Fatal("failed to discover radios:", err)
+		log.Fatalln("failed to discover radios:", err)
 	}
 	if len(clients) == 0 {
-		log.Fatal("no radios found")
+		log.Fatalln("no radios found")
 	}
 
 	// Create radio
 	radio, err := createService.Create(ctx, clients[0])
 	if err != nil {
-		log.Fatal("failed to create radio:", err)
+		log.Fatalln("failed to create radio:", err)
 	}
 
 	// Subscribe to state changes
@@ -52,7 +52,7 @@ func main() {
 		for s := range sub {
 			j, err := json.MarshalIndent(s, "", "  ")
 			if err != nil {
-				log.Fatal("failed to marshal state:", err)
+				log.Fatalln("failed to marshal state:", err)
 			}
 
 			fmt.Println(string(j))

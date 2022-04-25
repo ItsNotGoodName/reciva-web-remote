@@ -20,8 +20,8 @@ type HubServiceImpl struct {
 	doneC        chan struct{}
 	radioService CreateService
 
-	radioMapMu sync.RWMutex     // radiosMu is used to protect radios map.
-	radiosMap  map[string]Radio // radios is used to store radios. UUID is used as the key.
+	radioMapMu sync.RWMutex
+	radiosMap  map[string]Radio
 }
 
 type discoverResponse struct {
@@ -29,12 +29,11 @@ type discoverResponse struct {
 	err   error
 }
 
-func NewHubService(radioService CreateService) *HubServiceImpl {
+func NewHubService(createService CreateService) *HubServiceImpl {
 	return &HubServiceImpl{
 		discoverC:    make(chan chan discoverResponse),
 		doneC:        make(chan struct{}),
-		radioMapMu:   sync.RWMutex{},
-		radioService: radioService,
+		radioService: createService,
 		radiosMap:    make(map[string]Radio),
 	}
 }
@@ -55,6 +54,8 @@ func (hs *HubServiceImpl) Discover() (int, error) {
 func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{}) {
 	var oldCancel context.CancelFunc = func() {}
 	discover := func() (int, error) {
+		log.Println("radio.HubService.Background: Discovering radios...")
+
 		// Discover clients
 		clients, _, err := upnp.Discover()
 		if err != nil {
@@ -96,7 +97,11 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 		// Set old cancel
 		oldCancel = newCancel
 
-		return len(radios), nil
+		count := len(radios)
+
+		log.Println("radio.HubService.Background:", count, "radio(s) discovered")
+
+		return count, nil
 	}
 	if _, err := discover(); err != nil {
 		log.Println("radio.HubService.Background:", err)
@@ -119,6 +124,9 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 			return
 		case resC := <-hs.discoverC:
 			count, err := discover()
+			if err != nil {
+				log.Println("radio.HubService.Background:", err)
+			}
 			resC <- discoverResponse{count: count, err: err}
 		}
 	}

@@ -25,7 +25,6 @@ func GetWS(upgrader *websocket.Upgrader, handleWS func(*websocket.Conn)) http.Ha
 func HandleWS(application *app.App) func(conn *websocket.Conn) {
 	return func(conn *websocket.Conn) {
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 
 		application.Bus(
 			ctx,

@@ -15,17 +15,17 @@ type CreateServiceImpl struct {
 	radioService RunService
 }
 
-func NewCreateService(controlPoint upnpsub.ControlPoint, radioService RunService) *CreateServiceImpl {
+func NewCreateService(controlPoint upnpsub.ControlPoint, runService RunService) *CreateServiceImpl {
 	return &CreateServiceImpl{
 		controlPoint: controlPoint,
-		radioService: radioService,
+		radioService: runService,
 	}
 }
 
 func (cs *CreateServiceImpl) Background(ctx context.Context, doneC chan<- struct{}) {
 	go func() {
 		if err := upnpsub.ListenAndServe("", cs.controlPoint); err != nil {
-			log.Fatal("Failed to start control point:", err)
+			log.Fatalln("Failed to start control point:", err)
 		}
 	}()
 

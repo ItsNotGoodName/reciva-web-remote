@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/core/app"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/bus"
 	"github.com/gorilla/websocket"
 )
 
@@ -22,11 +22,11 @@ func GetWS(upgrader *websocket.Upgrader, handleWS func(*websocket.Conn)) http.Ha
 	}
 }
 
-func HandleWS(application *app.App) func(conn *websocket.Conn) {
+func HandleWS(busService bus.Service) func(conn *websocket.Conn) {
 	return func(conn *websocket.Conn) {
 		ctx, cancel := context.WithCancel(context.Background())
 
-		application.Bus(
+		busService.Handle(
 			ctx,
 			wsHandleRead(ctx, cancel, conn),
 			wsHandleWrite(ctx, cancel, conn),
@@ -48,8 +48,8 @@ const (
 	wsMaxMessageSize = 512
 )
 
-func wsHandleWrite(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn) chan<- app.Command {
-	writeC := make(chan app.Command)
+func wsHandleWrite(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn) chan<- bus.Command {
+	writeC := make(chan bus.Command)
 	go func() {
 		ticker := time.NewTicker(wsPingPeriod)
 		defer func() {
@@ -85,8 +85,8 @@ func wsHandleWrite(ctx context.Context, cancel context.CancelFunc, conn *websock
 	return writeC
 }
 
-func wsHandleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn) <-chan app.Command {
-	readC := make(chan app.Command)
+func wsHandleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn) <-chan bus.Command {
+	readC := make(chan bus.Command)
 	go func() {
 		defer cancel()
 
@@ -96,7 +96,7 @@ func wsHandleRead(ctx context.Context, cancel context.CancelFunc, conn *websocke
 
 		for {
 			// Read msg or end on error
-			var msg app.Command
+			var msg bus.Command
 			err := conn.ReadJSON(&msg)
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {

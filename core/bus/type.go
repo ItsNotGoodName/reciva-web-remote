@@ -1,15 +1,23 @@
-package app
+package bus
 
 import (
+	"context"
+
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 )
 
-type Command struct {
-	Type Type        `json:"type"`
-	Slug interface{} `json:"slug"`
-}
+type (
+	Type string
 
-type Type string
+	Command struct {
+		Type Type        `json:"type"`
+		Slug interface{} `json:"slug"`
+	}
+
+	Service interface {
+		Handle(ctx context.Context, readC <-chan Command, writeC chan<- Command)
+	}
+)
 
 const (
 	TypeError            = Type("error")
@@ -19,21 +27,21 @@ const (
 	TypeStateUnsubscribe = Type("state.unsubscribe")
 )
 
-func NewErrorCommand(err error) Command {
+func newErrorCommand(err error) Command {
 	return Command{
 		Type: TypeError,
 		Slug: err.Error(),
 	}
 }
 
-func NewStateCommand(state *state.State) Command {
+func newStateCommand(state *state.State) Command {
 	return Command{
 		Type: TypeState,
 		Slug: state,
 	}
 }
 
-func NewStatePartialCommand(partial state.Partial) Command {
+func newStatePartialCommand(partial state.Partial) Command {
 	return Command{
 		Type: TypeStatePartial,
 		Slug: partial,

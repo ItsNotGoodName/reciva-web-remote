@@ -22,9 +22,10 @@ func main() {
 	statePub := pubsub.NewStatePub()
 	middlewarePub := pubsub.NewSignalPub()
 	runService := radio.NewRunService(
-		statePub,
 		middleware.NewPreset(middlewarePub, mock.NewPresetStore()),
 		middlewarePub,
+		radio.NewRadioService(),
+		statePub,
 	)
 	controlPoint := upnpsub.NewControlPoint()
 	createService := radio.NewCreateService(controlPoint, runService)

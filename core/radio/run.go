@@ -1,24 +1,30 @@
 package radio
 
 import (
+	"context"
+	"log"
+	"time"
+
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 )
 
 type RunServiceImpl struct {
-	statePub      state.StatePub
 	middleware    state.Middleware
 	middlewarePub state.MiddlewarePub
+	radioService  RadioService
+	statePub      state.StatePub
 }
 
-func NewRunService(statePub state.StatePub, middleware state.Middleware, middlewarePub state.MiddlewarePub) *RunServiceImpl {
+func NewRunService(middleware state.Middleware, middlewarePub state.MiddlewarePub, radioService RadioService, statePub state.StatePub) *RunServiceImpl {
 	return &RunServiceImpl{
-		statePub:      statePub,
 		middleware:    middleware,
 		middlewarePub: middlewarePub,
+		radioService:  radioService,
+		statePub:      statePub,
 	}
 }
 
-func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
+func (rs *RunServiceImpl) Run(dctx context.Context, radio Radio, s state.State) {
 	handle := func(frag state.Fragment) {
 		rs.middleware.Apply(&frag)
 		if s.Merge(frag) {
@@ -28,12 +34,22 @@ func (rs *RunServiceImpl) Run(radio Radio, s state.State) {
 	handle(s.Fragment())
 
 	middlewareSub, middlewareUnsub := rs.middlewarePub.Subscribe()
-	defer middlewareUnsub()
+	ticker := time.NewTicker(60 * time.Second)
+	defer func() {
+		middlewareUnsub()
+		ticker.Stop()
+	}()
 
 	for {
 		select {
 		case <-radio.Done():
 			return
+		case <-ticker.C:
+			go func() {
+				if err := rs.radioService.RefreshVolume(dctx, radio); err != nil {
+					log.Println("radio.RunService.Run: failed to refresh volume:", err)
+				}
+			}()
 		case <-middlewareSub:
 			handle(s.Fragment())
 		case radio.readC <- s:

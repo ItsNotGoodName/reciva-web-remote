@@ -25,7 +25,7 @@ type (
 	}
 
 	RunService interface {
-		Run(radio Radio, state state.State)
+		Run(dctx context.Context, radio Radio, state state.State)
 	}
 
 	RadioService interface {

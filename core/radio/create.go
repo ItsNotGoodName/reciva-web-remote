@@ -33,7 +33,7 @@ func (cs *CreateServiceImpl) Background(ctx context.Context, doneC chan<- struct
 	doneC <- struct{}{}
 }
 
-func (cs *CreateServiceImpl) Create(ctx context.Context, client goupnp.ServiceClient) (Radio, error) {
+func (cs *CreateServiceImpl) Create(dctx context.Context, client goupnp.ServiceClient) (Radio, error) {
 	// Get UUID
 	uuid, err := upnp.GetUUID(client)
 	if err != nil {
@@ -44,14 +44,14 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, client goupnp.ServiceCl
 	s := state.New(uuid, upnp.GetName(client), upnp.GetModelName(client), upnp.GetModelNumber(client))
 
 	// Get and set volume
-	volume, err := upnp.GetVolume(ctx, client)
+	volume, err := upnp.GetVolume(dctx, client)
 	if err != nil {
 		return Radio{}, err
 	}
 	s.SetVolume(volume)
 
 	// Get and parse presets count
-	presetsCount, err := upnp.GetNumberOfPresets(ctx, client)
+	presetsCount, err := upnp.GetNumberOfPresets(dctx, client)
 	if err != nil {
 		return Radio{}, err
 	}
@@ -62,7 +62,7 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, client goupnp.ServiceCl
 	// Get and set presets
 	var presets []state.Preset
 	for i := 1; i <= presetsCount; i++ {
-		p, err := upnp.GetPreset(ctx, client, i)
+		p, err := upnp.GetPreset(dctx, client, i)
 		if err != nil {
 			return Radio{}, err
 		}
@@ -72,7 +72,7 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, client goupnp.ServiceCl
 	s.SetPresets(presets)
 
 	// Get audio sources
-	audioSources, err := upnp.GetAudioSources(ctx, client)
+	audioSources, err := upnp.GetAudioSources(dctx, client)
 	if err != nil {
 		return Radio{}, err
 	}
@@ -80,14 +80,14 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, client goupnp.ServiceCl
 
 	// Create subscription
 	eventURL := upnp.GetEventURL(client)
-	sub, err := cs.controlPoint.Subscribe(ctx, &eventURL)
+	sub, err := cs.controlPoint.Subscribe(dctx, &eventURL)
 	if err != nil {
 		return Radio{}, err
 	}
 
 	// Create and run radio
 	radio := new(sub, uuid, client)
-	go cs.radioService.Run(radio, s)
+	go cs.radioService.Run(dctx, radio, s)
 
 	return radio, nil
 }

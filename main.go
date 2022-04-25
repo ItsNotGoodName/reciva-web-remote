@@ -54,9 +54,9 @@ func main() {
 	// Core
 	middlewarePub := pubsub.NewSignalPub()
 	middlewareAndPresetStore := middleware.NewPreset(middlewarePub, presetStore)
-	statePub := pubsub.NewStatePub()
-	runService := radio.NewRunService(statePub, middlewareAndPresetStore, middlewarePub)
 	radioService := radio.NewRadioService()
+	statePub := pubsub.NewStatePub()
+	runService := radio.NewRunService(middlewareAndPresetStore, middlewarePub, radioService, statePub)
 	createService := radio.NewCreateService(upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort)), runService)
 	backgrounds = append(backgrounds, createService)
 	hubService := radio.NewHubService(createService)

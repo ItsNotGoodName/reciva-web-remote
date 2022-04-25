@@ -144,6 +144,10 @@ func IsChangedAll(changed int) bool {
 	return changed&ChangedAll == ChangedAll
 }
 
+func MergeChanged(changed int, other int) int {
+	return changed | other
+}
+
 func ValidPresetNumber(s *State, preset int) error {
 	if preset < 1 || preset > len(s.Presets) {
 		return fmt.Errorf("invalid preset number: %d", preset)

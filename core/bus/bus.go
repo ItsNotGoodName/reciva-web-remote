@@ -2,7 +2,6 @@ package bus
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
@@ -32,7 +31,6 @@ func (bs *BusServiceImpl) stateGet(ctx context.Context, uuid string) (*state.Sta
 }
 
 func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writeC chan<- Command) {
-	stateUUID := ""
 	stateSub, stateUnsub := make(<-chan state.Message), func() {}
 	defer stateUnsub()
 
@@ -50,9 +48,9 @@ func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writ
 		case dto := <-readC:
 			switch dto.Type {
 			case TypeStateSubscribe:
-				stateUUID = fmt.Sprint(dto.Slug)
-				if stateUUID == "" {
-					writeCommand(ctx, writeC, newErrorCommand(fmt.Errorf("invalid uuid")))
+				stateUUID, err := parseStateSubscribe(dto.Slug)
+				if err != nil {
+					writeCommand(ctx, writeC, newErrorCommand(err))
 					continue
 				}
 
@@ -72,10 +70,6 @@ func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writ
 			case TypeStateUnsubscribe:
 				// Unsubscribe from radio
 				stateUnsub()
-				select {
-				case <-stateSub:
-				default:
-				}
 			}
 		}
 	}

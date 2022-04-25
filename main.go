@@ -42,13 +42,10 @@ func main() {
 		return
 	}
 
-	// Backgrounds
-	var backgrounds []background.Background
-
 	// Right
 	presetStore, err := file.NewPresetStore(cfg.ConfigFile)
 	if err != nil {
-		log.Fatalln("Failed to create preset store:", err)
+		log.Fatalln("main.main: failed to create preset store:", err)
 	}
 
 	// Core
@@ -58,14 +55,18 @@ func main() {
 	statePub := pubsub.NewStatePub()
 	runService := radio.NewRunService(middlewareAndPresetStore, middlewarePub, radioService, statePub)
 	createService := radio.NewCreateService(upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort)), runService)
-	backgrounds = append(backgrounds, createService)
 	hubService := radio.NewHubService(createService)
-	backgrounds = append(backgrounds, hubService)
 	busService := bus.New(hubService, radioService, statePub)
 
 	// Left
 	router := router.New(cfg.PortStr, presenter.New(json.Render), web.FS(), hubService, radioService, busService, middlewareAndPresetStore)
-	backgrounds = append(backgrounds, router)
+
+	// Backgrounds
+	backgrounds := []background.Background{
+		createService,
+		hubService,
+		router,
+	}
 
 	// Run backgrounds
 	background.Run(interrupt.Context(), backgrounds)

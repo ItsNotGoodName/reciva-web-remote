@@ -7,8 +7,8 @@ import (
 )
 
 type StatePub struct {
-	subMapMu sync.Mutex
-	subsMap  map[*chan state.Message]string
+	subsMapMu sync.Mutex
+	subsMap   map[*chan state.Message]string
 }
 
 func NewStatePub() *StatePub {
@@ -20,27 +20,32 @@ func NewStatePub() *StatePub {
 func (sp *StatePub) Subscribe(uuid string) (<-chan state.Message, func()) {
 	sub := make(chan state.Message, 1)
 
-	sp.subMapMu.Lock()
+	sp.subsMapMu.Lock()
 
 	sp.subsMap[&sub] = uuid
 
-	sp.subMapMu.Unlock()
+	sp.subsMapMu.Unlock()
 
 	return sub, sp.unsubscribeFunc(&sub)
 }
 
 func (sp *StatePub) unsubscribeFunc(sub *chan state.Message) func() {
 	return func() {
-		sp.subMapMu.Lock()
+		sp.subsMapMu.Lock()
 
 		delete(sp.subsMap, sub)
 
-		sp.subMapMu.Unlock()
+		sp.subsMapMu.Unlock()
+
+		select {
+		case <-*sub:
+		default:
+		}
 	}
 }
 
 func (sp *StatePub) Publish(s state.State, changed int) {
-	sp.subMapMu.Lock()
+	sp.subsMapMu.Lock()
 
 	msg := state.Message{
 		State: s,
@@ -55,7 +60,7 @@ func (sp *StatePub) Publish(s state.State, changed int) {
 			default:
 				select {
 				case old := <-*sub:
-					msg.Changed |= old.Changed
+					msg.Changed = state.MergeChanged(old.Changed, msg.Changed)
 					*sub <- msg
 				case *sub <- msg:
 				}
@@ -63,5 +68,5 @@ func (sp *StatePub) Publish(s state.State, changed int) {
 		}
 	}
 
-	sp.subMapMu.Unlock()
+	sp.subsMapMu.Unlock()
 }

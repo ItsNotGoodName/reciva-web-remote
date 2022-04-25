@@ -9,10 +9,11 @@ import (
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/app"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gorilla/websocket"
+	"github.com/go-chi/cors"
 )
 
 type Router struct {
@@ -21,8 +22,8 @@ type Router struct {
 }
 
 func New(port string, h presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService, application *app.App) *Router {
-	r := chi.NewRouter()
-	upgrader := websocket.Upgrader{}
+	r := newMux()
+	upgrader := newUpgrader()
 
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
@@ -35,18 +36,29 @@ func New(port string, h presenter.Presenter, fs fs.FS, hub radio.HubService, rad
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
 
+	r.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	// API routes
 	r.Route("/api", func(r chi.Router) {
-		r.Get("/ws", GetWS(upgrader, HandleWS(application)))
+		r.Get("/ws", api.GetWS(upgrader, api.HandleWS(application)))
 
-		r.Get("/radios", h(GetRadios(hub, radioService)))
-		r.Post("/radios", h(PostRadios(hub)))
+		r.Get("/radios", h(api.GetRadios(hub, radioService)))
+		r.Post("/radios", h(api.PostRadios(hub)))
 
 		r.Route("/radio/{uuid}", func(r chi.Router) {
-			r.Get("/", h(RequireRadio(hub, GetRadio(radioService))))
-			r.Patch("/", h(RequireRadio(hub, PatchRadio(radioService))))
-			r.Post("/", h(RequireRadio(hub, PostRadio(radioService))))
-			r.Post("/volume", h(RequireRadio(hub, PostRadioVolume(radioService))))
+			r.Get("/", h(api.RequireRadio(hub, api.GetRadio(radioService))))
+			r.Patch("/", h(api.RequireRadio(hub, api.PatchRadio(radioService))))
+			r.Post("/", h(api.RequireRadio(hub, api.PostRadio(radioService))))
+			r.Post("/volume", h(api.RequireRadio(hub, api.PostRadioVolume(radioService))))
 		})
 	})
 

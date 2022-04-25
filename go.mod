@@ -6,6 +6,7 @@ require (
 	github.com/ItsNotGoodName/go-upnpsub v0.5.0
 	github.com/avast/retry-go/v3 v3.1.1
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/cors v1.2.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/huin/goupnp v1.0.3
 )

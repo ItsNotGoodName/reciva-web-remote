@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
@@ -67,8 +68,10 @@ func GetRadios(hub radio.HubService, radioService radio.RadioService) presenter.
 
 func PostRadios(hub radio.HubService) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
+		force, _ := strconv.ParseBool(r.URL.Query().Get("force"))
+
 		// Discover radios
-		count, err := hub.Discover()
+		count, err := hub.Discover(force)
 		if err != nil {
 			code := http.StatusInternalServerError
 			if err == core.ErrHubDiscovering {

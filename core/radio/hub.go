@@ -35,7 +35,7 @@ func NewHubService(createService CreateService) *HubServiceImpl {
 	}
 }
 
-func (hs *HubServiceImpl) Discover() (int, error) {
+func (hs *HubServiceImpl) Discover(force bool) (int, error) {
 	resC := make(chan discoverResponse)
 	select {
 	case hs.discoverC <- resC:

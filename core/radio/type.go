@@ -11,7 +11,7 @@ import (
 
 type (
 	HubService interface {
-		Discover() (int, error)
+		Discover(force bool) (int, error)
 		Get(uuid string) (Radio, error)
 		List() []Radio
 	}

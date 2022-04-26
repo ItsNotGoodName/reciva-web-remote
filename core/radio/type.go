@@ -35,11 +35,11 @@ type (
 	}
 
 	Radio struct {
-		UUID         string               // UUID of the radio.
-		client       goupnp.ServiceClient // client is the SOAP client.
-		readC        chan state.State     // readC is used to read the state.
-		subscription upnpsub.Subscription // subscription to the UPnP event publisher.
-		updateC      chan state.Fragment  // updateC is used to update state.
+		UUID         string                                // UUID of the radio.
+		client       goupnp.ServiceClient                  // client is the SOAP client.
+		stateC       chan state.State                      // stateC is used to read the state.
+		subscription upnpsub.Subscription                  // subscription to the UPnP event publisher.
+		updateFnC    chan func(*state.State) state.Changed // updateFnC is used to update state.
 	}
 )
 
@@ -47,9 +47,9 @@ func new(subscription upnpsub.Subscription, uuid string, client goupnp.ServiceCl
 	return Radio{
 		UUID:         uuid,
 		client:       client,
-		readC:        make(chan state.State),
+		stateC:       make(chan state.State),
 		subscription: subscription,
-		updateC:      make(chan state.Fragment),
+		updateFnC:    make(chan func(*state.State) state.Changed),
 	}
 }
 
@@ -57,24 +57,24 @@ func (r *Radio) Done() <-chan struct{} {
 	return r.subscription.Done()
 }
 
-func (r *Radio) read(ctx context.Context) (*state.State, error) {
+func (r *Radio) state(ctx context.Context) (*state.State, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case <-r.Done():
 		return nil, core.ErrRadioClosed
-	case state := <-r.readC:
+	case state := <-r.stateC:
 		return &state, nil
 	}
 }
 
-func (r *Radio) update(ctx context.Context, frag state.Fragment) error {
+func (r *Radio) update(ctx context.Context, updateFn func(*state.State) state.Changed) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-r.Done():
 		return core.ErrRadioClosed
-	case r.updateC <- frag:
+	case r.updateFnC <- updateFn:
 		return nil
 	}
 }

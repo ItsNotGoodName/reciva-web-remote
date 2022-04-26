@@ -40,7 +40,7 @@ func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writ
 			return
 		case msg := <-stateSub:
 			// Write state or state partial
-			if state.IsChangedAll(msg.Changed) {
+			if msg.Changed.Is(state.ChangedAll) {
 				writeCommand(ctx, writeC, newStateCommand(&msg.State))
 			} else {
 				writeCommand(ctx, writeC, newStatePartialCommand(state.GetPartial(&msg.State, msg.Changed)))

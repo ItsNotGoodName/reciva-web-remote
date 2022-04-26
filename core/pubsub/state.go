@@ -44,7 +44,7 @@ func (sp *StatePub) unsubscribeFunc(sub *chan state.Message) func() {
 	}
 }
 
-func (sp *StatePub) Publish(s state.State, changed int) {
+func (sp *StatePub) Publish(s state.State, changed state.Changed) {
 	sp.subsMapMu.Lock()
 
 	msg := state.Message{
@@ -60,7 +60,7 @@ func (sp *StatePub) Publish(s state.State, changed int) {
 			default:
 				select {
 				case old := <-*sub:
-					msg.Changed = state.MergeChanged(old.Changed, msg.Changed)
+					msg.Changed = old.Changed.Merge(msg.Changed)
 					*sub <- msg
 				case *sub <- msg:
 				}

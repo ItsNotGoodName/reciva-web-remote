@@ -20,10 +20,9 @@ func (rs *RadioServiceImpl) SetVolume(ctx context.Context, radio Radio, volume i
 		return err
 	}
 
-	f := state.NewFragment(radio.UUID)
-	f.Volume = &volume
-
-	return radio.update(context.Background(), f)
+	return radio.update(context.Background(), func(s *state.State) state.Changed {
+		return s.SetVolume(volume)
+	})
 }
 
 func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset int) error {
@@ -63,10 +62,9 @@ func (rs *RadioServiceImpl) RefreshVolume(ctx context.Context, radio Radio) erro
 		return err
 	}
 
-	f := state.NewFragment(radio.UUID)
-	f.Volume = &volume
-
-	return radio.update(ctx, f)
+	return radio.update(ctx, func(s *state.State) state.Changed {
+		return s.SetVolume(volume)
+	})
 }
 
 func (rs *RadioServiceImpl) Refresh(ctx context.Context, radio Radio) error {
@@ -75,7 +73,7 @@ func (rs *RadioServiceImpl) Refresh(ctx context.Context, radio Radio) error {
 }
 
 func (rs *RadioServiceImpl) GetState(ctx context.Context, radio Radio) (*state.State, error) {
-	return radio.read(ctx)
+	return radio.state(ctx)
 }
 
 func (rs *RadioServiceImpl) SetAudioSource(ctx context.Context, radio Radio, audioSource string) error {

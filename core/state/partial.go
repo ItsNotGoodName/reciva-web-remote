@@ -1,6 +1,6 @@
 package state
 
-func GetPartial(s *State, c int) Partial {
+func GetPartial(s *State, c Changed) Partial {
 	p := NewPartial(s.UUID)
 
 	// AudioSource

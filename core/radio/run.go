@@ -25,13 +25,13 @@ func NewRunService(middleware state.Middleware, middlewarePub state.MiddlewarePu
 }
 
 func (rs *RunServiceImpl) Run(dctx context.Context, radio Radio, s state.State) {
-	handle := func(frag state.Fragment, changed int) {
-		rs.middleware.Apply(&frag)
-		if changed = s.Merge(frag) | changed; changed != 0 {
-			rs.statePub.Publish(s, changed)
+	handle := func(c state.Changed) {
+		c = c.Merge(rs.middleware.Apply(&s, c))
+		if c != 0 {
+			rs.statePub.Publish(s, c)
 		}
 	}
-	handle(s.Fragment(), state.ChangedAll)
+	handle(state.ChangedAll)
 
 	middlewareSub, middlewareUnsub := rs.middlewarePub.Subscribe()
 	ticker := time.NewTicker(60 * time.Second)
@@ -51,14 +51,12 @@ func (rs *RunServiceImpl) Run(dctx context.Context, radio Radio, s state.State) 
 				}
 			}()
 		case <-middlewareSub:
-			handle(s.Fragment(), 0)
-		case radio.readC <- s:
-		case frag := <-radio.updateC:
-			handle(frag, 0)
+			handle(state.ChangedAll)
+		case radio.stateC <- s:
+		case fn := <-radio.updateFnC:
+			handle(fn(&s))
 		case event := <-radio.subscription.Events():
-			frag := state.NewFragment(radio.UUID)
-			parseEvent(event, &frag)
-			handle(frag, 0)
+			handle(parseEvent(event, &s))
 		}
 	}
 }

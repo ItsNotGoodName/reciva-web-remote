@@ -37,44 +37,40 @@ func (p *Preset) Update(ctx context.Context, preset *preset.Preset) error {
 	return nil
 }
 
-func (p *Preset) Apply(frag *state.Fragment) {
+func (p *Preset) Apply(s *state.State, c state.Changed) state.Changed {
 	ctx := context.Background()
 
-	p.fragmentPresets(ctx, frag)
-
-	p.fragmentTitleAndURL(ctx, frag)
+	return c.Merge(p.fragmentPresets(ctx, s, c)).Merge(p.fragmentTitleAndURL(ctx, s, c))
 }
 
-func (p *Preset) fragmentPresets(ctx context.Context, frag *state.Fragment) {
-	if frag.Presets != nil {
-		for i := range frag.Presets {
-			titleNew := ""
-			urlNew := ""
-
-			preset, err := p.store.Get(ctx, frag.Presets[i].URL)
-			if err == nil {
-				titleNew = preset.TitleNew
-				urlNew = preset.URLNew
-			}
-
-			frag.Presets[i].TitleNew = titleNew
-			frag.Presets[i].URLNew = urlNew
-		}
+func (p *Preset) fragmentPresets(ctx context.Context, s *state.State, c state.Changed) state.Changed {
+	if !c.Is(state.ChangedPresets) {
+		return 0
 	}
+
+	presets := s.Presets
+	for i := range presets {
+		p, err := p.store.Get(ctx, presets[i].URL)
+		if err != nil {
+			continue
+		}
+
+		presets[i].TitleNew = p.TitleNew
+		presets[i].URLNew = p.URLNew
+	}
+
+	return s.SetPresets(presets)
 }
 
-func (p *Preset) fragmentTitleAndURL(ctx context.Context, frag *state.Fragment) {
-	if frag.URL != nil {
-		urlNew := ""
-		titleNew := ""
-
-		preset, err := p.store.Get(ctx, *frag.URL)
-		if err == nil {
-			urlNew = preset.URLNew
-			titleNew = preset.TitleNew
-		}
-
-		frag.TitleNew = &titleNew
-		frag.URLNew = &urlNew
+func (p *Preset) fragmentTitleAndURL(ctx context.Context, s *state.State, c state.Changed) state.Changed {
+	if !c.Is(state.ChangedURL) {
+		return 0
 	}
+
+	preset, err := p.store.Get(ctx, s.URL)
+	if err != nil {
+		return 0
+	}
+
+	return s.SetTitleNew(preset.TitleNew).Merge(s.SetURLNew(preset.URLNew))
 }

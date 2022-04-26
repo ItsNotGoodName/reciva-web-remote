@@ -1,6 +1,9 @@
 package state
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 const (
 	StatusConnecting = "Connecting"
@@ -11,9 +14,10 @@ const (
 	AudioSourceInternetRadio = "Internet radio"
 )
 
+const ChangedAll Changed = math.MaxInt
+
 const (
-	ChangedAll = 1 << iota
-	ChangedAudioSource
+	ChangedAudioSource Changed = 1 << iota
 	ChangedIsMuted
 	ChangedMetadata
 	ChangedPower
@@ -30,17 +34,17 @@ const (
 
 type (
 	Pub interface {
-		Publish(state State, changed int)
+		Publish(state State, changed Changed)
 		Subscribe(uuid string) (<-chan Message, func())
 	}
 
 	Message struct {
 		State   State
-		Changed int
+		Changed Changed
 	}
 
 	Middleware interface {
-		Apply(*Fragment)
+		Apply(*State, Changed) Changed
 	}
 
 	MiddlewarePub interface {
@@ -92,22 +96,9 @@ type (
 		Volume       *int     `json:"volume,omitempty"`
 	}
 
-	Fragment struct {
-		AudioSource *string
-		IsMuted     *bool
-		Metadata    *string
-		Power       *bool
-		Presets     []Preset
-		Status      *Status
-		Title       *string
-		TitleNew    *string
-		URL         *string
-		URLNew      *string
-		UUID        string
-		Volume      *int
-	}
-
 	Status string
+
+	Changed int
 )
 
 func NewPreset(number int, title, url string) Preset {
@@ -132,20 +123,6 @@ func NewPartial(uuid string) Partial {
 	return Partial{
 		UUID: uuid,
 	}
-}
-
-func NewFragment(uuid string) Fragment {
-	return Fragment{
-		UUID: uuid,
-	}
-}
-
-func IsChangedAll(changed int) bool {
-	return changed&ChangedAll == ChangedAll
-}
-
-func MergeChanged(changed int, other int) int {
-	return changed | other
 }
 
 func ValidPresetNumber(s *State, preset int) error {

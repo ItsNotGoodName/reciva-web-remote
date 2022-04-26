@@ -15,12 +15,12 @@ type eventStateXML struct {
 	URL      string `xml:"playback-details>stream>url"`
 }
 
-func parseEvent(event *upnpsub.Event, frag *state.Fragment) {
+func parseEvent(event *upnpsub.Event, s *state.State) (changed state.Changed) {
 	for _, v := range event.Properties {
 		if v.Name == "PowerState" {
 			// Power change
 			power := v.Value == "On"
-			frag.Power = &power
+			changed = changed.Merge(s.SetPower(power))
 		} else if v.Name == "PlaybackXML" {
 			if v.Value == "" {
 				continue
@@ -34,27 +34,35 @@ func parseEvent(event *upnpsub.Event, frag *state.Fragment) {
 
 			// Status change
 			status := state.ParseStatus(esXML.State)
-			frag.Status = &status
+			changed = changed.Merge(s.SetStatus(status))
 
 			// Title change
 			title := esXML.Title
-			frag.Title = &title
+			changed = changed.Merge(s.SetTitle(title))
 
 			// URL change
 			url := esXML.URL
-			frag.URL = &url
+			changed = changed.Merge(s.SetURL(url))
 
 			// Metadata change
 			metadata := esXML.Metadata
-			frag.Metadata = &metadata
+			changed = changed.Merge(s.SetMetadata(metadata))
 		} else if v.Name == "IsMuted" {
 			// IsMuted change
 			isMuted := v.Value == "TRUE"
-			frag.IsMuted = &isMuted
+			changed = changed.Merge(s.SetIsMuted(isMuted))
 		} else if v.Name == "AudioSource" {
 			// AudioSource change
 			audioSource := v.Value
-			frag.AudioSource = &audioSource
+			c, err := s.SetAudioSource(audioSource)
+			if err != nil {
+				log.Println("radio.parseEvent:", err)
+				continue
+			}
+
+			changed = changed.Merge(c)
 		}
 	}
+
+	return changed
 }

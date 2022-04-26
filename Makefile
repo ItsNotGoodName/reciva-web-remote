@@ -1,4 +1,4 @@
-NPM_PREFIX := podman run --rm -it -p 3000:3000 -v "$(shell pwd)/left/web:/work" -w /work docker.io/library/node:16
+NPM_PREFIX := podman run --rm -it -p 3000:3000 -v "$(shell pwd)/left/web:/work" -w /work docker.io/library/node:16.13
 
 all: npm build
 

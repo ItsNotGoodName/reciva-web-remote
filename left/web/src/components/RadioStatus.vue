@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DButton from "./DaisyUI/DButton.vue";
+
 const { status } = defineProps({
   status: {
     type: String,
@@ -9,18 +11,18 @@ const { status } = defineProps({
 
 <template>
   <div class="tooltip tooltip-bottom" :data-tip="status">
-    <button v-if="status == 'Connecting'" class="btn btn-circle btn-warning" :aria-label="status">
+    <d-button v-if="status == 'Connecting'" class="btn-circle btn-warning" :aria-label="status">
       <v-icon name="fa-sync" animation="spin" />
-    </button>
-    <button v-else-if="status == 'Playing'" class="btn btn-circle btn-success" :aria-label="status">
+    </d-button>
+    <d-button v-else-if="status == 'Playing'" class="btn-circle btn-success pl-1" :aria-label="status">
       <v-icon name="fa-play" />
-    </button>
-    <button v-else-if="status == 'Stopped'" class="btn btn-circle btn-error" :aria-label="status">
+    </d-button>
+    <d-button v-else-if="status == 'Stopped'" class="btn-circle btn-error" :aria-label="status">
       <v-icon name="fa-stop" />
-    </button>
-    <button v-else class="btn btn-circle no-animation btn-info" :aria-label="status">
+    </d-button>
+    <d-button v-else class="btn-circle no-animation btn-info" :aria-label="status">
       <v-icon name="fa-question" />
-    </button>
+    </d-button>
   </div>
 </template>
 

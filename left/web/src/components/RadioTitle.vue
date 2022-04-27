@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DDropdownButton from './DaisyUI/DDropdownButton.vue';
+
 const { title, metadata, url, url_new, preset_number } = defineProps({
   title: {
     type: String,
@@ -25,14 +27,14 @@ const { title, metadata, url, url_new, preset_number } = defineProps({
 
 <template>
   <div class="dropdown dropdown-end">
-    <label tabindex="0" class="btn btn-primary w-full justify-start truncate">
+    <d-dropdown-button class="btn-primary w-full justify-start truncate">
       <div class="w-0">
         <span class="badge badge-info badge-lg mr-2 ">
           {{ preset_number }}
         </span>
         {{ title }}
       </div>
-    </label>
+    </d-dropdown-button>
     <div tabindex="0" class="dropdown-content card card-compact w-full p-2 mt-2 shadow bg-primary text-primary-content">
       <div class="card-body break-words">
         <h3 class="card-title">Stream Information</h3>

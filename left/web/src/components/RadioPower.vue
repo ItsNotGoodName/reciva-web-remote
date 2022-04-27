@@ -1,5 +1,6 @@
-
 <script setup lang="ts">
+import DButton from "./DaisyUI/DButton.vue";
+
 const { power } = defineProps({
   power: {
     type: Boolean,
@@ -9,12 +10,12 @@ const { power } = defineProps({
 </script>
 
 <template>
-  <button v-if="power" class="btn btn-success" aria-label="Powered ON">
+  <d-button v-if="power" class="btn-success" aria-label="Powered ON">
     <v-icon name="fa-power-off" />
-  </button>
-  <button v-else class="btn btn-error" aria-label="Powered OFF">
+  </d-button>
+  <d-button v-else class="btn-error" aria-label="Powered OFF">
     <v-icon name="fa-power-off" />
-  </button>
+  </d-button>
 </template>
 
 <style>

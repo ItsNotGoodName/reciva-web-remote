@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DDropdownButton from './DaisyUI/DDropdownButton.vue';
+
 const { name, model_name, model_number } = defineProps({
   name: {
     type: String,
@@ -17,9 +19,9 @@ const { name, model_name, model_number } = defineProps({
 
 <template>
   <div class="dropdown dropdown-top dropdown-end">
-    <label tabindex="0" class="btn btn-primary w-full justify-start truncate">
+    <d-dropdown-button class="btn-primary w-full justify-start truncate">
       <v-icon name="md-radio" />
-    </label>
+    </d-dropdown-button>
     <div tabindex="0" class="dropdown-content card card-compact w-80 p-2 mb-2 shadow bg-primary text-primary-content">
       <div class="card-body break-words">
         <h3 class="card-title">Radio Information</h3>

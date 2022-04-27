@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DButton from "./DaisyUI/DButton.vue";
+
 const { title, selected, number } = defineProps({
   selected: {
     type: Boolean,
@@ -16,10 +18,10 @@ const { title, selected, number } = defineProps({
 </script>
 
 <template>
-  <button class="btn flex w-full" :class="{ 'btn-primary': selected }">
-    <span class="badge badge-info badge-lg mr-2">{{ number }} </span>
+  <d-button class="flex w-full" :class="{ 'btn-primary': selected }">
+    <span class="badge badge-info badge-lg mr-2">{{ number }}</span>
     <span class="flex-grow w-0 truncate ">{{ title }}</span>
-  </button>
+  </d-button>
 </template>
 
 <style>

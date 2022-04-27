@@ -38,7 +38,8 @@ const onClick = (a: string) => {
     <d-dropdown-button :class="{ 'btn-secondary': audiosource }" aria-label="Audiosource">
       <v-icon name="fa-itunes-note" />
     </d-dropdown-button>
-    <ul tabindex="0" class="menu card card-compact bg-base-200 p-2 menu-compact dropdown-content space-y-2 mb-2 w-52">
+    <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52 space-y-2">
+      <span class="mx-auto">Audio Source</span>
       <d-button :loading="loading" :key="a" v-for="a in audiosources" :class="{ 'btn-secondary': a == audiosource }"
         @click="() => onClick(a)">
         {{ a }}

@@ -8,11 +8,15 @@ import RadioPower from "./components/RadioPower.vue";
 import RadioName from "./components/RadioName.vue";
 import DButton from "./components/DaisyUI/DButton.vue";
 import RadioAudiosource from "./components/RadioAudiosource.vue";
+import HamburgerMenu from "./components/HamburgerMenu.vue";
+import { PAGE_HOME, PAGE_EDIT } from "./constants";
 
-const edit = ref(false)
+const page = ref(PAGE_HOME);
 const status = ref("")
 const audiosources = ref(["Aux", "Internet radio"])
 const audiosource = ref("")
+const version = ref("")
+const versionLoading = ref(true)
 
 const radio = ref({
   name: "Living Room",
@@ -24,11 +28,16 @@ onMounted(() => {
   setTimeout(() => { status.value = "Stopped" }, 2000);
   setTimeout(() => { status.value = "Connecting" }, 4000);
   setTimeout(() => { status.value = "Playing" }, 6000);
+  setTimeout(() => { version.value = "v0.9.2"; versionLoading.value = false }, 2000);
 })
 
 const setAudiosource = async (value: string) => {
   await new Promise(resolve => setTimeout(resolve, 1000))
   audiosource.value = value
+}
+
+const setPage = (value: string) => {
+  page.value = value
 }
 </script>
 
@@ -36,11 +45,11 @@ const setAudiosource = async (value: string) => {
   <div class="h-screen">
     <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
       <radio-status :status="status" />
-      <radio-title class="flex-grow w-full" title="Lorem Ipsum" url="http://www.google.com"
+      <radio-title class="flex-grow w-full" title="Preset 0" title_new="Lorem Ipsum" url="http://www.google.com"
         url_new="http://example.com" />
     </div>
     <div class="mx-5 pt-20 pb-36">
-      <div v-if="!edit" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div v-if="page == PAGE_HOME" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <radio-preset :selected="true" :number="1" title="Preset 1" />
         <radio-preset :number="2" title="Preset 2" />
         <radio-preset :number="3" title="Preset 3" />
@@ -53,7 +62,7 @@ const setAudiosource = async (value: string) => {
         <radio-preset :number="10" title="Preset 11" />
         <radio-preset :number="11" title="Preset 11" />
       </div>
-      <div v-else>
+      <div v-else-if="page == PAGE_EDIT">
         Hello World
       </div>
     </div>
@@ -79,11 +88,7 @@ const setAudiosource = async (value: string) => {
       </div>
       <!--- Radios Toolbar -->
       <div class="grow flex gap-2">
-        <div class="tooltip" data-tip="Edit Presets">
-          <d-button :class="{ 'btn-success': edit }" aria-label="Edit Presets" @click="edit = !edit">
-            <v-icon name="fa-edit" />
-          </d-button>
-        </div>
+        <hamburger-menu :version="version" :version-loading="versionLoading" :page="page" :set-page="setPage" />
         <div class="grow flex">
           <div class="tooltip" data-tip="Discover">
             <d-button class="btn-primary rounded-none rounded-l-md" aria-label="Discover">

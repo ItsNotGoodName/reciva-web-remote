@@ -1,42 +1,26 @@
 <script setup lang="ts">
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
-const { title, title_new, metadata, url, url_new, preset_number } = defineProps({
-  title: {
-    type: String,
-    default: "",
+const { radio, loading } = defineProps({
+  radio: {
+    type: Object as () => Radio,
+    default: { preset_number: 0 }
   },
-  title_new: {
-    type: String,
-    default: "",
-  },
-  metadata: {
-    type: String,
-    default: "",
-  },
-  url: {
-    type: String,
-    default: "",
-  },
-  url_new: {
-    type: String,
-    default: "",
-  },
-  preset_number: {
-    type: Number,
-    default: 0,
-  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
 });
 </script>
 
 <template>
   <div class="dropdown dropdown-end">
-    <d-dropdown-button class="btn-primary w-full justify-start truncate">
+    <d-dropdown-button :loading="loading" class="btn-primary w-full justify-start truncate">
       <div class="w-0">
         <span class="badge badge-info badge-lg mr-2 ">
-          {{ preset_number }}
+          {{ radio.preset_number }}
         </span>
-        {{ title_new ? title_new : title }}
+        {{ radio.title_new ? radio.title_new : radio.title }}
       </div>
     </d-dropdown-button>
     <div tabindex="0" class="dropdown-content card card-compact w-full p-2 mt-2 shadow bg-primary text-primary-content">
@@ -44,27 +28,27 @@ const { title, title_new, metadata, url, url_new, preset_number } = defineProps(
         <h3 class="card-title">Stream Information</h3>
         <p>
           <span class="badge badge-info mr-2">Metadata</span>
-          {{ metadata }}
+          {{ radio.metadata }}
         </p>
         <p>
           <span class="badge badge-info mr-2">Title</span>
-          {{ title }}
+          {{ radio.title }}
         </p>
         <p>
           <span class="badge badge-info mr-2">New Title</span>
-          {{ title_new }}
+          {{ radio.title_new }}
         </p>
         <p>
           <span class="badge badge-info mr-2">Preset Number</span>
-          {{ preset_number }}
+          {{ radio.preset_number }}
         </p>
         <p>
           <span class="badge badge-info mr-2">URL</span>
-          <a class="link link-hover" :href="url">{{ url }}</a>
+          <a class="link link-hover" :href="radio.url">{{ radio.url }}</a>
         </p>
         <p>
           <span class="badge badge-info mr-2">New URL</span>
-          <a class="link link-hover" :href="url_new">{{ url_new }}</a>
+          <a class="link link-hover" :href="radio.url_new">{{ radio.url_new }}</a>
         </p>
       </div>
     </div>

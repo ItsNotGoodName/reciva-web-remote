@@ -25,7 +25,7 @@ const loadingAudioSource = computed(() => {
 
 <template>
   <div class="dropdown dropdown-top dropdown-end">
-    <d-dropdown-button :class="{ 'btn-secondary': radio.audio_source }" aria-label="Audiosource">
+    <d-dropdown-button :class="{ 'btn-secondary': radio.audio_source }" aria-label="Audio Source">
       <v-icon name="fa-itunes-note" />
     </d-dropdown-button>
     <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52 space-y-2">

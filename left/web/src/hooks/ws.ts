@@ -2,8 +2,8 @@ import { watch, ref, Ref } from "vue";
 
 import { WS_URL } from "../constants"
 
-const subscribe = (ws: WebSocket, uuid: string) => {
-  ws.send(JSON.stringify({ type: "state.subscribe", slug: uuid }));
+const subscribe = (ws: WebSocket, radioUUID: string) => {
+  ws.send(JSON.stringify({ type: "state.subscribe", slug: radioUUID }));
 }
 
 const unsubscribe = (ws: WebSocket) => {
@@ -11,7 +11,7 @@ const unsubscribe = (ws: WebSocket) => {
 }
 
 
-export function useWS(uuid: Ref<string>) {
+export function useWS(radioUUID: Ref<string>) {
   const connecting = ref(true);
   const connected = ref(false);
   const disconnected = ref(false);
@@ -28,8 +28,8 @@ export function useWS(uuid: Ref<string>) {
       disconnected.value = false;
       failCount = 0;
 
-      if (uuid.value) {
-        subscribe(ws, uuid.value);
+      if (radioUUID.value) {
+        subscribe(ws, radioUUID.value);
       }
     });
 
@@ -66,15 +66,15 @@ export function useWS(uuid: Ref<string>) {
     ws = connect()
   }
 
-  watch(uuid, () => {
+  watch(radioUUID, () => {
     if (!connected.value) {
       reconnect()
       return
     }
 
     radio.value = undefined;
-    if (uuid.value) {
-      subscribe(ws, uuid.value)
+    if (radioUUID.value) {
+      subscribe(ws, radioUUID.value)
     } else {
       unsubscribe(ws)
     }

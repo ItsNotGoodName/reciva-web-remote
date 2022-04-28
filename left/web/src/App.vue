@@ -2,14 +2,14 @@
 import { watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
-import { useWS, useRadiosQuery, useRadioSubscriptionMutation } from "./hooks"
+import { useWS, useRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
 
 import RadioStatus from "./components/RadioStatus.vue";
 import RadioTitle from "./components/RadioTitle.vue";
 import RadioPower from "./components/RadioPower.vue";
 import RadioName from "./components/RadioName.vue";
 import DButton from "./components/DaisyUI/DButton.vue";
-import RadioAudiosource from "./components/RadioAudiosource.vue";
+import RadioAudioSource from "./components/RadioAudioSource.vue";
 import HamburgerMenu from "./components/HamburgerMenu.vue";
 import RadioVolume from "./components/RadioVolume.vue"
 import RadiosDiscover from "./components/RadiosDiscover.vue";
@@ -20,7 +20,7 @@ const setPage = (value: string) => {
   page.value = value
 }
 
-const radioUUID = ref("");
+const radioUUID = useRadioUUID();
 const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useRadiosQuery();
 const { radio, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
@@ -84,7 +84,7 @@ const onRefreshClick = () => {
         <div v-if="radio" class="flex-grow md:flex-grow-0 flex gap-2">
           <radio-power class="flex-grow" :radio="radio" />
           <radio-volume :radio="radio" />
-          <radio-audiosource :radio="radio" />
+          <radio-audio-source :radio="radio" />
           <radio-name :radio="radio" />
         </div>
         <!--- Radios Toolbar -->

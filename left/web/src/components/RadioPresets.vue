@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from "vue";
+
 import { useRadioMutation } from "../hooks";
 
 import Preset from "./Preset.vue";
@@ -10,12 +12,22 @@ defineProps({
   },
 });
 
-const { mutate, isLoading } = useRadioMutation()
+const { mutate, isLoading, variables } = useRadioMutation()
+
+
+const loadingNumber = computed(() => {
+  if (!isLoading.value) {
+    return undefined;
+  }
+
+  return variables.value?.preset
+})
+
 </script>
 
 <template>
   <preset :key="p.number" v-for="p of radio.presets" :selected="radio.preset_number == p.number" :preset="p"
-    :loading="isLoading" @click="() => mutate({ uuid: radio.uuid, preset: p.number })" />
+    :loading="loadingNumber == p.number" @click="() => mutate({ uuid: radio.uuid, preset: p.number })" />
 </template>
 
 <style>

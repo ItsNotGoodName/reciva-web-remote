@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRadioMutation } from "../hooks";
+import { useRadioMutation, useRadioVolumeMutation } from "../hooks";
 
 import DButton from "./DaisyUI/DButton.vue";
 
@@ -11,16 +11,19 @@ defineProps({
 });
 
 const { mutate, isLoading } = useRadioMutation()
+const { mutate: refreshVolume, isLoading: refreshVolumeLoading } = useRadioVolumeMutation()
 </script>
 
 <template>
   <div v-if="!radio.is_muted" class="btn-group">
-    <d-button class="btn-info" aria-label="Volume Down" :loading="isLoading"
+    <d-button class="btn-info w-12" aria-label="Volume Down" :loading="isLoading"
       @click="mutate({ uuid: radio.uuid, volume: radio.volume - 5 })">
       <v-icon name="fa-volume-down" />
     </d-button>
-    <d-button class="btn-info px-0 w-10">{{ radio.volume }}%</d-button>
-    <d-button class="btn-info" aria-label="Volume Up" :loading="isLoading"
+    <d-button class="btn-info px-0 w-10" :loading="refreshVolumeLoading" @click="() => refreshVolume(radio.uuid)">
+      {{ radio.volume }}%
+    </d-button>
+    <d-button class="btn-info w-12" aria-label="Volume Up" :loading="isLoading"
       @click="mutate({ uuid: radio.uuid, volume: radio.volume + 5 })">
       <v-icon name="fa-volume-up" />
     </d-button>

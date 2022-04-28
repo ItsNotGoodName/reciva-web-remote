@@ -16,6 +16,27 @@ export function useRadioMutation() {
   })
 };
 
+
+export function useRadioSubscriptionMutation() {
+  return useMutation((uuid: string) => fetch(API_URL + "/api/radio/" + uuid + "/subscription", { method: "POST" })
+    .then((res) => res.json())
+    .then((json: APIResponse<void>) => {
+      if (!json.ok) {
+        throw new Error(json.error.message);
+      }
+    }));
+};
+
+export function useRadioVolumeMutation() {
+  return useMutation((uuid: string) => fetch(API_URL + "/api/radio/" + uuid + "/volume", { method: "POST" })
+    .then((res) => res.json())
+    .then((json: APIResponse<void>) => {
+      if (!json.ok) {
+        throw new Error(json.error.message);
+      }
+    }));
+};
+
 export function useRadiosDiscoverMutation() {
   const queryClient = useQueryClient()
   return useMutation((_: RadiosDiscoverMutation) => fetch(API_URL + "/api/radios", { method: "POST" })

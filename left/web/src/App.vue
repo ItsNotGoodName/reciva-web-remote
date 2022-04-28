@@ -2,7 +2,7 @@
 import { watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
-import { useWS, useRadiosQuery } from "./hooks"
+import { useWS, useRadiosQuery, useRadioSubscriptionMutation } from "./hooks"
 
 import RadioStatus from "./components/RadioStatus.vue";
 import RadioTitle from "./components/RadioTitle.vue";
@@ -22,8 +22,10 @@ const setPage = (value: string) => {
 
 const radioUUID = ref("");
 const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useRadiosQuery();
-const { radio, connecting, disconnected, reconnect } = useWS(radioUUID);
+const { radio, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
+const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
 
+// Make sure a valid radio is selected
 watch(radios, (newRadios) => {
   if (newRadios) {
     for (const r of newRadios) {
@@ -34,14 +36,23 @@ watch(radios, (newRadios) => {
     radioUUID.value = ""
   }
 });
+
+// Refetch radios and refresh currently selected radio
+const onRefreshClick = () => {
+  if (radioUUID.value) {
+    radioSubscriptionMutate(radioUUID.value)
+  }
+
+  radiosRefetch.value()
+}
 </script>
 
 <template>
   <div class="h-screen">
     <!-- Top Navbar -->
     <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
-      <radio-status :radio="radio" :loading="connecting" />
-      <radio-title class="flex-grow w-full" :radio="radio" :loading="connecting" />
+      <radio-status :radio="radio" :loading="wsConnecting" />
+      <radio-title class="flex-grow w-full" :radio="radio" :loading="wsConnecting" />
     </div>
     <div class="mx-5 pt-20 pb-36">
       <!-- Homepage -->
@@ -56,14 +67,14 @@ watch(radios, (newRadios) => {
     <!-- Bottom -->
     <div class="fixed bottom-0 w-full space-y-2">
       <!--- Radio Websocket Disconnect Alert -->
-      <div v-if="disconnected" class="ml-auto px-2 max-w-screen-sm">
+      <div v-if="wsDisconnected" class="ml-auto px-2 max-w-screen-sm">
         <div class="alert shadow-lg">
           <div>
             <v-icon class="text-info" name="fa-info-circle" />
             <span>Disconnected from server.</span>
           </div>
           <div class="flex-none">
-            <d-button class="btn-sm btn-primary" :loading="connecting" @click="reconnect">Reconnect</d-button>
+            <d-button class="btn-sm btn-primary" :loading="wsConnecting" @click="wsReconnect">Reconnect</d-button>
           </div>
         </div>
       </div>
@@ -80,7 +91,7 @@ watch(radios, (newRadios) => {
         <div class="grow flex gap-2">
           <hamburger-menu :page="page" :set-page="setPage" />
           <div class="grow flex">
-            <radios-discover class="btn-primary rounded-none rounded-l-md" />
+            <radios-discover class="btn-primary w-12 rounded-none rounded-l-md" />
             <select v-model="radioUUID" :disabled="radiosLoading" class="select select-primary rounded-none flex-grow">
               <option disabled selected value="">Select Radio</option>
               <template v-if="radios">
@@ -88,8 +99,8 @@ watch(radios, (newRadios) => {
               </template>
             </select>
             <div class="tooltip" data-tip="Refresh">
-              <d-button class="btn-primary rounded-none rounded-r-md" aria-label="Refresh" :loading="radiosLoading"
-                @click="() => radiosRefetch()">
+              <d-button class="btn-primary w-12 rounded-none rounded-r-md" aria-label="Refresh"
+                :loading="radiosLoading || radioSubscriptionLoading" @click="onRefreshClick">
                 <v-icon name="fa-redo" />
               </d-button>
             </div>

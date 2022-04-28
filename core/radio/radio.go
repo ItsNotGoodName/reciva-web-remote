@@ -67,7 +67,7 @@ func (rs *RadioServiceImpl) RefreshVolume(ctx context.Context, radio Radio) erro
 	})
 }
 
-func (rs *RadioServiceImpl) Refresh(ctx context.Context, radio Radio) error {
+func (rs *RadioServiceImpl) RefreshSubscription(ctx context.Context, radio Radio) error {
 	radio.subscription.Renew()
 	return nil
 }

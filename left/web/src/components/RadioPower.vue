@@ -14,11 +14,11 @@ const { mutate, isLoading } = useRadioMutation()
 </script>
 
 <template>
-  <d-button v-if="radio.power" class="btn-success" aria-label="Powered ON" :loading="isLoading"
+  <d-button v-if="radio.power" class="btn-success w-12" aria-label="Powered ON" :loading="isLoading"
     @click="() => mutate({ uuid: radio.uuid, power: false })">
     <v-icon name="fa-power-off" />
   </d-button>
-  <d-button v-else class="btn-error" aria-label="Powered OFF" :loading="isLoading"
+  <d-button v-else class="btn-error w-12" aria-label="Powered OFF" :loading="isLoading"
     @click="() => mutate({ uuid: radio.uuid, power: true })">
     <v-icon name="fa-power-off" />
   </d-button>

@@ -50,7 +50,7 @@ func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, rad
 		r.Route("/radio/{uuid}", func(r chi.Router) {
 			r.Get("/", p(api.RequireRadio(hub, api.GetRadio(radioService))))
 			r.Patch("/", p(api.RequireRadio(hub, api.PatchRadio(radioService))))
-			r.Post("/", p(api.RequireRadio(hub, api.PostRadio(radioService))))
+			r.Post("/subscription", p(api.RequireRadio(hub, api.PostRadioSubscription(radioService))))
 			r.Post("/volume", p(api.RequireRadio(hub, api.PostRadioVolume(radioService))))
 		})
 

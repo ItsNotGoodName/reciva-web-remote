@@ -155,10 +155,10 @@ func PatchRadio(radioService radio.RadioService) RadioRequester {
 	}
 }
 
-func PostRadio(radioService radio.RadioService) RadioRequester {
+func PostRadioSubscription(radioService radio.RadioService) RadioRequester {
 	return func(r *http.Request, rd radio.Radio) presenter.Response {
-		// Refresh radio
-		if err := radioService.Refresh(r.Context(), rd); err != nil {
+		// Refresh radio subscription
+		if err := radioService.RefreshSubscription(r.Context(), rd); err != nil {
 			return handleRadioError(err)
 		}
 

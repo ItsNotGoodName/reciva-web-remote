@@ -1,9 +1,10 @@
 import { useQuery } from "vue-query";
 
 import { API_URL } from "../constants"
+import { KEY_RADIOS } from "./key";
 
 export function useRadiosQuery() {
-  return useQuery("radios", () =>
+  return useQuery(KEY_RADIOS, () =>
     fetch(API_URL + "/api/radios")
       .then((response) => response.json())
       .then((json: APIResponse<Radio[]>) => {

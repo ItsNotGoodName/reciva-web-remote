@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import DButton from "./DaisyUI/DButton.vue";
-
 import { STATUS_CONNECTING, STATUS_PLAYING, STATUS_STOPPED } from "../constants";
+
+import DButton from "./DaisyUI/DButton.vue";
 
 defineProps({
   radio: {

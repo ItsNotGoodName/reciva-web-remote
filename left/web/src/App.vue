@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { watch, ref } from "vue";
+
+import { PAGE_HOME, PAGE_EDIT } from "./constants";
+import { useWS, useRadiosQuery } from "./hooks"
 
 import RadioStatus from "./components/RadioStatus.vue";
 import RadioTitle from "./components/RadioTitle.vue";
-import Preset from "./components/Preset.vue";
 import RadioPower from "./components/RadioPower.vue";
 import RadioName from "./components/RadioName.vue";
 import DButton from "./components/DaisyUI/DButton.vue";
 import RadioAudiosource from "./components/RadioAudiosource.vue";
 import HamburgerMenu from "./components/HamburgerMenu.vue";
-import { PAGE_HOME, PAGE_EDIT } from "./constants";
-import { useWS, useRadiosQuery } from "./hooks"
 import RadioVolume from "./components/RadioVolume.vue"
+import RadiosDiscover from "./components/RadiosDiscover.vue";
+import RadioPresets from "./components/RadioPresets.vue";
 
 const page = ref(PAGE_HOME);
 const setPage = (value: string) => {
@@ -20,7 +22,18 @@ const setPage = (value: string) => {
 
 const radioUUID = ref("");
 const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useRadiosQuery();
-const { connecting, disconnected, reconnect, radio } = useWS(radioUUID);
+const { radio, connecting, disconnected, reconnect } = useWS(radioUUID);
+
+watch(radios, (newRadios) => {
+  if (newRadios) {
+    for (const r of newRadios) {
+      if (r.uuid == radioUUID.value) {
+        return
+      }
+    }
+    radioUUID.value = ""
+  }
+});
 </script>
 
 <template>
@@ -33,7 +46,7 @@ const { connecting, disconnected, reconnect, radio } = useWS(radioUUID);
     <div class="mx-5 pt-20 pb-36">
       <!-- Homepage -->
       <div v-if="page == PAGE_HOME && radio" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <preset :key="p.number" v-for="p of radio.presets" :selected="radio.preset_number == p.number" :preset="p" />
+        <radio-presets :radio="radio" />
       </div>
       <!-- Edit Presets -->
       <div v-else-if="page == PAGE_EDIT">
@@ -67,11 +80,7 @@ const { connecting, disconnected, reconnect, radio } = useWS(radioUUID);
         <div class="grow flex gap-2">
           <hamburger-menu :page="page" :set-page="setPage" />
           <div class="grow flex">
-            <div class="tooltip" data-tip="Discover">
-              <d-button class="btn-primary rounded-none rounded-l-md" aria-label="Discover">
-                <v-icon name="fa-search" />
-              </d-button>
-            </div>
+            <radios-discover class="btn-primary rounded-none rounded-l-md" />
             <select v-model="radioUUID" :disabled="radiosLoading" class="select select-primary rounded-none flex-grow">
               <option disabled selected value="">Select Radio</option>
               <template v-if="radios">

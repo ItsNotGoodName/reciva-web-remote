@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
+
 import { PAGE_HOME, PAGE_EDIT } from "../constants"
 
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';

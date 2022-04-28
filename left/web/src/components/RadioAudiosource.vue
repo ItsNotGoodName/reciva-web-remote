@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRadioMutation } from "../hooks";
+
 import DButton from './DaisyUI/DButton.vue';
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
@@ -10,7 +11,7 @@ const { radio } = defineProps({
   }
 });
 
-const { mutate, isLoading } = useRadioMutation(radio.uuid)
+const { mutate, isLoading } = useRadioMutation()
 </script>
 
 <template>
@@ -21,7 +22,8 @@ const { mutate, isLoading } = useRadioMutation(radio.uuid)
     <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52 space-y-2">
       <span class="mx-auto">Audio Source</span>
       <d-button :loading="isLoading" :key="a" v-for="a in radio.audio_sources"
-        :class="{ 'btn-secondary': a == radio.audio_source }" @click="() => { mutate({ audio_source: a }) }">
+        :class="{ 'btn-secondary': a == radio.audio_source }"
+        @click="() => { mutate({ uuid: radio.uuid, audio_source: a }) }">
         {{ a }}
       </d-button>
     </ul>

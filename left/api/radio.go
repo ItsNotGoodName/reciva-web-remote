@@ -109,9 +109,10 @@ func GetRadio(radioService radio.RadioService) RadioRequester {
 
 func PatchRadio(radioService radio.RadioService) RadioRequester {
 	type RadioPatch struct {
-		Power  *bool `json:"power,omitempty"`
-		Preset *int  `json:"preset,omitempty"`
-		Volume *int  `json:"volume,omitempty"`
+		Power       *bool   `json:"power,omitempty"`
+		AudioSource *string `json:"audio_source,omitempty"`
+		Preset      *int    `json:"preset,omitempty"`
+		Volume      *int    `json:"volume,omitempty"`
 	}
 
 	return func(r *http.Request, rd radio.Radio) presenter.Response {
@@ -126,6 +127,12 @@ func PatchRadio(radioService radio.RadioService) RadioRequester {
 		// Set radio power
 		if radioPatch.Power != nil {
 			if err := radioService.SetPower(r.Context(), rd, *radioPatch.Power); err != nil {
+				return handleRadioError(err)
+			}
+		}
+		// Set radio audio source
+		if radioPatch.AudioSource != nil {
+			if err := radioService.SetAudioSource(r.Context(), rd, *radioPatch.AudioSource); err != nil {
 				return handleRadioError(err)
 			}
 		}

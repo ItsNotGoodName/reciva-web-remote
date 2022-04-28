@@ -1,4 +1,5 @@
 import { useQuery } from "vue-query";
+
 import { API_URL } from "../constants"
 
 export function useRadiosQuery() {
@@ -13,4 +14,3 @@ export function useRadiosQuery() {
       })
   );
 }
-

@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import DButton from './DaisyUI/DButton.vue';
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
-const { radio } = defineProps({
+defineProps({
   radio: {
     type: Object as () => Radio,
     required: true,

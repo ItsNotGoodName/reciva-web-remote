@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { ref } from "vue";
 
 import RadioStatus from "./components/RadioStatus.vue";
@@ -20,54 +20,70 @@ const setPage = (value: string) => {
 
 const radioUUID = ref("");
 const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useRadiosQuery();
-const { connecting, radio } = useWS(radioUUID);
-
+const { connecting, disconnected, reconnect, radio } = useWS(radioUUID);
 </script>
 
 <template>
   <div class="h-screen">
+    <!-- Top Navbar -->
     <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
       <radio-status :radio="radio" :loading="connecting" />
       <radio-title class="flex-grow w-full" :radio="radio" :loading="connecting" />
     </div>
     <div class="mx-5 pt-20 pb-36">
-      <div v-if="page == PAGE_HOME && radio"
-        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <!-- Homepage -->
+      <div v-if="page == PAGE_HOME && radio" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <preset :key="p.number" v-for="p of radio.presets" :selected="radio.preset_number == p.number" :preset="p" />
       </div>
+      <!-- Edit Presets -->
       <div v-else-if="page == PAGE_EDIT">
         Hello World
       </div>
     </div>
-    <div
-      class="navbar bg-base-200 fixed bottom-0 flex flex-row-reverse flex-wrap gap-2 pb-4 px-4 z-50 border-t-2 border-t-base-300">
-      <!--- Radio Toolbar -->
-      <div v-if="radio" class="flex-grow md:flex-grow-0 flex gap-2">
-        <radio-power class="flex-grow" :radio="radio" />
-        <radio-volume :radio="radio" />
-        <radio-audiosource :radio="radio" />
-        <radio-name :radio="radio" />
-      </div>
-      <!--- Radios Toolbar -->
-      <div class="grow flex gap-2">
-        <hamburger-menu :page="page" :set-page="setPage" />
-        <div class="grow flex">
-          <div class="tooltip" data-tip="Discover">
-            <d-button class="btn-primary rounded-none rounded-l-md" aria-label="Discover">
-              <v-icon name="fa-search" />
-            </d-button>
+    <!-- Bottom -->
+    <div class="fixed bottom-0 w-full space-y-2">
+      <!--- Radio Websocket Disconnect Alert -->
+      <div v-if="disconnected" class="ml-auto px-2 max-w-screen-sm">
+        <div class="alert shadow-lg">
+          <div>
+            <v-icon class="text-info" name="fa-info-circle" />
+            <span>Disconnected from server.</span>
           </div>
-          <select v-model="radioUUID" :disabled="radiosLoading" class="select select-primary rounded-none flex-grow">
-            <option disabled selected value="">Select Radio</option>
-            <template v-if="radios">
-              <option :key="r.uuid" v-for="r in radios" :value="r.uuid">{{ r.name }}</option>
-            </template>
-          </select>
-          <div class="tooltip" data-tip="Refresh">
-            <d-button class="btn-primary rounded-none rounded-r-md" aria-label="Refresh" :loading="radiosLoading"
-              @click="() => radiosRefetch()">
-              <v-icon name="fa-redo" />
-            </d-button>
+          <div class="flex-none">
+            <d-button class="btn-sm btn-primary" :loading="connecting" @click="reconnect">Reconnect</d-button>
+          </div>
+        </div>
+      </div>
+      <!--- Navbar -->
+      <div class="navbar bg-base-200 flex flex-row-reverse flex-wrap gap-2 pb-4 px-4 z-50 border-t-2 border-t-base-300">
+        <!--- Radio Toolbar -->
+        <div v-if="radio" class="flex-grow md:flex-grow-0 flex gap-2">
+          <radio-power class="flex-grow" :radio="radio" />
+          <radio-volume :radio="radio" />
+          <radio-audiosource :radio="radio" />
+          <radio-name :radio="radio" />
+        </div>
+        <!--- Radios Toolbar -->
+        <div class="grow flex gap-2">
+          <hamburger-menu :page="page" :set-page="setPage" />
+          <div class="grow flex">
+            <div class="tooltip" data-tip="Discover">
+              <d-button class="btn-primary rounded-none rounded-l-md" aria-label="Discover">
+                <v-icon name="fa-search" />
+              </d-button>
+            </div>
+            <select v-model="radioUUID" :disabled="radiosLoading" class="select select-primary rounded-none flex-grow">
+              <option disabled selected value="">Select Radio</option>
+              <template v-if="radios">
+                <option :key="r.uuid" v-for="r in radios" :value="r.uuid">{{ r.name }}</option>
+              </template>
+            </select>
+            <div class="tooltip" data-tip="Refresh">
+              <d-button class="btn-primary rounded-none rounded-r-md" aria-label="Refresh" :loading="radiosLoading"
+                @click="() => radiosRefetch()">
+                <v-icon name="fa-redo" />
+              </d-button>
+            </div>
           </div>
         </div>
       </div>

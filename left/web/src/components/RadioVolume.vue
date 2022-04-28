@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DButton from "./DaisyUI/DButton.vue";
 
-const { radio } = defineProps({
+defineProps({
   radio: {
     type: Object as () => Radio,
     required: true,

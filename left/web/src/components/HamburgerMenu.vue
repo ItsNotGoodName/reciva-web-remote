@@ -4,7 +4,7 @@ import { PAGE_HOME, PAGE_EDIT } from "../constants"
 
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
-const { version, versionLoading, page, setPage } = defineProps({
+defineProps({
   version: {
     type: String,
     default: "",

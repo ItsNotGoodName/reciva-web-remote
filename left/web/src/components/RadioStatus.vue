@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed } from "vue"
 import DButton from "./DaisyUI/DButton.vue";
 
 import { STATUS_CONNECTING, STATUS_PLAYING, STATUS_STOPPED } from "../constants";
 
-const props = defineProps({
+defineProps({
   radio: {
     type: Object as () => Radio,
     default: { status: "Unknown" }

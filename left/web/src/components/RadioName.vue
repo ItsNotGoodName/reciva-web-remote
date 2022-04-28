@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
-const { radio } = defineProps({
+defineProps({
   radio: {
     type: Object as () => Radio,
     required: true,

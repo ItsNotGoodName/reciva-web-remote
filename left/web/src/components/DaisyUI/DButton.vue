@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { loading } = defineProps({
+defineProps({
   loading: {
     type: Boolean,
     default: false,

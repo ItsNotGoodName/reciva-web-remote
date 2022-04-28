@@ -13,6 +13,7 @@ const unsubscribe = (ws: WebSocket) => {
 export function useWS(uuid: Ref<string>) {
   const connecting = ref(true);
   const connected = ref(false);
+  const disconnected = ref(false);
   const radio = ref<Radio | undefined>(undefined);
 
   const connect = () => {
@@ -22,6 +23,7 @@ export function useWS(uuid: Ref<string>) {
     ws.addEventListener("open", () => {
       connecting.value = false;
       connected.value = true;
+      disconnected.value = false;
 
       if (uuid.value) {
         subscribe(ws, uuid.value);
@@ -40,6 +42,7 @@ export function useWS(uuid: Ref<string>) {
     ws.addEventListener("close", () => {
       connecting.value = false
       connected.value = false
+      disconnected.value = true;
       radio.value = undefined;
 
       setTimeout(() => reconnect(), 5000);
@@ -71,5 +74,5 @@ export function useWS(uuid: Ref<string>) {
     }
   })
 
-  return { radio, connecting, connected, reconnect }
+  return { radio, connecting, connected, disconnected, reconnect }
 }

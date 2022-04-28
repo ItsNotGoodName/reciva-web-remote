@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DButton from "./DaisyUI/DButton.vue";
 
-const { preset, selected } = defineProps({
+defineProps({
   preset: {
     type: Object as () => RadioPreset,
     required: true,

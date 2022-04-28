@@ -15,6 +15,7 @@ export function useWS(uuid: Ref<string>) {
   const connected = ref(false);
   const disconnected = ref(false);
   const radio = ref<Radio | undefined>(undefined);
+  let failCount = 0;
 
   const connect = () => {
     let ws = new WebSocket(WS_URL + "/api/ws");
@@ -24,6 +25,7 @@ export function useWS(uuid: Ref<string>) {
       connecting.value = false;
       connected.value = true;
       disconnected.value = false;
+      failCount = 0;
 
       if (uuid.value) {
         subscribe(ws, uuid.value);
@@ -44,8 +46,11 @@ export function useWS(uuid: Ref<string>) {
       connected.value = false
       disconnected.value = true;
       radio.value = undefined;
+      failCount++;
 
-      setTimeout(() => reconnect(), 5000);
+      if (failCount < 5) {
+        setTimeout(reconnect, 2000 * failCount);
+      }
     });
 
     return ws

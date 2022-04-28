@@ -45,6 +45,7 @@ func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, rad
 		r.Get("/ws", api.GetWS(upgrader, api.HandleWS(busService)))
 
 		r.Get("/radios", p(api.GetRadios(hub, radioService)))
+		r.Get("/radios/slim", p(api.GetRadiosSlim(hub, radioService)))
 		r.Post("/radios", p(api.PostRadios(hub)))
 
 		r.Route("/radio/{uuid}", func(r chi.Router) {

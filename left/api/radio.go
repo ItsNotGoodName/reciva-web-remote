@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
@@ -43,25 +45,38 @@ func RequireRadio(hub radio.HubService, next RadioRequester) presenter.Requester
 	}
 }
 
+func getRadios(ctx context.Context, hub radio.HubService, radioService radio.RadioService) []state.State {
+	// List radios
+	radios := hub.List()
+
+	// List states
+	states := make([]state.State, 0, len(radios))
+	for _, rd := range radios {
+		state, err := radioService.GetState(ctx, rd)
+		if err != nil {
+			log.Println("api.getRadios:", err)
+			continue
+		}
+		states = append(states, *state)
+	}
+
+	return states
+}
+
 func GetRadios(hub radio.HubService, radioService radio.RadioService) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
-		// List radios
-		radios := hub.List()
-
-		// List states
-		states := make([]state.State, 0, len(radios))
-		for _, rd := range radios {
-			state, err := radioService.GetState(r.Context(), rd)
-			if err != nil {
-				log.Println("api.GetRadios:", err)
-				continue
-			}
-			states = append(states, *state)
-		}
-
 		return presenter.Response{
 			Code: http.StatusOK,
-			Data: states,
+			Data: getRadios(r.Context(), hub, radioService),
+		}
+	}
+}
+
+func GetRadiosSlim(hub radio.HubService, radioService radio.RadioService) presenter.Requester {
+	return func(r *http.Request) presenter.Response {
+		return presenter.Response{
+			Code: http.StatusOK,
+			Data: dto.NewSlimStates(getRadios(r.Context(), hub, radioService)),
 		}
 	}
 }

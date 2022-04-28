@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "vue-query";
 
 import { API_URL } from "../constants"
-import { KEY_RADIOS } from "./key";
+import { KEY_SLIM_RADIOS } from "./key";
 
 export function useRadioMutation() {
   return useMutation((req: RadioMutation) => {
@@ -48,7 +48,7 @@ export function useRadiosDiscoverMutation() {
       return json.data
     }), {
     onSuccess: (_: number) => {
-      queryClient.invalidateQueries(KEY_RADIOS)
+      queryClient.invalidateQueries(KEY_SLIM_RADIOS)
     }
   })
 };

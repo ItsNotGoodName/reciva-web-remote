@@ -1,1 +1,1 @@
-export const KEY_RADIOS = "radios"
+export const KEY_SLIM_RADIOS = "slim-radios"

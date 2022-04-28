@@ -2,7 +2,7 @@
 import { watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
-import { useWS, useRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
+import { useWS, useSlimRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
 
 import RadioStatus from "./components/RadioStatus.vue";
 import RadioTitle from "./components/RadioTitle.vue";
@@ -21,7 +21,7 @@ const setPage = (value: string) => {
 }
 
 const radioUUID = useRadioUUID();
-const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useRadiosQuery();
+const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useSlimRadiosQuery();
 const { radio, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
 

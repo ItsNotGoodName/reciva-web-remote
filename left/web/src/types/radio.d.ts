@@ -1,3 +1,8 @@
+declare interface SlimRadio {
+  name: string
+  uuid: string
+}
+
 declare interface Radio {
   audio_source: string
   audio_sources: string[]

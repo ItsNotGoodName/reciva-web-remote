@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "vue-query";
 
 import { API_URL } from "../constants"
-import { KEY_SLIM_RADIOS } from "./key";
+import { KEY_SLIM_RADIOS, KEY_PRESETS, KEY_PRESET } from "./key";
+
 
 export function useRadioMutation() {
   return useMutation((req: RadioMutation) => {
@@ -48,6 +49,23 @@ export function useRadiosDiscoverMutation() {
     }), {
     onSuccess: (_: number) => {
       queryClient.invalidateQueries(KEY_SLIM_RADIOS)
+    }
+  })
+};
+
+export function usePresetMutation() {
+  const queryClient = useQueryClient()
+  return useMutation((req: PresetMutation) => fetch(API_URL + "/api/preset", { method: "POST" })
+    .then((res) => res.json())
+    .then((json: APIResponse<void>) => {
+      if (!json.ok) {
+        throw new Error(json.error.message);
+      }
+      return req.url
+    }), {
+    onSuccess: (url: string) => {
+      queryClient.invalidateQueries(KEY_PRESETS)
+      queryClient.invalidateQueries([KEY_PRESET, url])
     }
   })
 };

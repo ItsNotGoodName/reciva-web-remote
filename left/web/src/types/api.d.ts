@@ -1,7 +1,13 @@
-declare interface APIResponse<T> {
-  ok: boolean
+declare type APIResponse<T> = APIData<T> | APIError;
+
+interface APIData<T> {
+  ok: true
   code: number
   data: T
+}
+interface APIError {
+  ok: false
+  code: number
   error: {
     message: string
   }
@@ -17,4 +23,10 @@ declare interface RadioMutation {
 
 declare interface RadiosDiscoverMutation {
   force?: boolean
+}
+
+declare interface PresetMutation {
+  title_new: string,
+  url: string,
+  url_new: string,
 }

@@ -15,7 +15,7 @@ defineProps({
 
 <template>
   <d-button class="flex w-full" :class="{ 'btn-primary': selected }">
-    <span class="badge badge-info badge-lg mr-2">{{ preset.number }}</span>
+    <span class="badge badge-info badge-lg rounded-md mr-2">{{ preset.number }}</span>
     <span class="flex-grow w-0 truncate ">{{ preset.title_new ? preset.title_new : preset.title }}</span>
   </d-button>
 </template>

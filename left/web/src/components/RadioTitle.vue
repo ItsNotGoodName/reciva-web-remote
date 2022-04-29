@@ -17,7 +17,7 @@ defineProps({
   <div class="dropdown dropdown-end">
     <d-dropdown-button :loading="loading" class="btn-primary w-full justify-start truncate">
       <div class="w-0">
-        <span class="badge badge-info badge-lg mr-2 ">
+        <span class="badge badge-info badge-lg rounded-md mr-2 ">
           {{ radio.preset_number }}
         </span>
         {{ radio.title_new ? radio.title_new : radio.title }}

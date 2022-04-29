@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"sort"
 	"sync"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
@@ -40,6 +41,10 @@ func (ps *PresetStore) List(ctx context.Context) ([]preset.Preset, error) {
 		pts = append(pts, preset)
 	}
 	ps.presetsMapMu.RUnlock()
+
+	sort.Slice(pts, func(i, j int) bool {
+		return pts[i].URL < pts[j].URL
+	})
 
 	return pts, nil
 }

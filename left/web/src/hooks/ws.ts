@@ -1,4 +1,4 @@
-import { watch, shallowReactive, ref, Ref } from "vue";
+import { computed, watch, shallowReactive, ref, Ref } from "vue";
 
 import { WS_URL } from "../constants"
 
@@ -30,12 +30,14 @@ const initialRadio: Radio = {
   volume: 0,
 }
 
-
 export function useWS(radioUUID: Ref<string>) {
   const connecting = ref(true);
   const connected = ref(false);
   const disconnected = ref(false);
   const radio = shallowReactive<Radio>({ ...initialRadio });
+  const radioSelected = computed(() => radio.uuid != "")
+  const radioLoading = computed(() => (radio.uuid != radioUUID.value) || connecting.value)
+
   let failCount = 0;
 
   const connect = () => {
@@ -99,5 +101,5 @@ export function useWS(radioUUID: Ref<string>) {
     }
   })
 
-  return { radio, connecting, connected, disconnected, reconnect }
+  return { radio, radioLoading, radioSelected, connecting, connected, disconnected, reconnect }
 }

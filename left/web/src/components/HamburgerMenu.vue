@@ -16,11 +16,11 @@ defineProps({
   },
   page: {
     type: String,
-    default: "",
+    required: true,
   },
   setPage: {
     type: Function as PropType<(page: string) => void>,
-    default: () => { },
+    required: true,
   },
 });
 </script>
@@ -33,7 +33,7 @@ defineProps({
     <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52">
       <li>
         <a :class="{ 'active': page == PAGE_HOME }" @click="() => setPage(PAGE_HOME)">
-          <v-icon name="fa-home" />Homepage
+          <v-icon name="fa-home" />Home Page
         </a>
       </li>
       <li>

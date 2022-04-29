@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, ref } from "vue";
+import { watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
 import { useWS, useSlimRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
@@ -13,7 +13,8 @@ import RadioAudioSource from "./components/RadioAudioSource.vue";
 import HamburgerMenu from "./components/HamburgerMenu.vue";
 import RadioVolume from "./components/RadioVolume.vue"
 import RadiosDiscover from "./components/RadiosDiscover.vue";
-import RadioPresets from "./components/RadioPresets.vue";
+import HomePage from "./pages/Home.vue";
+import EditPage from "./pages/Edit.vue"
 
 const page = ref(PAGE_HOME);
 const setPage = (value: string) => {
@@ -21,11 +22,9 @@ const setPage = (value: string) => {
 }
 
 const radioUUID = useRadioUUID();
-const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useSlimRadiosQuery();
-const { radio, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
+const { data: radios, isLoading: radiosLoading, error: radiosError, isError: radiosIsError, refetch: radiosRefetch } = useSlimRadiosQuery();
+const { radio, radioLoading, radioSelected, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
-const radioSelected = computed(() => radio.uuid != "")
-const radioLoading = computed(() => (radio.uuid != radioUUID.value) || wsConnecting.value)
 
 // Make sure a valid radio is selected
 watch(radios, (newRadios) => {
@@ -56,21 +55,23 @@ const onRefreshClick = () => {
       <radio-status :radio="radio" :loading="radioLoading" />
       <radio-title class="flex-grow w-full" :radio="radio" :loading="radioLoading" />
     </div>
-    <div class="mx-5 pt-20 pb-36">
-      <!-- Homepage -->
-      <div v-if="page == PAGE_HOME" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <radio-presets :radio="radio" />
-      </div>
-      <!-- Edit Presets -->
-      <div v-else-if="page == PAGE_EDIT">
-        Hello World
-      </div>
+    <div class="container mx-auto px-4 pt-20 pb-36">
+      <!-- Home Page -->
+      <home-page v-if="page == PAGE_HOME" :radio="radio" />
+      <!-- Edit Page -->
+      <edit-page v-else-if="page == PAGE_EDIT" :set-page="setPage" />
     </div>
     <!-- Bottom -->
-    <div class="fixed bottom-0 w-full space-y-2">
-      <!--- Radio Websocket Disconnect Alert -->
-      <div v-if="wsDisconnected" class="ml-auto px-2 max-w-screen-sm">
-        <div class="alert shadow-lg">
+    <div class="fixed bottom-0 w-full space-y-2 z-50">
+      <!--- Alerts -->
+      <div class="ml-auto px-2 max-w-screen-sm space-y-2">
+        <div v-if="radiosIsError" class="alert alert-error shadow-lg">
+          <div>
+            <v-icon name="fa-times-circle" />
+            <span>Failed to list radios. ({{ radiosError }})</span>
+          </div>
+        </div>
+        <div v-if="wsDisconnected" class="alert shadow-lg">
           <div>
             <v-icon class="text-info" name="fa-info-circle" />
             <span>Disconnected from server.</span>
@@ -81,9 +82,9 @@ const onRefreshClick = () => {
         </div>
       </div>
       <!--- Navbar -->
-      <div class="navbar bg-base-200 flex flex-row-reverse flex-wrap gap-2 pb-4 px-4 z-50 border-t-2 border-t-base-300">
+      <div class="navbar bg-base-200 flex flex-row-reverse flex-wrap gap-2 pb-4 px-4 border-t-2 border-t-base-300">
         <!--- Radio Toolbar -->
-        <div v-if="radioSelected" class="flex-grow md:flex-grow-0 flex gap-2">
+        <div v-if="radioSelected" class="grow md:grow-0 flex gap-2">
           <radio-power class="flex-grow" :radio="radio" />
           <radio-volume :radio="radio" />
           <radio-audio-source :radio="radio" />
@@ -94,7 +95,7 @@ const onRefreshClick = () => {
           <hamburger-menu :page="page" :set-page="setPage" />
           <div class="grow flex">
             <radios-discover class="btn-primary w-12 rounded-none rounded-l-md" />
-            <select v-model="radioUUID" :disabled="radiosLoading" class="select select-primary rounded-none flex-grow">
+            <select v-model="radioUUID" :disabled="radiosLoading" class="grow select select-primary rounded-none">
               <option disabled selected value="">Select Radio</option>
               <template v-if="radios">
                 <option :key="r.uuid" v-for="r in radios" :value="r.uuid">{{ r.name }}</option>

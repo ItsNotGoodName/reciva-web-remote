@@ -16,7 +16,6 @@ export function useRadioMutation() {
   })
 };
 
-
 export function useRadioSubscriptionMutation() {
   return useMutation((uuid: string) => fetch(API_URL + "/api/radio/" + uuid + "/subscription", { method: "POST" })
     .then((res) => res.json())

@@ -98,7 +98,7 @@ const refresh = () => {
         <div class="grow flex gap-2">
           <hamburger-menu :page="page" :set-page="setPage" />
           <div class="grow flex">
-            <radios-discover class="btn-primary w-12 rounded-none rounded-l-md" />
+            <radios-discover class="btn-primary w-14 rounded-none rounded-l-md" />
             <select v-model="radioUUID" :disabled="radiosLoading" class="grow select select-primary rounded-none">
               <option disabled selected value="">Select Radio</option>
               <template v-if="radios">
@@ -106,7 +106,7 @@ const refresh = () => {
               </template>
             </select>
             <div class="tooltip" data-tip="Refresh">
-              <d-button class="btn-primary w-12 rounded-none rounded-r-md" aria-label="Refresh" :loading="refreshing"
+              <d-button class="btn-primary w-14 rounded-none rounded-r-md" aria-label="Refresh" :loading="refreshing"
                 @click="refresh">
                 <v-icon name="fa-redo" />
               </d-button>

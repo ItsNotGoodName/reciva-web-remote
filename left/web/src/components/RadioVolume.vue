@@ -16,14 +16,14 @@ const { mutate: refreshVolume, isLoading: refreshVolumeLoading } = useRadioVolum
 
 <template>
   <div v-if="!radio.is_muted" class="btn-group">
-    <d-button class="btn-info w-12" aria-label="Volume Down" :loading="isLoading"
+    <d-button class="btn-info w-14" aria-label="Volume Down" :loading="isLoading"
       @click="mutate({ uuid: radio.uuid, volume: radio.volume - 5 })">
       <v-icon name="fa-volume-down" />
     </d-button>
-    <d-button class="btn-info px-0 w-10" :loading="refreshVolumeLoading" @click="() => refreshVolume(radio.uuid)">
+    <d-button class="btn-info px-0 w-12" :loading="refreshVolumeLoading" @click="() => refreshVolume(radio.uuid)">
       {{ radio.volume }}%
     </d-button>
-    <d-button class="btn-info w-12" aria-label="Volume Up" :loading="isLoading"
+    <d-button class="btn-info w-14" aria-label="Volume Up" :loading="isLoading"
       @click="mutate({ uuid: radio.uuid, volume: radio.volume + 5 })">
       <v-icon name="fa-volume-up" />
     </d-button>

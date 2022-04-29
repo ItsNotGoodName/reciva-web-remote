@@ -1,4 +1,4 @@
-import { watch, ref, Ref } from "vue";
+import { watch, shallowReactive, ref, Ref } from "vue";
 
 import { WS_URL } from "../constants"
 
@@ -10,12 +10,32 @@ const unsubscribe = (ws: WebSocket) => {
   ws.send(JSON.stringify({ type: "state.unsubscribe" }));
 }
 
+const initialRadio: Radio = {
+  audio_source: "",
+  audio_sources: [],
+  is_muted: false,
+  metadata: "",
+  model_name: "",
+  model_number: "",
+  name: "",
+  power: false,
+  preset_number: 0,
+  presets: [],
+  status: "",
+  title: "",
+  title_new: "",
+  url: "",
+  url_new: "",
+  uuid: "",
+  volume: 0,
+}
+
 
 export function useWS(radioUUID: Ref<string>) {
   const connecting = ref(true);
   const connected = ref(false);
   const disconnected = ref(false);
-  const radio = ref<Radio | undefined>(undefined);
+  const radio = shallowReactive<Radio>({ ...initialRadio });
   let failCount = 0;
 
   const connect = () => {
@@ -34,11 +54,9 @@ export function useWS(radioUUID: Ref<string>) {
     });
 
     ws.addEventListener("message", (event) => {
-      let msg = JSON.parse(event.data) as { type: string, slug: Radio };
-      if (msg.type == "state.partial" && radio.value) {
-        radio.value = { ...radio.value, ...msg.slug };
-      } else if (msg.type == "state") {
-        radio.value = msg.slug;
+      let msg = JSON.parse(event.data) as { type: string, slug: any };
+      if (msg.type == "state.partial" || msg.type == "state") {
+        Object.assign(radio, msg.slug);
       }
     });
 
@@ -46,7 +64,7 @@ export function useWS(radioUUID: Ref<string>) {
       connecting.value = false
       connected.value = false
       disconnected.value = true;
-      radio.value = undefined;
+      Object.assign(radio, initialRadio);
       failCount++;
 
       if (failCount < 5) {
@@ -63,6 +81,7 @@ export function useWS(radioUUID: Ref<string>) {
     if (connected.value || connecting.value) {
       return
     }
+
     ws = connect()
   }
 
@@ -72,7 +91,7 @@ export function useWS(radioUUID: Ref<string>) {
       return
     }
 
-    radio.value = undefined;
+    Object.assign(radio, initialRadio);
     if (radioUUID.value) {
       subscribe(ws, radioUUID.value)
     } else {

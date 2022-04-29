@@ -6,7 +6,7 @@ import DButton from "./DaisyUI/DButton.vue";
 defineProps({
   radio: {
     type: Object as () => Radio,
-    default: { status: "Unknown" }
+    required: true,
   },
   loading: {
     type: Boolean,

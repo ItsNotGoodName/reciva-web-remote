@@ -4,7 +4,7 @@ import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 defineProps({
   radio: {
     type: Object as () => Radio,
-    default: {}
+    required: true,
   },
   loading: {
     type: Boolean,
@@ -18,12 +18,7 @@ defineProps({
     <d-dropdown-button :loading="loading" class="btn-primary w-full justify-start truncate">
       <div class="w-0">
         <span class="badge badge-info badge-lg mr-2 ">
-          <template v-if="radio.preset_number">
-            {{ radio.preset_number }}
-          </template>
-          <template v-else>
-            <v-icon name="fa-question" scale="1" />
-          </template>
+          {{ radio.preset_number }}
         </span>
         {{ radio.title_new ? radio.title_new : radio.title }}
       </div>

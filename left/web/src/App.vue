@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, ref } from "vue";
+import { computed, watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
 import { useWS, useSlimRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
@@ -24,6 +24,8 @@ const radioUUID = useRadioUUID();
 const { data: radios, isLoading: radiosLoading, refetch: radiosRefetch } = useSlimRadiosQuery();
 const { radio, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
+const radioSelected = computed(() => radio.uuid != "")
+const radioLoading = computed(() => (radio.uuid != radioUUID.value) || wsConnecting.value)
 
 // Make sure a valid radio is selected
 watch(radios, (newRadios) => {
@@ -51,12 +53,12 @@ const onRefreshClick = () => {
   <div class="h-screen">
     <!-- Top Navbar -->
     <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
-      <radio-status :radio="radio" :loading="wsConnecting" />
-      <radio-title class="flex-grow w-full" :radio="radio" :loading="wsConnecting" />
+      <radio-status :radio="radio" :loading="radioLoading" />
+      <radio-title class="flex-grow w-full" :radio="radio" :loading="radioLoading" />
     </div>
     <div class="mx-5 pt-20 pb-36">
       <!-- Homepage -->
-      <div v-if="page == PAGE_HOME && radio" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-if="page == PAGE_HOME" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <radio-presets :radio="radio" />
       </div>
       <!-- Edit Presets -->
@@ -81,7 +83,7 @@ const onRefreshClick = () => {
       <!--- Navbar -->
       <div class="navbar bg-base-200 flex flex-row-reverse flex-wrap gap-2 pb-4 px-4 z-50 border-t-2 border-t-base-300">
         <!--- Radio Toolbar -->
-        <div v-if="radio" class="flex-grow md:flex-grow-0 flex gap-2">
+        <div v-if="radioSelected" class="flex-grow md:flex-grow-0 flex gap-2">
           <radio-power class="flex-grow" :radio="radio" />
           <radio-volume :radio="radio" />
           <radio-audio-source :radio="radio" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, ref } from "vue";
+import { computed, watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
 import { useWS, useSlimRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
@@ -23,11 +23,17 @@ const setPage = (value: string) => {
 }
 
 const radioUUID = useRadioUUID();
-const { data: radios, isLoading: radiosLoading, error: radiosError, isError: radiosIsError, refetch: radiosRefetch } = useSlimRadiosQuery();
+const { data: radios, isLoading: radiosLoading, error: radiosError, isError: radiosIsError, refetch: radiosRefetch, isFetching: radiosFetching } = useSlimRadiosQuery();
 const { radio, radioLoading, radioSelected, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
+const refreshing = computed(() => radiosFetching.value || radioSubscriptionLoading.value);
 
-// Make sure a valid radio is selected
+// Make sure websocket is connected when fetching radios
+watch(radiosFetching, () => {
+  wsReconnect()
+})
+
+// Make sure radioUUID is a valid radio
 watch(radios, (newRadios) => {
   if (newRadios) {
     for (const r of newRadios) {
@@ -39,9 +45,9 @@ watch(radios, (newRadios) => {
   }
 });
 
-// Refetch radios and refresh currently selected radio
-const onRefreshClick = () => {
-  if (radioUUID.value) {
+// Refresh current radio if selected and refetch radios
+const refresh = () => {
+  if (radioSelected.value) {
     radioSubscriptionMutate(radioUUID.value)
   }
 
@@ -100,8 +106,8 @@ const onRefreshClick = () => {
               </template>
             </select>
             <div class="tooltip" data-tip="Refresh">
-              <d-button class="btn-primary w-12 rounded-none rounded-r-md" aria-label="Refresh"
-                :loading="radiosLoading || radioSubscriptionLoading" @click="onRefreshClick">
+              <d-button class="btn-primary w-12 rounded-none rounded-r-md" aria-label="Refresh" :loading="refreshing"
+                @click="refresh">
                 <v-icon name="fa-redo" />
               </d-button>
             </div>

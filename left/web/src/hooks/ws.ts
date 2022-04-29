@@ -38,8 +38,6 @@ export function useWS(radioUUID: Ref<string>) {
   const radioSelected = computed(() => radio.uuid != "")
   const radioLoading = computed(() => (radio.uuid != radioUUID.value) || connecting.value)
 
-  let failCount = 0;
-
   const connect = () => {
     let ws = new WebSocket(WS_URL + "/api/ws");
     connecting.value = true;
@@ -48,7 +46,6 @@ export function useWS(radioUUID: Ref<string>) {
       connecting.value = false;
       connected.value = true;
       disconnected.value = false;
-      failCount = 0;
 
       if (radioUUID.value) {
         subscribe(ws, radioUUID.value);
@@ -67,11 +64,6 @@ export function useWS(radioUUID: Ref<string>) {
       connected.value = false
       disconnected.value = true;
       Object.assign(radio, initialRadio);
-      failCount++;
-
-      if (failCount < 5) {
-        setTimeout(reconnect, 2000 * failCount);
-      }
     });
 
     return ws
@@ -81,15 +73,15 @@ export function useWS(radioUUID: Ref<string>) {
 
   const reconnect = () => {
     if (connected.value || connecting.value) {
-      return
+      return false
     }
 
     ws = connect()
+    return true
   }
 
   watch(radioUUID, () => {
-    if (!connected.value) {
-      reconnect()
+    if (reconnect()) {
       return
     }
 

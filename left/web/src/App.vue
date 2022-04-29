@@ -9,6 +9,7 @@ import RadioTitle from "./components/RadioTitle.vue";
 import RadioPower from "./components/RadioPower.vue";
 import RadioName from "./components/RadioName.vue";
 import DButton from "./components/DaisyUI/DButton.vue";
+import DErrorAlert from "./components/DaisyUI/DErrorAlert.vue";
 import RadioAudioSource from "./components/RadioAudioSource.vue";
 import HamburgerMenu from "./components/HamburgerMenu.vue";
 import RadioVolume from "./components/RadioVolume.vue"
@@ -65,12 +66,9 @@ const onRefreshClick = () => {
     <div class="fixed bottom-0 w-full space-y-2 z-50">
       <!--- Alerts -->
       <div class="ml-auto px-2 max-w-screen-sm space-y-2">
-        <div v-if="radiosIsError" class="alert alert-error shadow-lg">
-          <div>
-            <v-icon name="fa-times-circle" />
-            <span>Failed to list radios. ({{ radiosError }})</span>
-          </div>
-        </div>
+        <d-error-alert v-if="radiosIsError" :error="radiosError">
+          Failed to list radios.
+        </d-error-alert>
         <div v-if="wsDisconnected" class="alert shadow-lg">
           <div>
             <v-icon class="text-info" name="fa-info-circle" />

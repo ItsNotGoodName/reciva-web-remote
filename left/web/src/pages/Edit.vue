@@ -5,6 +5,7 @@ import { usePresetsQuery } from "../hooks";
 import { PAGE_HOME, } from "../constants"
 
 import DButton from "../components/DaisyUI/DButton.vue";
+import DErrorAlert from "../components/DaisyUI/DErrorAlert.vue";
 
 defineProps({
   setPage: {
@@ -20,12 +21,7 @@ const { data, isLoading, isError, error } = usePresetsQuery();
   <div v-if="isLoading" class="flex">
     <v-icon class="mx-auto" name="fa-spinner" animation="spin" scale="2" />
   </div>
-  <div v-else-if="isError" class="alert alert-error shadow-lg">
-    <div>
-      <v-icon name="fa-times-circle" />
-      <span>Failed to list presets. ({{ error }})</span>
-    </div>
-  </div>
+  <d-error-alert v-else-if="isError" :error="error">Failed to list presets.</d-error-alert>
   <div v-else-if="data" class="overflow-x-auto w-full">
     <table class="table table-compact table-zebra w-full">
       <thead>

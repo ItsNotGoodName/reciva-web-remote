@@ -3,11 +3,11 @@ import { computed, watch, shallowReactive, ref, Ref } from "vue";
 import { WS_URL } from "../constants"
 
 const subscribe = (ws: WebSocket, radioUUID: string) => {
-  ws.send(JSON.stringify({ type: "state.subscribe", slug: radioUUID }));
+  ws.send(JSON.stringify({ type: "radio.subscribe", slug: radioUUID }));
 }
 
 const unsubscribe = (ws: WebSocket) => {
-  ws.send(JSON.stringify({ type: "state.unsubscribe" }));
+  ws.send(JSON.stringify({ type: "radio.unsubscribe" }));
 }
 
 const initialRadio: Radio = {
@@ -54,7 +54,7 @@ export function useWS(radioUUID: Ref<string>) {
 
     ws.addEventListener("message", (event) => {
       let msg = JSON.parse(event.data) as { type: string, slug: any };
-      if (msg.type == "state.partial" || msg.type == "state") {
+      if (msg.type == "radio.partial" || msg.type == "radio") {
         Object.assign(radio, msg.slug);
       }
     });

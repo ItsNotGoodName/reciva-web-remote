@@ -22,10 +22,10 @@ type (
 
 const (
 	TypeError            = Type("error")
-	TypeState            = Type("state")
-	TypeStatePartial     = Type("state.partial")
-	TypeStateSubscribe   = Type("state.subscribe")
-	TypeStateUnsubscribe = Type("state.unsubscribe")
+	TypeState            = Type("radio")
+	TypeStatePartial     = Type("radio.partial")
+	TypeStateSubscribe   = Type("radio.subscribe")
+	TypeStateUnsubscribe = Type("radio.unsubscribe")
 )
 
 func parseStateSubscribe(slug interface{}) (string, error) {

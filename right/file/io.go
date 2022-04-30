@@ -3,6 +3,7 @@ package file
 import (
 	"encoding/json"
 	"os"
+	"sort"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 )
@@ -54,6 +55,11 @@ func writeConfig(file string, m map[string]preset.Preset) error {
 			URLNew:   p.URLNew,
 		})
 	}
+
+	// Sort presets
+	sort.Slice(presets, func(i, j int) bool {
+		return presets[i].URL < presets[j].URL
+	})
 
 	// Create config struct
 	cfg := Config{

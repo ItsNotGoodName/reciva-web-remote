@@ -42,6 +42,7 @@ func (ps *PresetStore) List(ctx context.Context) ([]preset.Preset, error) {
 	}
 	ps.presetsMapMu.RUnlock()
 
+	// Sort presets
 	sort.Slice(pts, func(i, j int) bool {
 		return pts[i].URL < pts[j].URL
 	})

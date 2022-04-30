@@ -23,7 +23,7 @@ defineProps({
         {{ radio.title_new ? radio.title_new : radio.title }}
       </div>
     </d-dropdown-button>
-    <div tabindex="0" class="dropdown-content card card-compact w-full p-2 mt-1 shadow bg-primary text-primary-content">
+    <div tabindex="0" class="dropdown-content card card-compact w-full p-2 mt-2 shadow bg-primary text-primary-content">
       <div class="card-body break-words">
         <h3 class="card-title">Stream Information</h3>
         <p>

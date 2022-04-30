@@ -15,7 +15,7 @@ const { mutate: refreshVolume, isLoading: refreshVolumeLoading } = useRadioVolum
 </script>
 
 <template>
-  <div v-if="!radio.is_muted" class="btn-group">
+  <div v-if="!radio.is_muted" class="btn-group flex-nowrap">
     <d-button class="btn-info w-14" aria-label="Volume Down" :loading="isLoading"
       @click="mutate({ uuid: radio.uuid, volume: radio.volume - 5 })">
       <v-icon name="fa-volume-down" />

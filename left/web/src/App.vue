@@ -58,7 +58,7 @@ const refresh = () => {
 <template>
   <div class="h-screen">
     <!-- Top Navbar -->
-    <div class="navbar bg-base-200 fixed top-0 flex gap-1 z-50 border-b-2 border-b-base-300">
+    <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
       <radio-status :radio="radio" :loading="radioLoading" />
       <radio-title class="flex-grow w-full" :radio="radio" :loading="radioLoading" />
     </div>
@@ -86,9 +86,9 @@ const refresh = () => {
         </div>
       </div>
       <!--- Navbar -->
-      <div class="navbar bg-base-200 flex flex-wrap-reverse gap-1 pb-4 border-t-2 border-t-base-300">
+      <div class="navbar bg-base-200 flex flex-wrap-reverse gap-2 border-t-2 border-t-base-300">
         <!--- Radios Toolbar -->
-        <div class="flex-auto flex gap-1 z-10">
+        <div class="flex-auto flex gap-2 z-10">
           <hamburger-menu :page="page" :set-page="setPage" />
           <div class="flex-auto flex">
             <radios-discover class="btn-primary w-14 rounded-none rounded-l-md" />
@@ -108,7 +108,7 @@ const refresh = () => {
           </div>
         </div>
         <!--- Radio Toolbar -->
-        <div v-if="radioSelected" class="flex-auto flex gap-1">
+        <div v-if="radioSelected" class="flex-auto flex gap-2 ">
           <radio-power class="flex-auto" :radio="radio" />
           <radio-volume :radio="radio" />
           <radio-audio-source :radio="radio" />

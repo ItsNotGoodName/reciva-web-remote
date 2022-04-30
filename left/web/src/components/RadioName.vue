@@ -14,7 +14,7 @@ defineProps({
     <d-dropdown-button class="btn-primary w-full justify-start truncate">
       <v-icon name="md-radio" />
     </d-dropdown-button>
-    <div tabindex="0" class="dropdown-content card card-compact w-80 p-2 mb-1 shadow bg-primary text-primary-content">
+    <div tabindex="0" class="dropdown-content card card-compact w-80 p-2 mb-2 shadow bg-primary text-primary-content">
       <div class="card-body break-words">
         <h3 class="card-title">Radio Information</h3>
         <p>

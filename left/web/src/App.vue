@@ -18,19 +18,19 @@ import HomePage from "./pages/Home.vue";
 import EditPage from "./pages/Edit.vue"
 
 const page = ref(PAGE_HOME);
-const setPage = (value: string) => {
+const updatePage = (value: string) => {
   page.value = value
 }
 
 const radioUUID = useRadioUUID();
 const { data: radios, isLoading: radiosLoading, error: radiosError, isError: radiosIsError, refetch: radiosRefetch, isFetching: radiosFetching } = useSlimRadiosQuery();
-const { radio, radioLoading, radioSelected, connecting: wsConnecting, disconnected: wsDisconnected, reconnect: wsReconnect } = useWS(radioUUID);
+const { radio, radioLoading, radioSelected, connecting, disconnected, reconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
 const refreshing = computed(() => radiosFetching.value || radioSubscriptionLoading.value);
 
 // Make sure websocket is connected when fetching radios
 watch(radiosFetching, () => {
-  wsReconnect()
+  reconnect()
 })
 
 // Make sure radioUUID is a valid radio
@@ -72,16 +72,16 @@ const refresh = () => {
     <div class="fixed bottom-0 w-full space-y-2 z-50">
       <!--- Alerts -->
       <div class="ml-auto px-2 max-w-screen-sm space-y-2">
-        <d-error-alert v-if="radiosIsError" :error="radiosError">
+        <d-error-alert v-if="radiosIsError">
           Failed to list radios.
         </d-error-alert>
-        <div v-if="wsDisconnected" class="alert shadow-lg">
+        <div v-if="disconnected" class="alert shadow-lg">
           <div>
             <v-icon class="text-info" name="fa-info-circle" />
             <span>Disconnected from server.</span>
           </div>
           <div class="flex-none">
-            <d-button class="btn-sm btn-primary" :loading="wsConnecting" @click="wsReconnect">Reconnect</d-button>
+            <d-button class="btn-sm btn-primary" :loading="connecting" @click="reconnect">Reconnect</d-button>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ const refresh = () => {
       <div class="navbar bg-base-200 flex flex-wrap-reverse gap-2 border-t-2 border-t-base-300">
         <!--- Radios Toolbar -->
         <div class="flex-auto flex gap-2 z-10">
-          <hamburger-menu :page="page" :set-page="setPage" />
+          <hamburger-menu :page="page" @update:page="updatePage" />
           <div class="flex-auto flex">
             <radios-discover class="btn-primary w-14 rounded-none rounded-l-md" />
             <select v-model="radioUUID" :disabled="radiosLoading"

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { PropType } from 'vue';
-
 import { PAGE_HOME, PAGE_EDIT } from "../constants"
 
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
+
+const emit = defineEmits<{ (e: 'update:page', page: string): void }>()
 
 defineProps({
   version: {
@@ -18,10 +18,6 @@ defineProps({
     type: String,
     required: true,
   },
-  setPage: {
-    type: Function as PropType<(page: string) => void>,
-    required: true,
-  },
 });
 </script>
 
@@ -32,12 +28,12 @@ defineProps({
     </d-dropdown-button>
     <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52">
       <li>
-        <a :class="{ 'active': page == PAGE_HOME }" @click="() => setPage(PAGE_HOME)">
+        <a :class="{ 'active': page == PAGE_HOME }" @click="emit('update:page', PAGE_HOME)">
           <v-icon name="fa-home" />Home Page
         </a>
       </li>
       <li>
-        <a :class="{ 'active': page == PAGE_EDIT }" @click="() => setPage(PAGE_EDIT)">
+        <a :class="{ 'active': page == PAGE_EDIT }" @click="emit('update:page', PAGE_EDIT)">
           <v-icon name="fa-edit" />Edit Presets
         </a>
       </li>

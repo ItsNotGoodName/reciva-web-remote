@@ -16,10 +16,8 @@ const updatePresetUrl = (url: string) => {
 
 <template>
   <div class="flex gap-4 flex-wrap-reverse">
-    <div class="lg:flex-1 flex overflow-x-auto">
-      <presets-table class="w-full" :preset-url="presetUrl" @update:preset-url="updatePresetUrl" />
-    </div>
-    <div v-if="presetFormOpen" class="flex-1 lg:flex-initial w-96">
+    <presets-table class="flex-auto md:flex-1" :preset-url="presetUrl" @update:preset-url="updatePresetUrl" />
+    <div v-if="presetFormOpen" class="flex-1 md:flex-initial w-96">
       <preset-form class="p-2 rounded-lg bg-base-200 border-2 border-base-200" :preset-url="presetUrl"
         @close="presetFormOpen = false" />
     </div>

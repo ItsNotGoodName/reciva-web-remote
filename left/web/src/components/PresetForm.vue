@@ -14,10 +14,9 @@ const props = defineProps({
   },
 });
 
-const { data, isFetching: dataIsFetching, isError: dataIsError, error: dataError, isSuccess: dataSuccess } = usePresetQuery(computed(() => props.presetUrl))
-const loading = computed(() => dataIsFetching.value || !data.value)
+const { data, isFetching: dataIsFetching, isError: dataIsError, error: dataError, isSuccess: dataSuccess, refetch: dataRefetch } = usePresetQuery(computed(() => props.presetUrl))
 const { mutate, isLoading: mutateIsLoading, isError: mutateIsError, error: mutateError } = usePresetMutation()
-
+const loading = computed(() => dataIsFetching.value || mutateIsLoading.value)
 const form = reactive({
   url: '',
   url_new: '',
@@ -26,7 +25,7 @@ const form = reactive({
   title_new_changed: false
 })
 
-watchEffect(() => {
+const formSync = () => {
   if (dataSuccess.value && data.value) {
     form.url = data.value.url
     form.url_new = data.value.url_new
@@ -34,15 +33,17 @@ watchEffect(() => {
     form.title_new = data.value.title_new
     form.title_new_changed = false
   }
-})
-
+}
+const reset = () => dataRefetch.value().then(formSync)
 const submit = () => mutate({ url: form.url, url_new: form.url_new, title_new: form.title_new })
+
+watchEffect(formSync)
 </script>
 
 <template>
   <form class="space-y-2" @submit.prevent="submit">
-    <d-error-alert v-if="dataIsError" :error="dataError">Failed to get preset.</d-error-alert>
     <h1 class="text-center text-2xl">Edit Preset</h1>
+    <d-error-alert v-if="dataIsError">Failed to get preset.</d-error-alert>
     <div class="form-control">
       <label class="label">
         <span class="label-text">URL</span>
@@ -65,11 +66,14 @@ const submit = () => mutate({ url: form.url, url_new: form.url_new, title_new: f
         :class="{ 'textarea-warning': form.url_new_changed }" @input="form.url_new_changed = true"
         v-model="form.url_new" :disabled="loading" />
     </div>
-    <div class="flex space-x-2">
-      <d-button class="btn-success ml-auto" :loading="mutateIsLoading || loading" type="submit">Save</d-button>
-      <d-button type="button" @click="emit('close')">Close</d-button>
+    <div class="btn-group fleex">
+      <d-button class="flex-1" type="button" @click="emit('close')">Close</d-button>
+      <d-button class="flex-1 btn-error" :loading="loading" type="button" @click="reset">
+        Reset
+      </d-button>
+      <d-button class="flex-1 btn-success" :loading="loading" type="submit">Save</d-button>
     </div>
-    <d-error-alert v-if="mutateIsError" :error="mutateError">Failed to update preset.</d-error-alert>
+    <d-error-alert v-if="mutateIsError">Failed to update preset.</d-error-alert>
   </form>
 </template>
 

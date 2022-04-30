@@ -8,13 +8,10 @@ defineProps({
 </script>
 
 <template>
-  <button class="btn" :class="{ 'loading ': loading }">
+  <button class="btn touch-manipulation" :class="{ 'loading ': loading }">
     <slot v-if="!loading"></slot>
   </button>
 </template>
 
-<style scoped>
-button {
-  touch-action: manipulation;
-}
+<style>
 </style>

@@ -58,7 +58,7 @@ const refresh = () => {
 <template>
   <div class="h-screen">
     <!-- Top Navbar -->
-    <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
+    <div class="navbar bg-base-200 fixed top-0 flex gap-1 z-50 border-b-2 border-b-base-300">
       <radio-status :radio="radio" :loading="radioLoading" />
       <radio-title class="flex-grow w-full" :radio="radio" :loading="radioLoading" />
     </div>
@@ -86,20 +86,14 @@ const refresh = () => {
         </div>
       </div>
       <!--- Navbar -->
-      <div class="navbar bg-base-200 flex flex-row-reverse flex-wrap gap-2 pb-4 px-4 border-t-2 border-t-base-300">
-        <!--- Radio Toolbar -->
-        <div v-if="radioSelected" class="grow md:grow-0 flex gap-2">
-          <radio-power class="flex-grow" :radio="radio" />
-          <radio-volume :radio="radio" />
-          <radio-audio-source :radio="radio" />
-          <radio-name :radio="radio" />
-        </div>
+      <div class="navbar bg-base-200 flex flex-wrap-reverse gap-1 pb-4 border-t-2 border-t-base-300">
         <!--- Radios Toolbar -->
-        <div class="grow flex gap-2">
+        <div class="flex-auto flex gap-1 z-10">
           <hamburger-menu :page="page" :set-page="setPage" />
-          <div class="grow flex">
+          <div class="flex-auto flex">
             <radios-discover class="btn-primary w-14 rounded-none rounded-l-md" />
-            <select v-model="radioUUID" :disabled="radiosLoading" class="grow select select-primary rounded-none">
+            <select v-model="radioUUID" :disabled="radiosLoading"
+              class="flex-auto w-36 select select-primary rounded-none">
               <option disabled selected value="">Select Radio</option>
               <template v-if="radios">
                 <option :key="r.uuid" v-for="r in radios" :value="r.uuid">{{ r.name }}</option>
@@ -112,6 +106,13 @@ const refresh = () => {
               </d-button>
             </div>
           </div>
+        </div>
+        <!--- Radio Toolbar -->
+        <div v-if="radioSelected" class="flex-auto flex gap-1">
+          <radio-power class="flex-auto" :radio="radio" />
+          <radio-volume :radio="radio" />
+          <radio-audio-source :radio="radio" />
+          <radio-name :radio="radio" />
         </div>
       </div>
     </div>

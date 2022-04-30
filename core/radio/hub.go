@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
@@ -59,18 +60,39 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 			return 0, err
 		}
 
+		// Radio run context
 		newCtx, newCancel := context.WithCancel(ctx)
 
-		// Create radios
-		var radios []Radio
-		for _, client := range clients {
-			radio, err := hs.radioService.Create(newCtx, client)
-			if err != nil {
-				fmt.Println("radio.HubService.Background:", err)
-				continue
-			}
+		// Create radios concurrently
+		radioC := make(chan Radio)
+		var wg sync.WaitGroup
+		for i := range clients {
+			wg.Add(1)
+			go (func(idx int) {
+				// Timeout for creating radio
+				sctx, cancel := context.WithTimeout(ctx, 45*time.Second)
+				defer cancel()
 
-			radios = append(radios, radio)
+				// Create radio
+				radio, err := hs.radioService.Create(sctx, newCtx, clients[idx])
+				if err != nil {
+					fmt.Println("radio.HubService.Background:", err)
+				} else {
+					radioC <- radio
+				}
+
+				wg.Done()
+			})(i)
+		}
+		go (func() {
+			wg.Wait()
+			close(radioC)
+		})()
+
+		// Collect radios
+		var radios []Radio
+		for r := range radioC {
+			radios = append(radios, r)
 		}
 
 		// Create radios map

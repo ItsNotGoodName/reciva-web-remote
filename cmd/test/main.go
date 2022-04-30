@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// Create radio
-	radio, err := createService.Create(ctx, clients[0])
+	radio, err := createService.Create(ctx, ctx, clients[0])
 	if err != nil {
 		log.Fatalln("failed to create radio:", err)
 	}

@@ -34,7 +34,7 @@ func (cs *CreateServiceImpl) Background(ctx context.Context, doneC chan<- struct
 	doneC <- struct{}{}
 }
 
-func (cs *CreateServiceImpl) Create(dctx context.Context, client goupnp.ServiceClient) (Radio, error) {
+func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, client goupnp.ServiceClient) (Radio, error) {
 	// Get UUID
 	uuid, err := upnp.GetUUID(client)
 	if err != nil {
@@ -45,14 +45,14 @@ func (cs *CreateServiceImpl) Create(dctx context.Context, client goupnp.ServiceC
 	s := state.New(uuid, upnp.GetName(client), upnp.GetModelName(client), upnp.GetModelNumber(client))
 
 	// Get and set volume
-	volume, err := upnp.GetVolume(dctx, client)
+	volume, err := upnp.GetVolume(ctx, client)
 	if err != nil {
 		return Radio{}, err
 	}
 	s.SetVolume(volume)
 
 	// Get and parse presets count
-	presetsCount, err := upnp.GetNumberOfPresets(dctx, client)
+	presetsCount, err := upnp.GetNumberOfPresets(ctx, client)
 	if err != nil {
 		return Radio{}, err
 	}
@@ -63,7 +63,7 @@ func (cs *CreateServiceImpl) Create(dctx context.Context, client goupnp.ServiceC
 	// Get and set presets
 	var presets []state.Preset
 	for i := 1; i <= presetsCount; i++ {
-		p, err := upnp.GetPreset(dctx, client, i)
+		p, err := upnp.GetPreset(ctx, client, i)
 		if err != nil {
 			return Radio{}, err
 		}
@@ -73,7 +73,7 @@ func (cs *CreateServiceImpl) Create(dctx context.Context, client goupnp.ServiceC
 	s.SetPresets(presets)
 
 	// Get audio sources
-	audioSources, err := upnp.GetAudioSources(dctx, client)
+	audioSources, err := upnp.GetAudioSources(ctx, client)
 	if err != nil {
 		return Radio{}, err
 	}

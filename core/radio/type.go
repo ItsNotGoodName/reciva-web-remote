@@ -17,7 +17,7 @@ type (
 	}
 
 	CreateService interface {
-		Create(dctx context.Context, client goupnp.ServiceClient) (Radio, error)
+		Create(ctx context.Context, dctx context.Context, client goupnp.ServiceClient) (Radio, error)
 	}
 
 	RunService interface {

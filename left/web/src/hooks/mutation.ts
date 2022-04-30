@@ -55,7 +55,7 @@ export function useRadiosDiscoverMutation() {
 
 export function usePresetMutation() {
   const queryClient = useQueryClient()
-  return useMutation((req: PresetMutation) => fetch(API_URL + "/api/preset", { method: "POST" })
+  return useMutation((req: PresetMutation) => fetch(API_URL + "/api/preset", { method: "POST", body: JSON.stringify(req) })
     .then((res) => res.json())
     .then((json: APIResponse<void>) => {
       if (!json.ok) {

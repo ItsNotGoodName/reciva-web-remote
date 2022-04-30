@@ -66,7 +66,7 @@ const refresh = () => {
       <!-- Home Page -->
       <home-page v-if="page == PAGE_HOME" :radio="radio" />
       <!-- Edit Page -->
-      <edit-page v-else-if="page == PAGE_EDIT" :set-page="setPage" />
+      <edit-page v-else-if="page == PAGE_EDIT" />
     </div>
     <!-- Bottom -->
     <div class="fixed bottom-0 w-full space-y-2 z-50">

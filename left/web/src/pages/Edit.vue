@@ -1,68 +1,28 @@
 <script setup lang="ts">
-import { PropType, } from "vue"
+import { ref } from "vue"
 
-import { usePresetsQuery } from "../hooks";
-import { PAGE_HOME, } from "../constants"
+import PresetForm from "../components/PresetForm.vue";
+import PresetsTable from "../components/PresetsTable.vue";
 
-import DButton from "../components/DaisyUI/DButton.vue";
-import DErrorAlert from "../components/DaisyUI/DErrorAlert.vue";
+const presetFormOpen = ref(false)
+const presetUrl = ref("")
 
-defineProps({
-  setPage: {
-    type: Function as PropType<(page: string) => void>,
-    required: true,
-  },
-});
-
-const { data, isLoading, isError, error } = usePresetsQuery();
+const updatePresetUrl = (url: string) => {
+  presetUrl.value = url
+  presetFormOpen.value = true
+  window.scrollTo(0, 0)
+}
 </script>
 
 <template>
-  <div v-if="isLoading" class="flex">
-    <v-icon class="mx-auto" name="fa-spinner" animation="spin" scale="2" />
-  </div>
-  <d-error-alert v-else-if="isError" :error="error">Failed to list presets.</d-error-alert>
-  <div v-else-if="data" class="overflow-x-auto w-full">
-    <table class="table table-compact table-zebra w-full">
-      <thead>
-        <tr>
-          <th>
-            <d-button class="btn-primary btn-sm" @click="() => setPage(PAGE_HOME)" aria-label="Home">
-              <v-icon name="fa-home" />
-            </d-button>
-          </th>
-          <th>URL</th>
-          <th>New Title</th>
-          <th>New URL</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="p in data" :key="p.url">
-          <th class="w-0">
-            <d-button class="btn-success btn-sm" aria-label="Edit">
-              <v-icon name="fa-edit" />
-            </d-button>
-          </th>
-          <td class="w-0">
-            {{ p.url }}
-          </td>
-          <td class="w-0">
-            {{ p.title_new }}
-          </td>
-          <td>
-            {{ p.url_new }}
-          </td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr>
-          <th></th>
-          <th>URL</th>
-          <th>New Title</th>
-          <th>New URL</th>
-        </tr>
-      </tfoot>
-    </table>
+  <div class="flex gap-4 flex-wrap-reverse">
+    <div class="lg:flex-1 flex overflow-x-auto">
+      <presets-table class="w-full" :preset-url="presetUrl" @update:preset-url="updatePresetUrl" />
+    </div>
+    <div v-if="presetFormOpen" class="flex-1 lg:flex-initial w-96">
+      <preset-form class="p-2 rounded-lg bg-base-200 border-2 border-base-200" :preset-url="presetUrl"
+        @close="presetFormOpen = false" />
+    </div>
   </div>
 </template>
 

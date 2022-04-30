@@ -1,4 +1,4 @@
-import { Ref } from "vue"
+import { computed, Ref } from "vue"
 import { useQuery } from "vue-query";
 
 import { API_URL } from "../constants"
@@ -32,7 +32,7 @@ export function usePresetsQuery() {
 
 export function usePresetQuery(url: Ref<string>) {
   return useQuery([KEY_PRESET, url], () =>
-    fetch(API_URL + "/api/presets?url=" + url.value)
+    fetch(API_URL + "/api/preset?url=" + url.value)
       .then((response) => response.json())
       .then((json: APIResponse<Preset>) => {
         if (!json.ok) {
@@ -40,5 +40,5 @@ export function usePresetQuery(url: Ref<string>) {
         }
         return json.data;
       })
-  );
+    , { enabled: computed(() => !!url.value) });
 }

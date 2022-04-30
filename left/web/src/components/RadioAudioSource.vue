@@ -28,7 +28,7 @@ const loadingAudioSource = computed(() => {
     <d-dropdown-button :class="{ 'btn-secondary': radio.audio_source }" aria-label="Audio Source">
       <v-icon name="fa-itunes-note" />
     </d-dropdown-button>
-    <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52 space-y-2">
+    <ul tabindex="0" class="menu menu-compact dropdown-content mb-1 p-2 shadow bg-base-200 rounded-box w-52 space-y-2">
       <span class="mx-auto">Audio Source</span>
       <d-button :loading="loadingAudioSource == a" :key="a" v-for="a in radio.audio_sources"
         :class="{ 'btn-secondary': a == radio.audio_source }"

@@ -16,7 +16,7 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 - Toggle power
 - Change volume
 - Change audio source (unreliable)
-- Play presets (make sure audio source is `Internet radio`)
+- Play presets (make sure audio source is `Internet radio` or else it will hang)
 - [Host playlists](###host-playlists)
 
 ## Running
@@ -85,6 +85,48 @@ The contents of the playlists can be changed in the web interface.
 
 ![Edit Demo](/assets/desktop-edit-demo.png)
 
+## API
+
+### Responses
+
+```json
+// Success without data
+{
+  "ok": true
+}
+// Success with data
+{
+  "ok": true,
+  "data": []
+}
+// Failure
+{
+  "ok": false,
+  "error": {
+    "message": "An error occurred"
+  }
+}
+```
+
+### Routes
+
+| Method | URI                              | Description               |
+| ------ | -------------------------------- | ------------------------- |
+| POST   | /api/radios                      | Discover Radios           |
+| GET    | /api/radios                      | List Radios               |
+| GET    | /api/radio/{{uuid}}              | Get Radio                 |
+| GET    | /api/radio/{{uuid}}/state        | Get State                 |
+| PATCH  | /api/radio/{{uuid}}/state        | Modify State              |
+| POST   | /api/radio/{{uuid}}/subscription | Refresh UPnP Subscription |
+| POST   | /api/radio/{{uuid}}/volume       | Refresh Volume            |
+| GET    | /api/presets                     | List Presets              |
+| GET    | /api/preset?url={{url}}          | Get Preset                |
+| POST   | /api/preset                      | Update Preset             |
+| GET    | /api/states                      | List States               |
+| GET    | /api/state/{{uuid}}              | Get State                 |
+| PATCH  | /api/state/{{uuid}}              | Modify State              |
+| WS     | /api/ws                          | Websocket                 |
+
 ## Build
 
 Make requires [Podman](https://podman.io/) when working with npm.
@@ -125,6 +167,10 @@ make dev-backend
 
 ## Todo
 
-- Add volume slider to web interface
+- Document API
+- Readd toasts in web interface
+- Add volume slider in web interface
 - Make [Podman](https://podman.io/) an optional requirement for Make
-- Add events
+- Discover radios on a timer
+- Better error handling in `upnp` package when using `retry` package to prevent spamming when there is a UPnP error (ex. invalid action)
+- Add events (ex. radios discovered, presets changed)

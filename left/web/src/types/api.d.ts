@@ -2,12 +2,10 @@ declare type APIResponse<T> = APIData<T> | APIError;
 
 interface APIData<T> {
   ok: true
-  code: number
   data: T
 }
 interface APIError {
   ok: false
-  code: number
   error: {
     message: string
   }

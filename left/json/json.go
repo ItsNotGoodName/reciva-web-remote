@@ -10,7 +10,6 @@ import (
 
 type Response struct {
 	OK    bool        `json:"ok"`
-	Code  int         `json:"code"`
 	Error *Error      `json:"error,omitempty"`
 	Data  interface{} `json:"data,omitempty"`
 }
@@ -31,8 +30,7 @@ func renderError(rw http.ResponseWriter, code int, err error) {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
 	if err := json.NewEncoder(rw).Encode(Response{
-		OK:   false,
-		Code: code,
+		OK: false,
 		Error: &Error{
 			Message: err.Error(),
 		},
@@ -46,7 +44,6 @@ func renderJSON(rw http.ResponseWriter, code int, data interface{}) {
 	rw.WriteHeader(code)
 	if err := json.NewEncoder(rw).Encode(Response{
 		OK:   true,
-		Code: code,
 		Data: data,
 	}); err != nil {
 		log.Println("json.renderJSON:", err)

@@ -18,7 +18,7 @@ defineProps({
 const { data, isLoading } = useBuildQuery();
 const versionUrl = computed(() => {
   if (data.value && data.value.version != 'dev') {
-    return `${GITHUB_URL}/releases/tag/${data.value.version}`;
+    return `${GITHUB_URL}/releases/tag/v${data.value.version}`;
   }
   return '#'
 })

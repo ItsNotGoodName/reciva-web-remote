@@ -89,7 +89,7 @@ The contents of the playlists can be changed in the web interface.
 
 ### Responses
 
-```json
+```jsonc
 // Success without data
 {
   "ok": true

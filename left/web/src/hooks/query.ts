@@ -2,7 +2,7 @@ import { computed, Ref } from "vue"
 import { useQuery } from "vue-query";
 
 import { API_URL } from "../constants"
-import { KEY_RADIOS, KEY_PRESETS, KEY_PRESET } from "./key";
+import { KEY_RADIOS, KEY_PRESETS, KEY_PRESET, KEY_BUILD } from "./key";
 
 export function useRadiosQuery() {
   return useQuery(KEY_RADIOS, () =>
@@ -41,4 +41,17 @@ export function usePresetQuery(url: Ref<string>) {
         return json.data;
       })
     , { enabled: computed(() => !!url.value) });
+}
+
+export function useBuildQuery() {
+  return useQuery(KEY_BUILD, () =>
+    fetch(API_URL + "/api/build")
+      .then((response) => response.json())
+      .then((json: APIResponse<Build>) => {
+        if (!json.ok) {
+          throw new Error(json.error.message);
+        }
+        return json.data;
+      })
+    , { staleTime: Infinity });
 }

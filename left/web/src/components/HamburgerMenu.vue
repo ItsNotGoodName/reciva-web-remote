@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { PAGE_HOME, PAGE_EDIT } from "../constants"
+import { useBuildQuery } from "../hooks";
 
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
 const emit = defineEmits<{ (e: 'update:page', page: string): void }>()
 
 defineProps({
-  version: {
-    type: String,
-    default: "",
-  },
-  versionLoading: {
-    type: Boolean,
-    default: false,
-  },
   page: {
     type: String,
     required: true,
   },
 });
+
+const { data, isLoading } = useBuildQuery();
 </script>
 
 <template>
@@ -42,15 +37,15 @@ defineProps({
           <v-icon name="fa-github" />Source Code
         </a>
       </li>
-      <li v-if="versionLoading">
+      <li v-if="isLoading">
         <a>
           <v-icon name="fa-spinner" animation="spin" />Version
         </a>
       </li>
-      <li v-else-if="version">
-        <a :href="'https://github.com/ItsNotGoodName/reciva-web-remote/releases/tag/' + version">
+      <li v-else-if="data && data.version != 'dev'">
+        <a :href="'https://github.com/ItsNotGoodName/reciva-web-remote/releases/tag/' + data.version">
           <v-icon name="fa-tag" />
-          {{ version }}
+          {{ data.version }}
         </a>
       </li>
     </ul>

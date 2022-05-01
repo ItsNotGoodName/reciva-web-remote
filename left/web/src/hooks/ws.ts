@@ -73,15 +73,18 @@ export function useWS(stateUUID: Ref<string>) {
 
   const reconnect = () => {
     if (connected.value || connecting.value) {
-      return false
+      return
     }
 
     ws = connect()
-    return true
   }
 
   watch(stateUUID, () => {
-    if (reconnect()) {
+    if (!connected.value) {
+      reconnect()
+      return
+    }
+    if (connecting.value) {
       return
     }
 

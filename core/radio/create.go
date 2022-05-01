@@ -82,7 +82,7 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, c
 	}
 	s.SetAudioSources(audioSources)
 
-	// Rate limit to prevent subscription from failing
+	// Back off for a second to prevent subscription from failing
 	// TODO: Find a better way to do this
 	time.Sleep(time.Second)
 

@@ -11,8 +11,6 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
 )
 
-var ()
-
 type HubServiceImpl struct {
 	discoverC    chan chan discoverResponse
 	doneC        chan struct{}

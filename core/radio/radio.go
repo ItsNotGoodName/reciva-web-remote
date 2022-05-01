@@ -2,6 +2,7 @@ package radio
 
 import (
 	"context"
+	"log"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
@@ -31,12 +32,8 @@ func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset 
 		return err
 	}
 
-	// Set to correct audio source if possible
-	// TODO: return error if it cannot be set to correct audio source
-	if err := state.ValidAudioSource(s, state.AudioSourceInternetRadio); err == nil && s.AudioSource != state.AudioSourceInternetRadio {
-		if err := rs.SetAudioSource(ctx, radio, state.AudioSourceInternetRadio); err != nil {
-			return err
-		}
+	if err := state.ValidAudioSource(s, state.AudioSourceInternetRadio); err != nil {
+		log.Printf("radio.RadioService.PlayPreset: %s is not a valid audio source", state.AudioSourceInternetRadio)
 	}
 
 	if err := state.ValidPresetNumber(s, preset); err != nil {

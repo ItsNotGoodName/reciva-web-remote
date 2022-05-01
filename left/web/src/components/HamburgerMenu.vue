@@ -53,7 +53,7 @@ const versionUrl = computed(() => {
       <li v-else-if="data">
         <a :href="versionUrl">
           <v-icon name="fa-tag" />
-          {{ data.version }}
+          v{{ data.version }}
         </a>
       </li>
     </ul>

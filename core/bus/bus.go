@@ -3,34 +3,23 @@ package bus
 import (
 	"context"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 )
 
-type BusServiceImpl struct {
-	hubService   radio.HubService
-	radioService radio.RadioService
-	statePub     state.Pub
+type Bus struct {
+	app      dto.App
+	statePub state.Pub
 }
 
-func New(hubService radio.HubService, radioService radio.RadioService, statePub state.Pub) *BusServiceImpl {
-	return &BusServiceImpl{
-		hubService:   hubService,
-		radioService: radioService,
-		statePub:     statePub,
+func New(app dto.App, statePub state.Pub) *Bus {
+	return &Bus{
+		app:      app,
+		statePub: statePub,
 	}
 }
 
-func (bs *BusServiceImpl) stateGet(ctx context.Context, uuid string) (*state.State, error) {
-	radio, err := bs.hubService.Get(uuid)
-	if err != nil {
-		return nil, err
-	}
-
-	return bs.radioService.GetState(ctx, radio)
-}
-
-func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writeC chan<- Command) {
+func (b *Bus) Handle(ctx context.Context, readC <-chan dto.Command, writeC chan<- dto.Command) {
 	stateSub, stateUnsub := make(<-chan state.Message), func() {}
 	defer stateUnsub()
 
@@ -45,10 +34,10 @@ func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writ
 			} else {
 				writeCommand(ctx, writeC, newStatePartialCommand(state.GetPartial(&msg.State, msg.Changed)))
 			}
-		case dto := <-readC:
-			switch dto.Type {
-			case TypeStateSubscribe:
-				stateUUID, err := parseStateSubscribe(dto.Slug)
+		case c := <-readC:
+			switch c.Type {
+			case dto.CommandTypeStateSubscribe:
+				stateUUID, err := parseStateSubscribe(c.Slug)
 				if err != nil {
 					writeCommand(ctx, writeC, newErrorCommand(err))
 					continue
@@ -56,18 +45,18 @@ func (bs *BusServiceImpl) Handle(ctx context.Context, readC <-chan Command, writ
 
 				// Subscribe to state
 				stateUnsub()
-				stateSub, stateUnsub = bs.statePub.Subscribe(stateUUID)
+				stateSub, stateUnsub = b.statePub.Subscribe(stateUUID)
 
 				// Get state
-				state, err := bs.stateGet(ctx, stateUUID)
+				res, err := b.app.StateGet(ctx, &dto.StateRequest{UUID: stateUUID})
 				if err != nil {
 					writeCommand(ctx, writeC, newErrorCommand(err))
 					continue
 				}
 
 				// Write state
-				writeCommand(ctx, writeC, newStateCommand(state))
-			case TypeStateUnsubscribe:
+				writeCommand(ctx, writeC, newStateCommand(&res.State))
+			case dto.CommandTypeStateUnsubscribe:
 				// Unsubscribe from radio
 				stateUnsub()
 			}

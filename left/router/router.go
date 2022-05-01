@@ -8,9 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/core/bus"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/api"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 	"github.com/go-chi/chi/v5"
@@ -26,7 +24,7 @@ type Router struct {
 	r    chi.Router
 }
 
-func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, radioService radio.RadioService, busService bus.Service, presetStore preset.PresetStore) *Router {
+func New(app dto.App, bus dto.Bus, port string, p presenter.Presenter, fs fs.FS) *Router {
 	r := newRouter()
 	upgrader := newUpgrader()
 
@@ -42,28 +40,48 @@ func New(port string, p presenter.Presenter, fs fs.FS, hub radio.HubService, rad
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
-		r.Get("/ws", api.GetWS(upgrader, api.HandleWS(busService)))
+		// Build
+		r.Get("/build", p(api.GetBuild(app)))
 
-		r.Get("/radios", p(api.GetRadios(hub, radioService)))
-		r.Get("/radios/slim", p(api.GetRadiosSlim(hub, radioService)))
-		r.Post("/radios", p(api.PostRadios(hub)))
+		// Radios
+		r.Get("/radios", p(api.GetRadios(app)))
+		r.Post("/radios", p(api.PostRadios(app)))
 
+		getState := p(api.RequireUUID(api.GetState(app)))
+		patchState := p(api.RequireUUID(api.PatchState(app)))
+
+		// Radio
 		r.Route("/radio/{uuid}", func(r chi.Router) {
-			r.Get("/", p(api.RequireRadio(hub, api.GetRadio(radioService))))
-			r.Patch("/", p(api.RequireRadio(hub, api.PatchRadio(radioService))))
-			r.Post("/subscription", p(api.RequireRadio(hub, api.PostRadioSubscription(radioService))))
-			r.Post("/volume", p(api.RequireRadio(hub, api.PostRadioVolume(radioService))))
+			r.Get("/", p(api.RequireUUID(api.GetRadio(app))))
+			r.Get("/state", getState)
+			r.Patch("/state", patchState)
+			r.Post("/subscription", p(api.RequireUUID(api.PostRadioSubscription(app))))
+			r.Post("/volume", p(api.RequireUUID(api.PostRadioVolume(app))))
 		})
 
-		r.Get("/presets", p(api.GetPresets(presetStore)))
+		// States
+		r.Get("/states", p(api.GetStates(app)))
 
-		r.Get("/preset", p(api.GetPreset(presetStore)))
-		r.Post("/preset", p(api.PostPreset(presetStore)))
+		// State
+		r.Route("/state/{uuid}", func(r chi.Router) {
+			r.Get("/", getState)
+			r.Patch("/", patchState)
+		})
+
+		// Presets
+		r.Get("/presets", p(api.GetPresets(app)))
+
+		// Preset
+		r.Get("/preset", p(api.GetPreset(app)))
+		r.Post("/preset", p(api.PostPreset(app)))
+
+		// WS
+		r.Get("/ws", api.GetWS(upgrader, api.HandleWS(bus)))
 	})
 
 	mountFS(r, fs)
 
-	mountPresets(r, presetStore)
+	mountPresets(r, app)
 
 	return &Router{
 		port: port,

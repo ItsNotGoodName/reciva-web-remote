@@ -6,8 +6,10 @@ import (
 
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/app"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/background"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/bus"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/middleware"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
@@ -56,10 +58,20 @@ func main() {
 	runService := radio.NewRunService(middlewareAndPresetStore, middlewarePub, radioService, statePub)
 	createService := radio.NewCreateService(upnpsub.NewControlPoint(upnpsub.WithPort(cfg.CPort)), runService)
 	hubService := radio.NewHubService(createService)
-	busService := bus.New(hubService, radioService, statePub)
+
+	// App
+	app := app.New(
+		dto.Build{Version: version, Commit: commit, Date: date, BuiltBy: builtBy},
+		hubService,
+		middlewareAndPresetStore,
+		radioService,
+	)
+
+	// Bus
+	bus := bus.New(app, statePub)
 
 	// Left
-	router := router.New(cfg.PortStr, presenter.New(json.Render), web.FS(), hubService, radioService, busService, middlewareAndPresetStore)
+	router := router.New(app, bus, cfg.PortStr, presenter.New(json.Render), web.FS())
 
 	// Backgrounds
 	backgrounds := []background.Background{

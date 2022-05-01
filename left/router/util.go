@@ -10,19 +10,19 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/api"
 	"github.com/go-chi/chi/v5"
 )
 
 // mountPresets mounts all presets from the given preset store.
-func mountPresets(r chi.Router, presetStore preset.PresetStore) {
-	presets, err := presetStore.List(context.Background())
+func mountPresets(r chi.Router, app dto.App) {
+	res, err := app.PresetList(context.Background())
 	if err != nil {
 		log.Fatalln("router.mountPresets:", err)
 	}
 
-	for _, p := range presets {
+	for _, p := range res.Presets {
 		u, _ := url.Parse(p.URL)
 		route, url := u.Path, p.URL
 
@@ -30,7 +30,7 @@ func mountPresets(r chi.Router, presetStore preset.PresetStore) {
 			log.Fatalf("router.mountPresets: URL=%s route=%s: %s", url, route, err)
 		}
 
-		r.Get(route, api.GetPresetURL(presetStore, url))
+		r.Get(route, api.GetPresetURL(app, url))
 		log.Println("router.mountPresets: mounting url", url, "to", route)
 	}
 }

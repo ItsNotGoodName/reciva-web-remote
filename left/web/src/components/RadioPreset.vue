@@ -3,7 +3,7 @@ import DButton from "./DaisyUI/DButton.vue";
 
 defineProps({
   preset: {
-    type: Object as () => RadioPreset,
+    type: Object as () => StatePreset,
     required: true,
   },
   selected: {

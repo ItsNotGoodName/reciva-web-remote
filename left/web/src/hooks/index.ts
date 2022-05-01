@@ -1,4 +1,4 @@
 export { useWS } from "./ws"
-export { useSlimRadiosQuery, usePresetsQuery, usePresetQuery } from "./query"
-export { useRadioMutation, useRadioSubscriptionMutation, useRadioVolumeMutation, useRadiosDiscoverMutation, usePresetMutation } from "./mutation"
+export { useRadiosQuery, usePresetsQuery, usePresetQuery } from "./query"
+export { useStateMutation, useRadioSubscriptionMutation, useRadioVolumeMutation, useRadiosDiscoverMutation, usePresetMutation } from "./mutation"
 export { useRadioUUID } from "./uuid"

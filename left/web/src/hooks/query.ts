@@ -2,13 +2,13 @@ import { computed, Ref } from "vue"
 import { useQuery } from "vue-query";
 
 import { API_URL } from "../constants"
-import { KEY_SLIM_RADIOS, KEY_PRESETS, KEY_PRESET } from "./key";
+import { KEY_RADIOS, KEY_PRESETS, KEY_PRESET } from "./key";
 
-export function useSlimRadiosQuery() {
-  return useQuery(KEY_SLIM_RADIOS, () =>
-    fetch(API_URL + "/api/radios/slim")
+export function useRadiosQuery() {
+  return useQuery(KEY_RADIOS, () =>
+    fetch(API_URL + "/api/radios")
       .then((response) => response.json())
-      .then((json: APIResponse<SlimRadio[]>) => {
+      .then((json: APIResponse<State[]>) => {
         if (!json.ok) {
           throw new Error(json.error.message);
         }

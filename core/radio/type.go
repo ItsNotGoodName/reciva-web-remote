@@ -36,6 +36,7 @@ type (
 
 	Radio struct {
 		UUID         string                                // UUID of the radio.
+		Name         string                                // Name of the radio.
 		client       goupnp.ServiceClient                  // client is the SOAP client.
 		stateC       chan state.State                      // stateC is used to read the state.
 		subscription upnpsub.Subscription                  // subscription to the UPnP event publisher.
@@ -43,9 +44,10 @@ type (
 	}
 )
 
-func new(subscription upnpsub.Subscription, uuid string, client goupnp.ServiceClient) Radio {
+func new(uuid, name string, client goupnp.ServiceClient, subscription upnpsub.Subscription) Radio {
 	return Radio{
 		UUID:         uuid,
+		Name:         name,
 		client:       client,
 		stateC:       make(chan state.State),
 		subscription: subscription,

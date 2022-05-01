@@ -14,8 +14,8 @@ const props = defineProps({
   },
 });
 
-const { data, isFetching: dataIsFetching, isError: dataIsError, error: dataError, isSuccess: dataSuccess, refetch: dataRefetch } = usePresetQuery(computed(() => props.presetUrl))
-const { mutate, isLoading: mutateIsLoading, isError: mutateIsError, error: mutateError } = usePresetMutation()
+const { data, isFetching: dataIsFetching, isError: dataIsError, isSuccess: dataSuccess, refetch: dataRefetch } = usePresetQuery(computed(() => props.presetUrl))
+const { mutate, isLoading: mutateIsLoading, isError: mutateIsError, } = usePresetMutation()
 const loading = computed(() => dataIsFetching.value || mutateIsLoading.value)
 const form = reactive({
   url: '',

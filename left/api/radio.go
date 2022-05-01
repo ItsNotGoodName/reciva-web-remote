@@ -1,21 +1,13 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/radio"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
-	"github.com/go-chi/chi/v5"
 )
-
-type RadioRequester func(*http.Request, radio.Radio) presenter.Response
 
 func handleRadioError(err error) presenter.Response {
 	code := http.StatusInternalServerError
@@ -23,175 +15,68 @@ func handleRadioError(err error) presenter.Response {
 		code = http.StatusGone
 	} else if err == core.ErrRadioNotFound {
 		code = http.StatusNotFound
+	} else if err == core.ErrHubDiscovering {
+		code = http.StatusConflict
+	} else if err == core.ErrHubServiceClosed {
+		code = http.StatusServiceUnavailable
 	}
 
-	return presenter.Response{
-		Code:  code,
-		Error: err,
-	}
+	return presenter.Response{Code: code, Error: err}
 }
 
-func RequireRadio(hub radio.HubService, next RadioRequester) presenter.Requester {
+func GetRadios(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
-		uuid := chi.URLParam(r, "uuid")
-
-		// Get radio
-		rd, err := hub.Get(uuid)
+		res, err := app.RadioList()
 		if err != nil {
 			return handleRadioError(err)
 		}
 
-		return next(r, rd)
+		return presenter.Response{Code: http.StatusOK, Data: res.Radios}
 	}
 }
 
-func getRadios(ctx context.Context, hub radio.HubService, radioService radio.RadioService) []state.State {
-	// List radios
-	radios := hub.List()
-
-	// List states
-	states := make([]state.State, 0, len(radios))
-	for _, rd := range radios {
-		state, err := radioService.GetState(ctx, rd)
-		if err != nil {
-			log.Println("api.getRadios:", err)
-			continue
-		}
-		states = append(states, *state)
-	}
-
-	return states
-}
-
-func GetRadios(hub radio.HubService, radioService radio.RadioService) presenter.Requester {
-	return func(r *http.Request) presenter.Response {
-		return presenter.Response{
-			Code: http.StatusOK,
-			Data: getRadios(r.Context(), hub, radioService),
-		}
-	}
-}
-
-func GetRadiosSlim(hub radio.HubService, radioService radio.RadioService) presenter.Requester {
-	return func(r *http.Request) presenter.Response {
-		return presenter.Response{
-			Code: http.StatusOK,
-			Data: dto.NewSlimStates(getRadios(r.Context(), hub, radioService)),
-		}
-	}
-}
-
-func PostRadios(hub radio.HubService) presenter.Requester {
+func PostRadios(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		force, _ := strconv.ParseBool(r.URL.Query().Get("force"))
 
-		// Discover radios
-		count, err := hub.Discover(force)
-		if err != nil {
-			code := http.StatusInternalServerError
-			if err == core.ErrHubDiscovering {
-				code = http.StatusConflict
-			} else if err == core.ErrHubServiceClosed {
-				code = http.StatusServiceUnavailable
-			}
-			return presenter.Response{
-				Code:  code,
-				Error: err,
-			}
-		}
-
-		return presenter.Response{
-			Code: http.StatusOK,
-			Data: count,
-		}
-	}
-}
-
-func GetRadio(radioService radio.RadioService) RadioRequester {
-	return func(r *http.Request, rd radio.Radio) presenter.Response {
-		// Get state
-		state, err := radioService.GetState(r.Context(), rd)
+		res, err := app.RadioDiscover(&dto.RadioDiscoverRequest{Force: force})
 		if err != nil {
 			return handleRadioError(err)
 		}
 
-		return presenter.Response{
-			Code: http.StatusOK,
-			Data: state,
-		}
+		return presenter.Response{Code: http.StatusOK, Data: res.Count}
 	}
 }
 
-func PatchRadio(radioService radio.RadioService) RadioRequester {
-	type RadioPatch struct {
-		Power       *bool   `json:"power,omitempty"`
-		AudioSource *string `json:"audio_source,omitempty"`
-		Preset      *int    `json:"preset,omitempty"`
-		Volume      *int    `json:"volume,omitempty"`
-	}
-
-	return func(r *http.Request, rd radio.Radio) presenter.Response {
-		var radioPatch RadioPatch
-		if err := json.NewDecoder(r.Body).Decode(&radioPatch); err != nil {
-			return presenter.Response{
-				Code:  http.StatusBadRequest,
-				Error: err,
-			}
-		}
-
-		// Set radio power
-		if radioPatch.Power != nil {
-			if err := radioService.SetPower(r.Context(), rd, *radioPatch.Power); err != nil {
-				return handleRadioError(err)
-			}
-		}
-		// Set radio audio source
-		if radioPatch.AudioSource != nil {
-			if err := radioService.SetAudioSource(r.Context(), rd, *radioPatch.AudioSource); err != nil {
-				return handleRadioError(err)
-			}
-		}
-		// Set radio preset
-		if radioPatch.Preset != nil {
-			if err := radioService.PlayPreset(r.Context(), rd, *radioPatch.Preset); err != nil {
-				return handleRadioError(err)
-			}
-		}
-		// Set radio volume
-		if radioPatch.Volume != nil {
-			if err := radioService.SetVolume(r.Context(), rd, *radioPatch.Volume); err != nil {
-				return handleRadioError(err)
-			}
-		}
-
-		return presenter.Response{
-			Code: http.StatusOK,
-		}
-	}
-}
-
-func PostRadioSubscription(radioService radio.RadioService) RadioRequester {
-	return func(r *http.Request, rd radio.Radio) presenter.Response {
-		// Refresh radio subscription
-		if err := radioService.RefreshSubscription(r.Context(), rd); err != nil {
+func GetRadio(app dto.App) UUIDRequester {
+	return func(r *http.Request, uuid string) presenter.Response {
+		res, err := app.RadioGet(&dto.RadioRequest{UUID: uuid})
+		if err != nil {
 			return handleRadioError(err)
 		}
 
-		return presenter.Response{
-			Code: http.StatusOK,
-		}
+		return presenter.Response{Code: http.StatusOK, Data: res.Radio}
 	}
 }
 
-func PostRadioVolume(radioService radio.RadioService) RadioRequester {
-	return func(r *http.Request, rd radio.Radio) presenter.Response {
-		// Refresh radio volume
-		if err := radioService.RefreshVolume(r.Context(), rd); err != nil {
+func PostRadioSubscription(app dto.App) UUIDRequester {
+	return func(r *http.Request, uuid string) presenter.Response {
+		err := app.RadioRefreshSubscription(r.Context(), &dto.RadioRequest{UUID: uuid})
+		if err != nil {
 			return handleRadioError(err)
 		}
 
-		return presenter.Response{
-			Code: http.StatusOK,
+		return presenter.Response{Code: http.StatusOK}
+	}
+}
+
+func PostRadioVolume(app dto.App) UUIDRequester {
+	return func(r *http.Request, uuid string) presenter.Response {
+		err := app.RadioRefreshVolume(r.Context(), &dto.RadioRequest{UUID: uuid})
+		if err != nil {
+			return handleRadioError(err)
 		}
+
+		return presenter.Response{Code: http.StatusOK}
 	}
 }

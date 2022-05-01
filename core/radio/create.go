@@ -41,8 +41,11 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, c
 		return Radio{}, err
 	}
 
+	// Get name
+	name := upnp.GetName(client)
+
 	// Create state
-	s := state.New(uuid, upnp.GetName(client), upnp.GetModelName(client), upnp.GetModelNumber(client))
+	s := state.New(uuid, name, upnp.GetModelName(client), upnp.GetModelNumber(client))
 
 	// Get and set volume
 	volume, err := upnp.GetVolume(ctx, client)
@@ -91,7 +94,7 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, c
 	}
 
 	// Create and run radio
-	radio := new(sub, uuid, client)
+	radio := new(uuid, name, client, sub)
 	go cs.radioService.Run(dctx, radio, s)
 
 	return radio, nil

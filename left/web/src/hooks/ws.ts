@@ -3,14 +3,14 @@ import { computed, watch, shallowReactive, ref, Ref } from "vue";
 import { WS_URL } from "../constants"
 
 const subscribe = (ws: WebSocket, radioUUID: string) => {
-  ws.send(JSON.stringify({ type: "radio.subscribe", slug: radioUUID }));
+  ws.send(JSON.stringify({ type: "state.subscribe", slug: radioUUID }));
 }
 
 const unsubscribe = (ws: WebSocket) => {
-  ws.send(JSON.stringify({ type: "radio.unsubscribe" }));
+  ws.send(JSON.stringify({ type: "state.unsubscribe" }));
 }
 
-const initialRadio: Radio = {
+const initialState: State = {
   audio_source: "",
   audio_sources: [],
   is_muted: false,
@@ -30,13 +30,13 @@ const initialRadio: Radio = {
   volume: 0,
 }
 
-export function useWS(radioUUID: Ref<string>) {
+export function useWS(stateUUID: Ref<string>) {
   const connecting = ref(true);
   const connected = ref(false);
   const disconnected = ref(false);
-  const radio = shallowReactive<Radio>({ ...initialRadio });
-  const radioSelected = computed(() => radio.uuid != "")
-  const radioLoading = computed(() => (radio.uuid != radioUUID.value) || connecting.value)
+  const state = shallowReactive<State>({ ...initialState });
+  const stateSelected = computed(() => state.uuid != "")
+  const stateLoading = computed(() => (state.uuid != stateUUID.value) || connecting.value)
 
   const connect = () => {
     let ws = new WebSocket(WS_URL + "/api/ws");
@@ -47,15 +47,15 @@ export function useWS(radioUUID: Ref<string>) {
       connected.value = true;
       disconnected.value = false;
 
-      if (radioUUID.value) {
-        subscribe(ws, radioUUID.value);
+      if (stateUUID.value) {
+        subscribe(ws, stateUUID.value);
       }
     });
 
     ws.addEventListener("message", (event) => {
       let msg = JSON.parse(event.data) as { type: string, slug: any };
-      if (msg.type == "radio.partial" || msg.type == "radio") {
-        Object.assign(radio, msg.slug);
+      if (msg.type == "state.partial" || msg.type == "state") {
+        Object.assign(state, msg.slug);
       }
     });
 
@@ -63,7 +63,7 @@ export function useWS(radioUUID: Ref<string>) {
       connecting.value = false
       connected.value = false
       disconnected.value = true;
-      Object.assign(radio, initialRadio);
+      Object.assign(state, initialState);
     });
 
     return ws
@@ -80,18 +80,18 @@ export function useWS(radioUUID: Ref<string>) {
     return true
   }
 
-  watch(radioUUID, () => {
+  watch(stateUUID, () => {
     if (reconnect()) {
       return
     }
 
-    Object.assign(radio, initialRadio);
-    if (radioUUID.value) {
-      subscribe(ws, radioUUID.value)
+    Object.assign(state, initialState);
+    if (stateUUID.value) {
+      subscribe(ws, stateUUID.value)
     } else {
       unsubscribe(ws)
     }
   })
 
-  return { radio, radioLoading, radioSelected, connecting, connected, disconnected, reconnect }
+  return { state, stateLoading, stateSelected, connecting, connected, disconnected, reconnect }
 }

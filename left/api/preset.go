@@ -6,7 +6,6 @@ import (
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 )
 
@@ -16,83 +15,57 @@ func handlePresetError(err error) presenter.Response {
 		code = http.StatusNotFound
 	}
 
-	return presenter.Response{
-		Code:  code,
-		Error: err,
-	}
+	return presenter.Response{Code: code, Error: err}
 }
 
-func GetPreset(presetStore preset.PresetStore) presenter.Requester {
+func GetPreset(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		url := r.URL.Query().Get("url")
 
-		// Get preset
-		p, err := presetStore.Get(r.Context(), url)
+		res, err := app.PresetGet(r.Context(), &dto.PresetGetRequest{URL: url})
 		if err != nil {
 			return handlePresetError(err)
 		}
 
-		return presenter.Response{
-			Code: http.StatusOK,
-			Data: dto.NewPreset(p),
-		}
+		return presenter.Response{Code: http.StatusOK, Data: res.Preset}
 	}
 }
 
-func GetPresets(presetStore preset.PresetStore) presenter.Requester {
+func GetPresets(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
-		// List presets
-		p, err := presetStore.List(r.Context())
+		res, err := app.PresetList(r.Context())
 		if err != nil {
 			handlePresetError(err)
 		}
 
-		return presenter.Response{
-			Code: http.StatusOK,
-			Data: dto.NewPresets(p),
-		}
+		return presenter.Response{Code: http.StatusOK, Data: res.Presets}
 	}
 }
 
-func PostPreset(presetStore preset.PresetStore) presenter.Requester {
+func PostPreset(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
-		dtoPreset := &dto.Preset{}
-		err := json.NewDecoder(r.Body).Decode(dtoPreset)
+		preset := dto.Preset{}
+		err := json.NewDecoder(r.Body).Decode(&preset)
 		if err != nil {
-			return presenter.Response{
-				Code:  http.StatusBadRequest,
-				Error: err,
-			}
+			return presenter.Response{Code: http.StatusBadRequest, Error: err}
 		}
 
-		p, err := dto.ConvertPreset(dtoPreset)
-		if err != nil {
-			return presenter.Response{
-				Code:  http.StatusBadRequest,
-				Error: err,
-			}
-		}
-
-		// Update preset
-		if err := presetStore.Update(r.Context(), p); err != nil {
+		if err := app.PresetUpdate(r.Context(), &dto.PresetUpdateRequest{Preset: preset}); err != nil {
 			return handlePresetError(err)
 		}
 
-		return presenter.Response{
-			Code: http.StatusOK,
-		}
+		return presenter.Response{Code: http.StatusOK}
 	}
 }
 
-func GetPresetURL(presetStore preset.PresetStore, url string) http.HandlerFunc {
+func GetPresetURL(app dto.App, url string) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		// Get preset
-		dtoPreset, err := presetStore.Get(r.Context(), url)
+		res, err := app.PresetGet(r.Context(), &dto.PresetGetRequest{URL: url})
 		if err != nil {
 			http.Error(rw, err.Error(), handlePresetError(err).Code)
 			return
 		}
 
-		rw.Write([]byte(dto.NewPreset(dtoPreset).URLNew))
+		rw.Write([]byte(res.Preset.URLNew))
 	}
 }

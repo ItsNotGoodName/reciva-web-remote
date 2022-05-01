@@ -2,8 +2,8 @@
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
 defineProps({
-  radio: {
-    type: Object as () => Radio,
+  state: {
+    type: Object as () => State,
     required: true,
   },
   loading: {
@@ -18,9 +18,9 @@ defineProps({
     <d-dropdown-button :loading="loading" class="btn-primary w-full justify-start truncate">
       <div class="w-0">
         <span class="badge badge-info badge-lg rounded-md mr-2 ">
-          {{ radio.preset_number }}
+          {{ state.preset_number }}
         </span>
-        {{ radio.title_new ? radio.title_new : radio.title }}
+        {{ state.title_new ? state.title_new : state.title }}
       </div>
     </d-dropdown-button>
     <div tabindex="0" class="dropdown-content card card-compact w-full p-2 mt-2 shadow bg-primary text-primary-content">
@@ -28,27 +28,27 @@ defineProps({
         <h3 class="card-title">Stream Information</h3>
         <p>
           <span class="badge badge-info mr-2">Metadata</span>
-          {{ radio.metadata }}
+          {{ state.metadata }}
         </p>
         <p>
           <span class="badge badge-info mr-2">Title</span>
-          {{ radio.title }}
+          {{ state.title }}
         </p>
         <p>
           <span class="badge badge-info mr-2">New Title</span>
-          {{ radio.title_new }}
+          {{ state.title_new }}
         </p>
         <p>
           <span class="badge badge-info mr-2">Preset Number</span>
-          {{ radio.preset_number }}
+          {{ state.preset_number }}
         </p>
         <p>
           <span class="badge badge-info mr-2">URL</span>
-          <a class="link link-hover" :href="radio.url">{{ radio.url }}</a>
+          <a class="link link-hover" :href="state.url">{{ state.url }}</a>
         </p>
         <p>
           <span class="badge badge-info mr-2">New URL</span>
-          <a class="link link-hover" :href="radio.url_new">{{ radio.url_new }}</a>
+          <a class="link link-hover" :href="state.url_new">{{ state.url_new }}</a>
         </p>
       </div>
     </div>

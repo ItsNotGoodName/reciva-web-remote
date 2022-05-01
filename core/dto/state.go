@@ -2,20 +2,22 @@ package dto
 
 import "github.com/ItsNotGoodName/reciva-web-remote/core/state"
 
-type SlimState struct {
-	Name string `json:"name"`
+type StateRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func NewSlimState(s *state.State) SlimState {
-	return SlimState{Name: s.Name, UUID: s.UUID}
+type StateGetResponse struct {
+	State state.State `json:"state"`
 }
 
-func NewSlimStates(ss []state.State) []SlimState {
-	states := make([]SlimState, len(ss))
-	for i, s := range ss {
-		states[i] = NewSlimState(&s)
-	}
+type StateListResponse struct {
+	States []state.State `json:"states"`
+}
 
-	return states
+type StatePatchRequest struct {
+	UUID        string  `json:"uuid"`
+	Power       *bool   `json:"power,omitempty"`
+	AudioSource *string `json:"audio_source,omitempty"`
+	Preset      *int    `json:"preset,omitempty"`
+	Volume      *int    `json:"volume,omitempty"`
 }

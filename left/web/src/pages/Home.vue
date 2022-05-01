@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import { useRadioMutation } from "../hooks";
+import { useStateMutation } from "../hooks";
 
 import RadioPreset from "../components/RadioPreset.vue";
 
 defineProps({
-  radio: {
-    type: Object as () => Radio,
+  state: {
+    type: Object as () => State,
     required: true,
   },
 });
 
-const { mutate, isLoading, variables } = useRadioMutation()
+const { mutate, isLoading, variables } = useStateMutation()
 
 const loadingNumber = computed(() => {
   if (!isLoading.value) {
@@ -25,8 +25,8 @@ const loadingNumber = computed(() => {
 
 <template>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <radio-preset :key="p.number" v-for="p of radio.presets" :selected="radio.preset_number == p.number" :preset="p"
-      :loading="loadingNumber == p.number" @click="() => mutate({ uuid: radio.uuid, preset: p.number })" />
+    <radio-preset :key="p.number" v-for="p of state.presets" :selected="state.preset_number == p.number" :preset="p"
+      :loading="loadingNumber == p.number" @click="() => mutate({ uuid: state.uuid, preset: p.number })" />
   </div>
 </template>
 

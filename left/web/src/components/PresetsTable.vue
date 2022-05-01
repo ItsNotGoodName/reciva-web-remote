@@ -4,7 +4,7 @@ import { usePresetsQuery } from "../hooks";
 import DButton from "../components/DaisyUI/DButton.vue";
 import DErrorAlert from "../components/DaisyUI/DErrorAlert.vue";
 
-const { data, isLoading, isError, error } = usePresetsQuery();
+const { data, isLoading, isError } = usePresetsQuery();
 
 const emit = defineEmits<{
   (e: 'update:presetUrl', url: string): void

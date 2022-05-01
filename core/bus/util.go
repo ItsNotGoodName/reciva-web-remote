@@ -1,8 +1,12 @@
 package bus
 
-import "context"
+import (
+	"context"
 
-func writeCommand(ctx context.Context, writeC chan<- Command, command Command) {
+	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
+)
+
+func writeCommand(ctx context.Context, writeC chan<- dto.Command, command dto.Command) {
 	select {
 	case <-ctx.Done():
 		return

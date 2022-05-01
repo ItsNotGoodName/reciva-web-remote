@@ -6,8 +6,8 @@ import { STATUS_CONNECTING, STATUS_PLAYING, STATUS_STOPPED } from "../constants"
 import DButton from "./DaisyUI/DButton.vue";
 
 const props = defineProps({
-  radio: {
-    type: Object as () => Radio,
+  state: {
+    type: Object as () => State,
     required: true,
   },
   loading: {
@@ -17,7 +17,7 @@ const props = defineProps({
 });
 
 const status = computed(() => {
-  return props.radio.status ? props.radio.status : "Unknown"
+  return props.state.status ? props.state.status : "Unknown"
 })
 
 </script>

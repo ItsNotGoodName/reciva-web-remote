@@ -40,10 +40,10 @@ func (p *Preset) Update(ctx context.Context, preset *preset.Preset) error {
 func (p *Preset) Apply(s *state.State, c state.Changed) state.Changed {
 	ctx := context.Background()
 
-	return c.Merge(p.fragmentPresets(ctx, s, c)).Merge(p.fragmentTitleAndURL(ctx, s, c))
+	return c.Merge(p.applyPresets(ctx, s, c)).Merge(p.applyTitleAndURL(ctx, s, c))
 }
 
-func (p *Preset) fragmentPresets(ctx context.Context, s *state.State, c state.Changed) state.Changed {
+func (p *Preset) applyPresets(ctx context.Context, s *state.State, c state.Changed) state.Changed {
 	if !c.Is(state.ChangedPresets) {
 		return 0
 	}
@@ -62,7 +62,7 @@ func (p *Preset) fragmentPresets(ctx context.Context, s *state.State, c state.Ch
 	return s.SetPresets(presets)
 }
 
-func (p *Preset) fragmentTitleAndURL(ctx context.Context, s *state.State, c state.Changed) state.Changed {
+func (p *Preset) applyTitleAndURL(ctx context.Context, s *state.State, c state.Changed) state.Changed {
 	if !c.Is(state.ChangedURL) {
 		return 0
 	}

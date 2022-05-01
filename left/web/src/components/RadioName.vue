@@ -2,8 +2,8 @@
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
 
 defineProps({
-  radio: {
-    type: Object as () => Radio,
+  state: {
+    type: Object as () => State,
     required: true,
   },
 });
@@ -19,15 +19,15 @@ defineProps({
         <h3 class="card-title">Radio Information</h3>
         <p>
           <span class="badge badge-info mr-2">Name</span>
-          {{ radio.name }}
+          {{ state.name }}
         </p>
         <p>
           <span class="badge badge-info mr-2">Model Name</span>
-          {{ radio.model_name }}
+          {{ state.model_name }}
         </p>
         <p>
           <span class="badge badge-info mr-2">Model Number</span>
-          {{ radio.model_number }}
+          {{ state.model_number }}
         </p>
       </div>
     </div>

@@ -2,7 +2,7 @@
 import { computed, watch, ref } from "vue";
 
 import { PAGE_HOME, PAGE_EDIT } from "./constants";
-import { useWS, useSlimRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
+import { useWS, useRadiosQuery, useRadioSubscriptionMutation, useRadioUUID } from "./hooks"
 
 import RadioStatus from "./components/RadioStatus.vue";
 import RadioTitle from "./components/RadioTitle.vue";
@@ -23,8 +23,8 @@ const updatePage = (value: string) => {
 }
 
 const radioUUID = useRadioUUID();
-const { data: radios, isLoading: radiosLoading, error: radiosError, isError: radiosIsError, refetch: radiosRefetch, isFetching: radiosFetching } = useSlimRadiosQuery();
-const { radio, radioLoading, radioSelected, connecting, disconnected, reconnect } = useWS(radioUUID);
+const { data: radios, isLoading: radiosLoading, isError: radiosIsError, refetch: radiosRefetch, isFetching: radiosFetching } = useRadiosQuery();
+const { state, stateLoading, stateSelected, connecting, disconnected, reconnect } = useWS(radioUUID);
 const { mutate: radioSubscriptionMutate, isLoading: radioSubscriptionLoading } = useRadioSubscriptionMutation();
 const refreshing = computed(() => radiosFetching.value || radioSubscriptionLoading.value);
 
@@ -47,7 +47,7 @@ watch(radios, (newRadios) => {
 
 // Refresh current radio if selected and refetch radios
 const refresh = () => {
-  if (radioSelected.value) {
+  if (stateSelected.value) {
     radioSubscriptionMutate(radioUUID.value)
   }
 
@@ -59,12 +59,12 @@ const refresh = () => {
   <div class="h-screen">
     <!-- Top Navbar -->
     <div class="navbar bg-base-200 fixed top-0 flex gap-2 z-50 border-b-2 border-b-base-300">
-      <radio-status :radio="radio" :loading="radioLoading" />
-      <radio-title class="flex-grow w-full" :radio="radio" :loading="radioLoading" />
+      <radio-status :state="state" :loading="stateLoading" />
+      <radio-title class="flex-grow w-full" :state="state" :loading="stateLoading" />
     </div>
     <div class="container mx-auto px-4 pt-20 pb-36">
       <!-- Home Page -->
-      <home-page v-if="page == PAGE_HOME" :radio="radio" />
+      <home-page v-if="page == PAGE_HOME" :state="state" />
       <!-- Edit Page -->
       <edit-page v-else-if="page == PAGE_EDIT" />
     </div>
@@ -108,11 +108,11 @@ const refresh = () => {
           </div>
         </div>
         <!--- Radio Toolbar -->
-        <div v-if="radioSelected" class="flex-auto flex gap-2 ">
-          <radio-power class="flex-auto" :radio="radio" />
-          <radio-volume :radio="radio" />
-          <radio-audio-source :radio="radio" />
-          <radio-name :radio="radio" />
+        <div v-if="stateSelected" class="flex-auto flex gap-2 ">
+          <radio-power class="flex-auto" :state="state" />
+          <radio-volume :state="state" />
+          <radio-audio-source :state="state" />
+          <radio-name :state="state" />
         </div>
       </div>
     </div>

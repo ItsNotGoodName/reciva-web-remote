@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { PAGE_HOME, PAGE_EDIT } from "../constants"
+import { computed } from "vue"
+
+import { PAGE_HOME, PAGE_EDIT, GITHUB_URL } from "../constants"
 import { useBuildQuery } from "../hooks";
 
 import DDropdownButton from './DaisyUI/DDropdownButton.vue';
@@ -14,6 +16,12 @@ defineProps({
 });
 
 const { data, isLoading } = useBuildQuery();
+const versionUrl = computed(() => {
+  if (data.value && data.value.version != 'dev') {
+    return `${GITHUB_URL}/releases/tag/${data.value.version}`;
+  }
+  return '#'
+})
 </script>
 
 <template>
@@ -33,7 +41,7 @@ const { data, isLoading } = useBuildQuery();
         </a>
       </li>
       <li>
-        <a href="https://github.com/ItsNotGoodName/reciva-web-remote">
+        <a :href="GITHUB_URL">
           <v-icon name="fa-github" />Source Code
         </a>
       </li>
@@ -42,8 +50,8 @@ const { data, isLoading } = useBuildQuery();
           <v-icon name="fa-spinner" animation="spin" />Version
         </a>
       </li>
-      <li v-else-if="data && data.version != 'dev'">
-        <a :href="'https://github.com/ItsNotGoodName/reciva-web-remote/releases/tag/' + data.version">
+      <li v-else-if="data">
+        <a :href="versionUrl">
           <v-icon name="fa-tag" />
           {{ data.version }}
         </a>

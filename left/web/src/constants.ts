@@ -9,7 +9,7 @@ export const WS_URL = import.meta.env.VITE_WS_URL
     }
     return "wss://" + window.location.host;
   })();
-
+export const GITHUB_URL = import.meta.env.VITE_GITHUB_URL
 
 export const PAGE_HOME = "";
 export const PAGE_EDIT = "edit";

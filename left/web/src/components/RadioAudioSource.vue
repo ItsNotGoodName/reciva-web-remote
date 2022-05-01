@@ -16,7 +16,7 @@ defineProps({
 const { mutate, isLoading, variables } = useStateMutation()
 const loadingAudioSource = computed(() => {
   if (!isLoading.value) {
-    return undefined;
+    return null;
   }
 
   return variables.value?.audio_source

@@ -16,7 +16,7 @@ const { mutate, isLoading, variables } = useStateMutation()
 
 const loadingNumber = computed(() => {
   if (!isLoading.value) {
-    return undefined;
+    return null;
   }
 
   return variables.value?.preset

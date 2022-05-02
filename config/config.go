@@ -40,7 +40,7 @@ func NewConfig(options ...func(*Config)) *Config {
 func WithFlag(c *Config) {
 	// Add flags
 	config := flag.String("config", c.ConfigFile, "Path to config.")
-	cport := flag.Int("cport", c.CPort, "Listen port for UPnP notify server.")
+	cport := flag.Int("cport", c.CPort, "Listen port for UPnP control point.")
 	port := flag.Int("port", c.Port, "Listen port for web server.")
 	showInfo := flag.Bool("info", c.ShowInfo, "Show build information about this binary.")
 	ShowVersion := flag.Bool("version", c.ShowVersion, "Show version.")

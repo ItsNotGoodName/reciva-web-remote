@@ -52,8 +52,8 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 	discover := func() (int, error) {
 		log.Println("radio.HubService.Background: Discovering radios...")
 
-		// Discover clients
-		clients, _, err := upnp.Discover()
+		// Discover radios
+		recivas, err := upnp.Discover()
 		if err != nil {
 			return 0, err
 		}
@@ -64,7 +64,7 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 		// Create radios concurrently
 		radioC := make(chan Radio)
 		var wg sync.WaitGroup
-		for i := range clients {
+		for i := range recivas {
 			wg.Add(1)
 			go (func(idx int) {
 				// Timeout for creating radio
@@ -72,7 +72,7 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 				defer cancel()
 
 				// Create radio
-				radio, err := hs.radioService.Create(sctx, newCtx, clients[idx])
+				radio, err := hs.radioService.Create(sctx, newCtx, recivas[idx])
 				if err != nil {
 					fmt.Println("radio.HubService.Background:", err)
 				} else {

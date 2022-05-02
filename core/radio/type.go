@@ -6,7 +6,7 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
-	"github.com/huin/goupnp"
+	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
 )
 
 type (
@@ -17,7 +17,7 @@ type (
 	}
 
 	CreateService interface {
-		Create(ctx context.Context, dctx context.Context, client goupnp.ServiceClient) (Radio, error)
+		Create(ctx context.Context, dctx context.Context, reciva upnp.Reciva) (Radio, error)
 	}
 
 	RunService interface {
@@ -37,18 +37,18 @@ type (
 	Radio struct {
 		UUID         string                                // UUID of the radio.
 		Name         string                                // Name of the radio.
-		client       goupnp.ServiceClient                  // client is the SOAP client.
+		reciva       upnp.Reciva                           // reciva is the UPnP client.
 		stateC       chan state.State                      // stateC is used to read the state.
 		subscription upnpsub.Subscription                  // subscription to the UPnP event publisher.
 		updateFnC    chan func(*state.State) state.Changed // updateFnC is used to update state.
 	}
 )
 
-func new(uuid, name string, client goupnp.ServiceClient, subscription upnpsub.Subscription) Radio {
+func new(uuid, name string, reciva upnp.Reciva, subscription upnpsub.Subscription) Radio {
 	return Radio{
 		UUID:         uuid,
 		Name:         name,
-		client:       client,
+		reciva:       reciva,
 		stateC:       make(chan state.State),
 		subscription: subscription,
 		updateFnC:    make(chan func(*state.State) state.Changed),

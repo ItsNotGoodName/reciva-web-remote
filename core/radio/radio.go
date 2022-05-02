@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
 )
 
 type RadioServiceImpl struct{}
@@ -14,20 +13,20 @@ func NewRadioService() *RadioServiceImpl {
 	return &RadioServiceImpl{}
 }
 
-func (rs *RadioServiceImpl) SetVolume(ctx context.Context, radio Radio, volume int) error {
+func (rs *RadioServiceImpl) SetVolume(ctx context.Context, r Radio, volume int) error {
 	volume = state.NormalizeVolume(volume)
 
-	if err := upnp.SetVolume(ctx, radio.client, volume); err != nil {
+	if err := r.reciva.SetVolume(ctx, volume); err != nil {
 		return err
 	}
 
-	return radio.update(context.Background(), func(s *state.State) state.Changed {
+	return r.update(context.Background(), func(s *state.State) state.Changed {
 		return s.SetVolume(volume)
 	})
 }
 
-func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset int) error {
-	s, err := rs.GetState(ctx, radio)
+func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, r Radio, preset int) error {
+	s, err := rs.GetState(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -41,40 +40,40 @@ func (rs *RadioServiceImpl) PlayPreset(ctx context.Context, radio Radio, preset 
 	}
 
 	if !s.Power {
-		if err := upnp.SetPowerState(ctx, radio.client, true); err != nil {
+		if err := r.reciva.SetPowerState(ctx, true); err != nil {
 			return err
 		}
 	}
 
-	return upnp.PlayPreset(ctx, radio.client, preset)
+	return r.reciva.PlayPreset(ctx, preset)
 }
 
-func (rs *RadioServiceImpl) SetPower(ctx context.Context, radio Radio, power bool) error {
-	return upnp.SetPowerState(ctx, radio.client, power)
+func (rs *RadioServiceImpl) SetPower(ctx context.Context, r Radio, power bool) error {
+	return r.reciva.SetPowerState(ctx, power)
 }
 
-func (rs *RadioServiceImpl) RefreshVolume(ctx context.Context, radio Radio) error {
-	volume, err := upnp.GetVolume(ctx, radio.client)
+func (rs *RadioServiceImpl) RefreshVolume(ctx context.Context, r Radio) error {
+	volume, err := r.reciva.GetVolume(ctx)
 	if err != nil {
 		return err
 	}
 
-	return radio.update(ctx, func(s *state.State) state.Changed {
+	return r.update(ctx, func(s *state.State) state.Changed {
 		return s.SetVolume(volume)
 	})
 }
 
-func (rs *RadioServiceImpl) RefreshSubscription(ctx context.Context, radio Radio) error {
-	radio.subscription.Renew()
+func (rs *RadioServiceImpl) RefreshSubscription(ctx context.Context, r Radio) error {
+	r.subscription.Renew()
 	return nil
 }
 
-func (rs *RadioServiceImpl) GetState(ctx context.Context, radio Radio) (*state.State, error) {
-	return radio.state(ctx)
+func (rs *RadioServiceImpl) GetState(ctx context.Context, r Radio) (*state.State, error) {
+	return r.state(ctx)
 }
 
-func (rs *RadioServiceImpl) SetAudioSource(ctx context.Context, radio Radio, audioSource string) error {
-	s, err := rs.GetState(ctx, radio)
+func (rs *RadioServiceImpl) SetAudioSource(ctx context.Context, r Radio, audioSource string) error {
+	s, err := rs.GetState(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -83,5 +82,5 @@ func (rs *RadioServiceImpl) SetAudioSource(ctx context.Context, radio Radio, aud
 		return err
 	}
 
-	return upnp.SetAudioSource(ctx, radio.client, audioSource)
+	return r.reciva.SetAudioSource(ctx, audioSource)
 }

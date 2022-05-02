@@ -8,7 +8,6 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
-	"github.com/huin/goupnp"
 )
 
 type CreateServiceImpl struct {
@@ -32,28 +31,28 @@ func (cs *CreateServiceImpl) Background(ctx context.Context, doneC chan<- struct
 	doneC <- struct{}{}
 }
 
-func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, client goupnp.ServiceClient) (Radio, error) {
+func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, reciva upnp.Reciva) (Radio, error) {
 	// Get UUID
-	uuid, err := upnp.GetUUID(client)
+	uuid, err := reciva.GetUUID()
 	if err != nil {
 		return Radio{}, err
 	}
 
 	// Get name
-	name := upnp.GetName(client)
+	name := reciva.GetName()
 
 	// Create state
-	s := state.New(uuid, name, upnp.GetModelName(client), upnp.GetModelNumber(client))
+	s := state.New(uuid, name, reciva.GetModelName(), reciva.GetModelNumber())
 
 	// Get and set volume
-	volume, err := upnp.GetVolume(ctx, client)
+	volume, err := reciva.GetVolume(ctx)
 	if err != nil {
 		return Radio{}, err
 	}
 	s.SetVolume(volume)
 
 	// Get and parse presets count
-	presetsCount, err := upnp.GetNumberOfPresets(ctx, client)
+	presetsCount, err := reciva.GetNumberOfPresets(ctx)
 	if err != nil {
 		return Radio{}, err
 	}
@@ -64,7 +63,7 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, c
 	// Get and set presets
 	var presets []state.Preset
 	for i := 1; i <= presetsCount; i++ {
-		p, err := upnp.GetPreset(ctx, client, i)
+		p, err := reciva.GetPreset(ctx, i)
 		if err != nil {
 			return Radio{}, err
 		}
@@ -74,7 +73,7 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, c
 	s.SetPresets(presets)
 
 	// Get audio sources
-	audioSources, err := upnp.GetAudioSources(ctx, client)
+	audioSources, err := reciva.GetAudioSources(ctx)
 	if err != nil {
 		return Radio{}, err
 	}
@@ -85,14 +84,14 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, c
 	time.Sleep(time.Second)
 
 	// Create subscription
-	eventURL := upnp.GetEventURL(client)
+	eventURL := reciva.GetEventURL()
 	sub, err := cs.controlPoint.Subscribe(dctx, &eventURL)
 	if err != nil {
 		return Radio{}, err
 	}
 
 	// Create and run radio
-	radio := new(uuid, name, client, sub)
+	radio := new(uuid, name, reciva, sub)
 	go cs.radioService.Run(dctx, radio, s)
 
 	return radio, nil

@@ -32,16 +32,16 @@ func main() {
 	go background.Run(ctx, []background.Background{createService})
 
 	// Discover radios
-	clients, _, err := upnp.Discover()
+	recivas, err := upnp.Discover()
 	if err != nil {
 		log.Fatalln("failed to discover radios:", err)
 	}
-	if len(clients) == 0 {
+	if len(recivas) == 0 {
 		log.Fatalln("no radios found")
 	}
 
 	// Create radio
-	radio, err := createService.Create(ctx, ctx, clients[0])
+	radio, err := createService.Create(ctx, ctx, recivas[0])
 	if err != nil {
 		log.Fatalln("failed to create radio:", err)
 	}

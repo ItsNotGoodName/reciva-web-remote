@@ -6,7 +6,7 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/itsnotgoodname/reciva-web-remote)](./go.mod)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ItsNotGoodName/reciva-web-remote)](https://goreportcard.com/report/github.com/ItsNotGoodName/reciva-web-remote)
 
-Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via REST api or web browser.
+Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.
 
 ![Desktop Demo](/assets/desktop-demo.png)
 
@@ -17,7 +17,7 @@ Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent,
 - Change radio volume
 - Change radio audio source (unreliable)
 - Play radio presets (make sure audio source is `Internet radio` or else it will hang)
-- [Host playlists](###host-playlists) for radios
+- [Host playlists](#host-playlists) for radios
 
 ## Running
 
@@ -108,7 +108,7 @@ The contents of the playlists can be changed in the web interface.
 }
 ```
 
-### Routes
+### Endpoints
 
 | Method | Endpoint                       | Description               |
 | ------ | ------------------------------ | ------------------------- |
@@ -126,7 +126,7 @@ The contents of the playlists can be changed in the web interface.
 | GET    | /api/states                    | List States               |
 | GET    | /api/state/{uuid}              | Get State                 |
 | PATCH  | /api/state/{uuid}              | Modify State              |
-| WS     | /api/ws                        | Websocket                 |
+| WS     | /api/ws                        | WebSocket                 |
 
 ## Build
 
@@ -173,5 +173,4 @@ make dev-backend
 - Add volume slider in web interface
 - Make [Podman](https://podman.io/) an optional requirement for Make
 - Discover radios on a timer
-- Better error handling in `upnp` package when using `retry` package to prevent spamming when there is a UPnP error (ex. invalid action)
 - Add events (ex. radios discovered, presets changed)

@@ -68,7 +68,7 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 			wg.Add(1)
 			go (func(idx int) {
 				// Timeout for creating radio
-				sctx, cancel := context.WithTimeout(ctx, 45*time.Second)
+				sctx, cancel := context.WithTimeout(ctx, 25*time.Second)
 				defer cancel()
 
 				// Create radio

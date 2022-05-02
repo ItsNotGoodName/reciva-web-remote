@@ -20,6 +20,8 @@ builds:
         goarch: arm64
       - goos: darwin
         goarch: 386
+    ldflags:
+      - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser -X main.releaseURL={{.ReleaseURL}} -X main.summary={{.Summary}}"
 archives:
   - format_overrides:
       - goos: windows

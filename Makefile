@@ -7,6 +7,8 @@ npm:
 
 build: build-frontend build-backend
 
+snapshot: build-frontend build-snapshot
+
 login:
 	$(NPM_PREFIX) bash
 
@@ -22,5 +24,5 @@ build-frontend:
 build-backend:
 	go build -o bin/
 
-snapshot:
+build-snapshot:
 	goreleaser release --snapshot --rm-dist

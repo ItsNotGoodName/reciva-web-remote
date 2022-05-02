@@ -22,10 +22,12 @@ import (
 )
 
 var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
-	builtBy = "unknown"
+	version    = "dev"
+	commit     = ""
+	date       = ""
+	builtBy    = "unknown"
+	releaseURL = ""
+	summary    = ""
 )
 
 func main() {
@@ -40,7 +42,7 @@ func main() {
 
 	// Show info and exit
 	if cfg.ShowInfo {
-		fmt.Printf("Version: %s\nCommit: %s\nDate: %s\nBuilt by: %s\n", version, commit, date, builtBy)
+		fmt.Printf("Version: %s\nCommit: %s\nDate: %s\nBuilt by: %s\nRelease url: %s\nSummary: %s\n", version, commit, date, builtBy, releaseURL, summary)
 		return
 	}
 
@@ -61,7 +63,7 @@ func main() {
 
 	// App
 	app := app.New(
-		dto.Build{Version: version, Commit: commit, Date: date, BuiltBy: builtBy},
+		dto.Build{Version: version, Commit: commit, Date: date, BuiltBy: builtBy, ReleaseURL: releaseURL, Summary: summary},
 		hubService,
 		middlewareAndPresetStore,
 		radioService,

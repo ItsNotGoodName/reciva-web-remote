@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed } from "vue"
-
 import { PAGE_HOME, PAGE_EDIT, GITHUB_URL } from "../constants"
 import { useBuildQuery } from "../hooks";
 
@@ -16,12 +14,6 @@ defineProps({
 });
 
 const { data, isLoading } = useBuildQuery();
-const versionUrl = computed(() => {
-  if (data.value && data.value.version != 'dev') {
-    return `${GITHUB_URL}/releases/tag/v${data.value.version}`;
-  }
-  return '#'
-})
 </script>
 
 <template>
@@ -29,7 +21,7 @@ const versionUrl = computed(() => {
     <d-dropdown-button :class="{ 'btn-success': page != PAGE_HOME }">
       <v-icon name="fa-bars" />
     </d-dropdown-button>
-    <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box w-52">
+    <ul tabindex="0" class="menu menu-compact dropdown-content mb-2 p-2 shadow bg-base-200 rounded-box min-w-max w-52">
       <li>
         <a :class="{ 'active': page == PAGE_HOME }" @click="emit('update:page', PAGE_HOME)">
           <v-icon name="fa-home" />Home Page
@@ -51,9 +43,9 @@ const versionUrl = computed(() => {
         </a>
       </li>
       <li v-else-if="data">
-        <a :href="versionUrl">
+        <a :href="data.release_url ? data.release_url : '#'">
           <v-icon name="fa-tag" />
-          v{{ data.version }}
+          {{ data.summary ? data.summary : data.version }}
         </a>
       </li>
     </ul>

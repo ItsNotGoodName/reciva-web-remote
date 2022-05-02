@@ -13,10 +13,6 @@ func (s *State) SetAudioSource(audioSource string) (Changed, error) {
 	return ChangedAudioSource, nil
 }
 
-func (s *State) SetAudioSources(audioSources []string) {
-	s.AudioSources = audioSources
-}
-
 func (s *State) SetIsMuted(isMuted bool) Changed {
 	if s.IsMuted == isMuted {
 		return 0

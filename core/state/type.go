@@ -109,13 +109,14 @@ func NewPreset(number int, title, url string) Preset {
 	}
 }
 
-func New(uuid, name, modelName, modelNumber string) State {
+func New(uuid, name, modelName, modelNumber string, audioSources []string) State {
 	return State{
-		ModelName:   modelName,
-		ModelNumber: modelNumber,
-		Name:        name,
-		Status:      StatusUnknown,
-		UUID:        uuid,
+		AudioSources: audioSources,
+		ModelName:    modelName,
+		ModelNumber:  modelNumber,
+		Name:         name,
+		Status:       StatusUnknown,
+		UUID:         uuid,
 	}
 }
 

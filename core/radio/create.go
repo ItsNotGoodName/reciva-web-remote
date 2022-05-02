@@ -41,8 +41,14 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, r
 	// Get name
 	name := reciva.GetName()
 
+	// Get audio sources
+	audioSources, err := reciva.GetAudioSources(ctx)
+	if err != nil {
+		return Radio{}, err
+	}
+
 	// Create state
-	s := state.New(uuid, name, reciva.GetModelName(), reciva.GetModelNumber())
+	s := state.New(uuid, name, reciva.GetModelName(), reciva.GetModelNumber(), audioSources)
 
 	// Get and set volume
 	volume, err := reciva.GetVolume(ctx)
@@ -71,13 +77,6 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, r
 		presets = append(presets, state.NewPreset(i, p.Name, p.URL))
 	}
 	s.SetPresets(presets)
-
-	// Get audio sources
-	audioSources, err := reciva.GetAudioSources(ctx)
-	if err != nil {
-		return Radio{}, err
-	}
-	s.SetAudioSources(audioSources)
 
 	// Back off for a second to prevent subscription from failing
 	// TODO: Find a better way to do this

@@ -16,6 +16,9 @@ func Run(ctx context.Context, backgrounds []Background) {
 		running++
 	}
 
+	// Wait for context
+	<-ctx.Done()
+
 	// Wait for backgrounds
 	for i := 0; i < running; i++ {
 		<-done

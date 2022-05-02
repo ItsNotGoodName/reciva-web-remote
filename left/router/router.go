@@ -98,6 +98,5 @@ func (r *Router) Start() {
 
 func (r *Router) Background(ctx context.Context, doneC chan<- struct{}) {
 	go r.Start()
-	<-ctx.Done()
 	doneC <- struct{}{}
 }

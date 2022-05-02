@@ -29,8 +29,6 @@ func (cs *CreateServiceImpl) Background(ctx context.Context, doneC chan<- struct
 			log.Fatalln("Failed to start control point:", err)
 		}
 	}()
-
-	<-ctx.Done()
 	doneC <- struct{}{}
 }
 

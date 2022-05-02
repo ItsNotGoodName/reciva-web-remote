@@ -16,8 +16,8 @@ type HubServiceImpl struct {
 	doneC        chan struct{}
 	radioService CreateService
 
-	radioMapMu sync.RWMutex
-	radiosMap  map[string]Radio
+	radiosMapMu sync.RWMutex
+	radiosMap   map[string]Radio
 }
 
 type discoverResponse struct {
@@ -100,10 +100,10 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 		}
 
 		// Set radios map
-		hs.radioMapMu.Lock()
+		hs.radiosMapMu.Lock()
 		oldRadiosMap := hs.radiosMap
 		hs.radiosMap = radiosMap
-		hs.radioMapMu.Unlock()
+		hs.radiosMapMu.Unlock()
 
 		// Close old radios
 		oldCancel()
@@ -131,11 +131,11 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 
 			// Close radios
 			oldCancel()
-			hs.radioMapMu.RLock()
+			hs.radiosMapMu.RLock()
 			for _, r := range hs.radiosMap {
 				<-r.Done()
 			}
-			hs.radioMapMu.RUnlock()
+			hs.radiosMapMu.RUnlock()
 
 			doneC <- struct{}{}
 			return
@@ -150,9 +150,9 @@ func (hs *HubServiceImpl) Background(ctx context.Context, doneC chan<- struct{})
 }
 
 func (hs *HubServiceImpl) Get(uuid string) (Radio, error) {
-	hs.radioMapMu.RLock()
+	hs.radiosMapMu.RLock()
 	r, ok := hs.radiosMap[uuid]
-	hs.radioMapMu.RUnlock()
+	hs.radiosMapMu.RUnlock()
 	if !ok {
 		return Radio{}, core.ErrRadioNotFound
 	}
@@ -161,12 +161,12 @@ func (hs *HubServiceImpl) Get(uuid string) (Radio, error) {
 }
 
 func (hs *HubServiceImpl) List() []Radio {
-	hs.radioMapMu.RLock()
+	hs.radiosMapMu.RLock()
 	var radios []Radio
 	for _, r := range hs.radiosMap {
 		radios = append(radios, r)
 	}
-	hs.radioMapMu.RUnlock()
+	hs.radiosMapMu.RUnlock()
 
 	return radios
 }

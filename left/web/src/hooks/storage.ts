@@ -1,6 +1,6 @@
 import { watch, ref } from "vue"
 
-export function useRadioUUID() {
+export function useRadioUUIDStorage() {
   const radioUUID = ref(localStorage.getItem("lastRadioUUID") || "")
 
   watch(radioUUID, (newRadioUUID) => {

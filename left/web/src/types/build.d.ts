@@ -1,4 +1,4 @@
-declare interface Build {
+declare type Build = {
   version: string
   commit: string
   date: string

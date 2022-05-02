@@ -1,4 +1,4 @@
-declare interface State {
+declare type State = {
   audio_source: string
   audio_sources: string[]
   is_muted: boolean
@@ -18,7 +18,7 @@ declare interface State {
   volume: number
 }
 
-declare interface StatePreset {
+declare type StatePreset = {
   number: number
   title: string
   title_new: string

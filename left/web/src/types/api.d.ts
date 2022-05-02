@@ -1,17 +1,17 @@
 declare type APIResponse<T> = APIData<T> | APIError;
 
-interface APIData<T> {
+type APIData<T> = {
   ok: true
   data: T
 }
-interface APIError {
+type APIError = {
   ok: false
   error: {
     message: string
   }
 }
 
-declare interface RadioMutation {
+declare type RadioMutation = {
   uuid: string,
   power?: boolean
   audio_source?: string
@@ -19,11 +19,11 @@ declare interface RadioMutation {
   volume?: number
 }
 
-declare interface RadiosDiscoverMutation {
+declare type RadiosDiscoverMutation = {
   force?: boolean
 }
 
-declare interface PresetMutation {
+declare type PresetMutation = {
   title_new: string,
   url: string,
   url_new: string,

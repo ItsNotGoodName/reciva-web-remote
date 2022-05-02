@@ -1,4 +1,4 @@
-declare interface Radio {
+declare type Radio = {
   name: string
   uuid: string
 }

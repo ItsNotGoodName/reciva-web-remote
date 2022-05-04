@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -167,6 +168,11 @@ func (hs *HubServiceImpl) List() []Radio {
 		radios = append(radios, r)
 	}
 	hs.radiosMapMu.RUnlock()
+
+	// Sort radios
+	sort.Slice(radios, func(i, j int) bool {
+		return radios[i].UUID < radios[j].UUID
+	})
 
 	return radios
 }

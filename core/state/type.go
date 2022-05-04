@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"fmt"
 	"math"
 )
@@ -44,7 +45,7 @@ type (
 	}
 
 	Middleware interface {
-		Apply(*State, Changed) Changed
+		Apply(context.Context, *State, Changed) Changed
 	}
 
 	MiddlewarePub interface {

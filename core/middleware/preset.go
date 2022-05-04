@@ -37,9 +37,7 @@ func (p *Preset) Update(ctx context.Context, preset *preset.Preset) error {
 	return nil
 }
 
-func (p *Preset) Apply(s *state.State, c state.Changed) state.Changed {
-	ctx := context.Background()
-
+func (p *Preset) Apply(ctx context.Context, s *state.State, c state.Changed) state.Changed {
 	return c.Merge(p.applyPresets(ctx, s, c)).Merge(p.applyTitleAndURL(ctx, s, c))
 }
 

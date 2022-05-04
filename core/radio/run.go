@@ -26,7 +26,7 @@ func NewRunService(middleware state.Middleware, middlewarePub state.MiddlewarePu
 
 func (rs *RunServiceImpl) Run(dctx context.Context, radio Radio, s state.State) {
 	handle := func(c state.Changed) {
-		c = c.Merge(rs.middleware.Apply(&s, c))
+		c = c.Merge(rs.middleware.Apply(dctx, &s, c))
 		if c != 0 {
 			rs.statePub.Publish(s, c)
 		}

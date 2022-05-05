@@ -46,8 +46,11 @@ func (p *Preset) applyPresets(ctx context.Context, s *state.State, c state.Chang
 		return 0
 	}
 
-	presets := s.Presets
-	for i := range presets {
+	presets := make([]state.Preset, 0, len(s.Presets))
+
+	for i := range s.Presets {
+		presets = append(presets, s.Presets[i])
+
 		p, err := p.store.Get(ctx, presets[i].URL)
 		if err != nil {
 			continue

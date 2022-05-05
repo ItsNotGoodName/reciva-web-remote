@@ -27,7 +27,7 @@ var (
 	date       = ""
 	builtBy    = "unknown"
 	releaseURL = ""
-	summary    = ""
+	summary    = "dev"
 )
 
 func main() {

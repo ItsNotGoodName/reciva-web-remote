@@ -45,7 +45,7 @@ const { data, isLoading } = useBuildQuery();
       <li v-else-if="data">
         <a :href="data.release_url ? data.release_url : '#'">
           <v-icon name="fa-tag" />
-          {{ data.summary ? data.summary : data.version }}
+          {{ data.summary }}
         </a>
       </li>
     </ul>

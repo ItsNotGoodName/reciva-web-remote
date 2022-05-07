@@ -32,7 +32,7 @@ export function usePresetsQuery() {
 
 export function usePresetQuery(url: Ref<string>) {
   return useQuery([KEY_PRESET, url], () =>
-    fetch(API_URL + "/api/preset?url=" + url.value)
+    fetch(API_URL + "/api/presets/" + url.value)
       .then((response) => response.json())
       .then((json: APIResponse<Preset>) => {
         if (!json.ok) {

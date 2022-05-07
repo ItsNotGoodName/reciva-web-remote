@@ -7,7 +7,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 )
 
-func GetBuild(app dto.App) presenter.Requester {
+func Build(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		return presenter.Response{Code: http.StatusOK, Data: app.Build()}
 	}

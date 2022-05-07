@@ -7,6 +7,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/core"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/dto"
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
+	"github.com/go-chi/chi/v5"
 )
 
 func handlePresetError(err error) presenter.Response {
@@ -18,9 +19,9 @@ func handlePresetError(err error) presenter.Response {
 	return presenter.Response{Code: code, Error: err}
 }
 
-func GetPreset(app dto.App) presenter.Requester {
+func PresetGet(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
-		url := r.URL.Query().Get("url")
+		url := chi.URLParam(r, "*")
 
 		res, err := app.PresetGet(r.Context(), &dto.PresetGetRequest{URL: url})
 		if err != nil {
@@ -31,7 +32,7 @@ func GetPreset(app dto.App) presenter.Requester {
 	}
 }
 
-func GetPresets(app dto.App) presenter.Requester {
+func PresetList(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		res, err := app.PresetList(r.Context())
 		if err != nil {
@@ -42,7 +43,7 @@ func GetPresets(app dto.App) presenter.Requester {
 	}
 }
 
-func PostPreset(app dto.App) presenter.Requester {
+func PresetUpdate(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		preset := dto.Preset{}
 		err := json.NewDecoder(r.Body).Decode(&preset)
@@ -58,7 +59,7 @@ func PostPreset(app dto.App) presenter.Requester {
 	}
 }
 
-func GetPresetURL(app dto.App, url string) http.HandlerFunc {
+func PresetGetURLNew(app dto.App, url string) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		res, err := app.PresetGet(r.Context(), &dto.PresetGetRequest{URL: url})
 		if err != nil {

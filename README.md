@@ -110,23 +110,21 @@ The contents of the playlists can be changed in the web interface.
 
 ### Endpoints
 
-| Method | Endpoint                       | Description               |
-| ------ | ------------------------------ | ------------------------- |
-| GET    | /api/build                     | Build Information         |
-| POST   | /api/radios                    | Discover Radios           |
-| GET    | /api/radios                    | List Radios               |
-| GET    | /api/radio/{uuid}              | Get Radio                 |
-| GET    | /api/radio/{uuid}/state        | Get State                 |
-| PATCH  | /api/radio/{uuid}/state        | Modify State              |
-| POST   | /api/radio/{uuid}/subscription | Refresh UPnP Subscription |
-| POST   | /api/radio/{uuid}/volume       | Refresh Volume            |
-| GET    | /api/presets                   | List Presets              |
-| GET    | /api/preset?url={url}          | Get Preset                |
-| POST   | /api/preset                    | Update Preset             |
-| GET    | /api/states                    | List States               |
-| GET    | /api/state/{uuid}              | Get State                 |
-| PATCH  | /api/state/{uuid}              | Modify State              |
-| WS     | /api/ws                        | WebSocket                 |
+| Method | Endpoint                        | Description               |
+| ------ | ------------------------------- | ------------------------- |
+| GET    | /api/build                      | Build Information         |
+| GET    | /api/presets                    | List Presets              |
+| GET    | /api/presets/{url}              | Get Preset                |
+| POST   | /api/presets                    | Update Preset             |
+| GET    | /api/radios                     | List Radios               |
+| POST   | /api/radios                     | Discover Radios           |
+| GET    | /api/radios/{uuid}              | Get Radio                 |
+| POST   | /api/radios/{uuid}/subscription | Refresh UPnP Subscription |
+| POST   | /api/radios/{uuid}/volume       | Refresh Volume            |
+| GET    | /api/states                     | List States               |
+| GET    | /api/states/{uuid}              | Get State                 |
+| PATCH  | /api/states/{uuid}              | Modify State              |
+| WS     | /api/ws                         | WebSocket                 |
 
 ## Build
 

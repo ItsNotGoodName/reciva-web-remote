@@ -8,7 +8,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/left/presenter"
 )
 
-func GetStates(app dto.App) presenter.Requester {
+func StateList(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		res, err := app.StateList(r.Context())
 		if err != nil {
@@ -19,7 +19,7 @@ func GetStates(app dto.App) presenter.Requester {
 	}
 }
 
-func GetState(app dto.App) UUIDRequester {
+func StateGet(app dto.App) UUIDRequester {
 	return func(r *http.Request, uuid string) presenter.Response {
 		res, err := app.StateGet(r.Context(), &dto.StateRequest{UUID: uuid})
 		if err != nil {
@@ -30,7 +30,7 @@ func GetState(app dto.App) UUIDRequester {
 	}
 }
 
-func PatchState(app dto.App) UUIDRequester {
+func StatePatch(app dto.App) UUIDRequester {
 	return func(r *http.Request, uuid string) presenter.Response {
 		var req dto.StatePatchRequest = dto.StatePatchRequest{UUID: uuid}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

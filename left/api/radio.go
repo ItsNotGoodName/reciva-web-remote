@@ -24,7 +24,7 @@ func handleRadioError(err error) presenter.Response {
 	return presenter.Response{Code: code, Error: err}
 }
 
-func GetRadios(app dto.App) presenter.Requester {
+func RadioList(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		res, err := app.RadioList()
 		if err != nil {
@@ -35,7 +35,7 @@ func GetRadios(app dto.App) presenter.Requester {
 	}
 }
 
-func PostRadios(app dto.App) presenter.Requester {
+func RadioDiscover(app dto.App) presenter.Requester {
 	return func(r *http.Request) presenter.Response {
 		force, _ := strconv.ParseBool(r.URL.Query().Get("force"))
 
@@ -48,7 +48,7 @@ func PostRadios(app dto.App) presenter.Requester {
 	}
 }
 
-func GetRadio(app dto.App) UUIDRequester {
+func RadioGet(app dto.App) UUIDRequester {
 	return func(r *http.Request, uuid string) presenter.Response {
 		res, err := app.RadioGet(&dto.RadioRequest{UUID: uuid})
 		if err != nil {
@@ -59,7 +59,7 @@ func GetRadio(app dto.App) UUIDRequester {
 	}
 }
 
-func PostRadioSubscription(app dto.App) UUIDRequester {
+func RadioRefreshSubscription(app dto.App) UUIDRequester {
 	return func(r *http.Request, uuid string) presenter.Response {
 		err := app.RadioRefreshSubscription(r.Context(), &dto.RadioRequest{UUID: uuid})
 		if err != nil {
@@ -70,7 +70,7 @@ func PostRadioSubscription(app dto.App) UUIDRequester {
 	}
 }
 
-func PostRadioVolume(app dto.App) UUIDRequester {
+func RadioRefreshVolume(app dto.App) UUIDRequester {
 	return func(r *http.Request, uuid string) presenter.Response {
 		err := app.RadioRefreshVolume(r.Context(), &dto.RadioRequest{UUID: uuid})
 		if err != nil {

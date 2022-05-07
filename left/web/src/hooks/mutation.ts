@@ -6,7 +6,7 @@ import { KEY_RADIOS, KEY_PRESETS, KEY_PRESET } from "./key";
 export function useStateMutation() {
   return useMutation((req: RadioMutation) => {
     const { uuid, ...jreq } = req
-    return fetch(API_URL + "/api/state/" + uuid, { body: JSON.stringify(jreq), method: "PATCH" })
+    return fetch(API_URL + "/api/states/" + uuid, { body: JSON.stringify(jreq), method: "PATCH" })
       .then((res) => res.json())
       .then((json: APIResponse<void>) => {
         if (!json.ok) {
@@ -17,7 +17,7 @@ export function useStateMutation() {
 };
 
 export function useRadioSubscriptionMutation() {
-  return useMutation((uuid: string) => fetch(API_URL + "/api/radio/" + uuid + "/subscription", { method: "POST" })
+  return useMutation((uuid: string) => fetch(API_URL + "/api/radios/" + uuid + "/subscription", { method: "POST" })
     .then((res) => res.json())
     .then((json: APIResponse<void>) => {
       if (!json.ok) {
@@ -27,7 +27,7 @@ export function useRadioSubscriptionMutation() {
 };
 
 export function useRadioVolumeMutation() {
-  return useMutation((uuid: string) => fetch(API_URL + "/api/radio/" + uuid + "/volume", { method: "POST" })
+  return useMutation((uuid: string) => fetch(API_URL + "/api/radios/" + uuid + "/volume", { method: "POST" })
     .then((res) => res.json())
     .then((json: APIResponse<void>) => {
       if (!json.ok) {
@@ -54,7 +54,7 @@ export function useRadiosDiscoverMutation() {
 
 export function usePresetMutation() {
   const queryClient = useQueryClient()
-  return useMutation((req: PresetMutation) => fetch(API_URL + "/api/preset", { method: "POST", body: JSON.stringify(req) })
+  return useMutation((req: PresetMutation) => fetch(API_URL + "/api/presets", { method: "POST", body: JSON.stringify(req) })
     .then((res) => res.json())
     .then((json: APIResponse<void>) => {
       if (!json.ok) {

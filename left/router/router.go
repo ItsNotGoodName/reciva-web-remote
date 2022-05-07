@@ -41,39 +41,35 @@ func New(app dto.App, bus dto.Bus, port string, p presenter.Presenter, fs fs.FS)
 	// API routes
 	r.Route("/api", func(r chi.Router) {
 		// Build
-		r.Get("/build", p(api.GetBuild(app)))
-
-		// Radios
-		r.Get("/radios", p(api.GetRadios(app)))
-		r.Post("/radios", p(api.PostRadios(app)))
-
-		getState := p(api.RequireUUID(api.GetState(app)))
-		patchState := p(api.RequireUUID(api.PatchState(app)))
+		r.Get("/build", p(api.Build(app)))
 
 		// Radio
-		r.Route("/radio/{uuid}", func(r chi.Router) {
-			r.Get("/", p(api.RequireUUID(api.GetRadio(app))))
-			r.Get("/state", getState)
-			r.Patch("/state", patchState)
-			r.Post("/subscription", p(api.RequireUUID(api.PostRadioSubscription(app))))
-			r.Post("/volume", p(api.RequireUUID(api.PostRadioVolume(app))))
+		r.Route("/radios", func(r chi.Router) {
+			r.Get("/", p(api.RadioList(app)))
+			r.Post("/", p(api.RadioDiscover(app)))
+
+			r.Route("/{uuid}", func(r chi.Router) {
+				r.Get("/", p(api.UUIDRequire(api.RadioGet(app))))
+				r.Post("/subscription", p(api.UUIDRequire(api.RadioRefreshSubscription(app))))
+				r.Post("/volume", p(api.UUIDRequire(api.RadioRefreshVolume(app))))
+			})
 		})
 
 		// States
-		r.Get("/states", p(api.GetStates(app)))
-
-		// State
-		r.Route("/state/{uuid}", func(r chi.Router) {
-			r.Get("/", getState)
-			r.Patch("/", patchState)
+		r.Route("/states", func(r chi.Router) {
+			r.Get("/", p(api.StateList(app)))
+			r.Route("/{uuid}", func(r chi.Router) {
+				r.Get("/", p(api.UUIDRequire(api.StateGet(app))))
+				r.Patch("/", p(api.UUIDRequire(api.StatePatch(app))))
+			})
 		})
 
 		// Presets
-		r.Get("/presets", p(api.GetPresets(app)))
-
-		// Preset
-		r.Get("/preset", p(api.GetPreset(app)))
-		r.Post("/preset", p(api.PostPreset(app)))
+		r.Route("/presets", func(r chi.Router) {
+			r.Get("/", p(api.PresetList(app)))
+			r.Post("/", p(api.PresetUpdate(app)))
+			r.Get("/*", p(api.PresetGet(app)))
+		})
 
 		// WS
 		r.Get("/ws", api.GetWS(upgrader, api.HandleWS(bus)))

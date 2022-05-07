@@ -30,7 +30,7 @@ func mountPresets(r chi.Router, app dto.App) {
 			log.Fatalf("router.mountPresets: URL=%s route=%s: %s", url, route, err)
 		}
 
-		r.Get(route, api.GetPresetURL(app, url))
+		r.Get(route, api.PresetGetURLNew(app, url))
 		log.Println("router.mountPresets: mounting url", url, "to", route)
 	}
 }

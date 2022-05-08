@@ -21,7 +21,9 @@ func New(app dto.App, statePub state.Pub) *Bus {
 
 func (b *Bus) Handle(ctx context.Context, readC <-chan dto.Command, writeC chan<- dto.Command) {
 	stateSub, stateUnsub := make(<-chan state.PubMessage), func() {}
-	defer stateUnsub()
+	defer func() {
+		stateUnsub()
+	}()
 
 	for {
 		select {

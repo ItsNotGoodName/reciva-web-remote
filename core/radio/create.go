@@ -8,6 +8,7 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/core/upnp"
+	"github.com/sethvargo/go-retry"
 )
 
 type CreateServiceImpl struct {
@@ -78,13 +79,14 @@ func (cs *CreateServiceImpl) Create(ctx context.Context, dctx context.Context, r
 	}
 	s.SetPresets(presets)
 
-	// Back off for a second to prevent subscription from failing
-	// TODO: Find a better way to do this
-	time.Sleep(time.Second)
-
 	// Create subscription
 	eventURL := reciva.GetEventURL()
-	sub, err := cs.controlPoint.Subscribe(dctx, &eventURL)
+	var sub upnpsub.Subscription
+	err = retry.Do(ctx, retry.WithMaxRetries(3, retry.NewFibonacci(time.Second)), func(ctx context.Context) error {
+		var err2 error
+		sub, err2 = cs.controlPoint.Subscribe(dctx, &eventURL)
+		return retry.RetryableError(err2)
+	})
 	if err != nil {
 		return Radio{}, err
 	}

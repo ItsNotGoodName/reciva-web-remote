@@ -7,9 +7,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/avast/retry-go/v3"
 	"github.com/huin/goupnp"
+	"github.com/sethvargo/go-retry"
 )
 
 // const controlServiceType = "urn:schemas-upnp-org:service:RenderingControl:1"
@@ -40,14 +41,17 @@ func newReciva(recivaRadio goupnp.ServiceClient) *Reciva {
 	}
 }
 
-func retryIf(err error) bool {
-	return strings.Contains(err.Error(), "goupnp: error performing SOAP HTTP request:") // Retry if it is a http error
-}
-
 func (r *Reciva) performAction(ctx context.Context, action string, request interface{}, response interface{}) error {
-	return retry.Do(func() error {
-		return r.recivaRadio.SOAPClient.PerformActionCtx(ctx, r.recivaRadio.Service.ServiceType, action, request, response)
-	}, retry.Context(ctx), retry.RetryIf(retryIf))
+	return retry.Do(ctx, retry.WithMaxRetries(3, retry.NewFibonacci(time.Second)), func(ctx context.Context) error {
+		err := r.recivaRadio.SOAPClient.PerformActionCtx(ctx, r.recivaRadio.Service.ServiceType, action, request, response)
+		if err != nil {
+			if strings.Contains(err.Error(), "goupnp: error performing SOAP HTTP request:") { // Retry if it is a http error
+				return retry.RetryableError(err)
+			}
+		}
+
+		return err
+	})
 }
 
 var uuidReg = regexp.MustCompile(`(?m)\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b`)

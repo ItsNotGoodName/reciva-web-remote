@@ -15,35 +15,31 @@ func NewSignalPub() *SignalPub {
 
 func (sp *SignalPub) Publish() {
 	sp.subsMapMu.Lock()
-
 	for sub := range sp.subsMap {
 		select {
 		case *sub <- struct{}{}:
 		default:
 		}
 	}
-
 	sp.subsMapMu.Unlock()
 }
 
 func (sp *SignalPub) Subscribe() (<-chan struct{}, func()) {
-	sp.subsMapMu.Lock()
-
 	sub := make(chan struct{}, 1)
-	sp.subsMap[&sub] = struct{}{}
+	subRef := &sub
 
+	sp.subsMapMu.Lock()
+	sp.subsMap[subRef] = struct{}{}
 	sp.subsMapMu.Unlock()
 
-	return sub, sp.unsubscribeFunc(&sub)
+	return sub, sp.unsubscribeFunc(subRef)
 
 }
 
-func (sp *SignalPub) unsubscribeFunc(ch *chan struct{}) func() {
+func (sp *SignalPub) unsubscribeFunc(sub *chan struct{}) func() {
 	return func() {
 		sp.subsMapMu.Lock()
-
-		delete(sp.subsMap, ch)
-
+		delete(sp.subsMap, sub)
 		sp.subsMapMu.Unlock()
 	}
 }

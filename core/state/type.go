@@ -36,10 +36,10 @@ const (
 type (
 	Pub interface {
 		Publish(state State, changed Changed)
-		Subscribe(uuid string) (<-chan Message, func())
+		Subscribe(uuid string) (<-chan PubMessage, func())
 	}
 
-	Message struct {
+	PubMessage struct {
 		State   State
 		Changed Changed
 	}

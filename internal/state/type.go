@@ -40,7 +40,7 @@ type (
 		TitleNew string `json:"title_new"` // TitleNew is the overridden title.
 		URL      string `json:"url"`       // URL of the preset.
 		URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
-	}
+	} //	@name	state.Preset
 
 	State struct {
 		AudioSource  string   `json:"audio_source"`  // AudioSource is the audio source.
@@ -60,7 +60,7 @@ type (
 		URLNew       string   `json:"url_new"`       // URLNew is the overridden URL.
 		UUID         string   `json:"uuid"`          // UUID of the radio.
 		Volume       int      `json:"volume"`        // Volume of the radio.
-	}
+	} //	@name	state.State
 
 	Partial struct {
 		AudioSource  *string  `json:"audio_source,omitempty"`

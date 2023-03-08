@@ -6,24 +6,34 @@ import (
 )
 
 type Preset struct {
-	TitleNew string
-	URL      string
-	URLNew   string
+	TitleNew string `json:"title_new"` // TitleNew is the overridden title.
+	URL      string `json:"url"`       // URL of the preset.
+	URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
 }
 
-func NewPreset(urL, titleNew, urlNew string) (*Preset, error) {
-	urlObj, err := url.ParseRequestURI(urL)
+func (p Preset) Validate() error {
+	urlObj, err := url.ParseRequestURI(p.URL)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if urlObj.Scheme == "" || urlObj.Host == "" {
-		return nil, fmt.Errorf("invalid URL: %s", urL)
+		return fmt.Errorf("invalid URL: %s", p.URL)
 	}
 
-	return &Preset{
+	return nil
+}
+
+func NewPreset(urL, titleNew, urlNew string) (*Preset, error) {
+	p := &Preset{
 		URL:      urL,
 		TitleNew: titleNew,
 		URLNew:   urlNew,
-	}, nil
+	}
+
+	if err := p.Validate(); err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }

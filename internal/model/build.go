@@ -1,10 +1,10 @@
 package model
 
 type Build struct {
-	Version    string
-	Commit     string
-	Date       string
-	BuiltBy    string
-	ReleaseURL string
-	Summary    string
+	BuiltBy    string `json:"built_by"`
+	Commit     string `json:"commit"`
+	Date       string `json:"date"`
+	ReleaseURL string `json:"release_url"`
+	Summary    string `json:"summary"`
+	Version    string `json:"version"`
 }

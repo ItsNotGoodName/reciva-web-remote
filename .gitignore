@@ -20,3 +20,4 @@ dist/
 *.db-journal
 reciva-web-remote
 tmp
+__debug_bin

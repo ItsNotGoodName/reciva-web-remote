@@ -45,8 +45,9 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 					log.Println("radio.run: failed to refresh volume:", err)
 				}
 			}()
-		case <-sub:
-			handle(state.ChangedAll)
+		case msg := <-sub:
+			data := msg.Data.(pubsub.ForceStateChangedMessage)
+			handle(data.Changed)
 		case stateC <- s:
 		case fn := <-updateFnC:
 			handle(fn(&s))

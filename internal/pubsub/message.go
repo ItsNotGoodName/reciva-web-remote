@@ -16,6 +16,11 @@ type StateMessage struct {
 }
 
 const ForceStateChangedTopic Topic = "force.state.changed"
+
+type ForceStateChangedMessage struct {
+	Changed state.Changed
+}
+
 const DiscoverTopic Topic = "discover"
 
 type DiscoverMessage struct {

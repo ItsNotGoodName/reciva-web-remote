@@ -1,25 +1,20 @@
-NPM_PREFIX := podman run --rm -it -p 3000:3000 -v "$(shell pwd)/left/web:/work" -w /work docker.io/library/node:16.13
-
 all: npm build
 
 npm:
-	$(NPM_PREFIX) npm install
+	npm install
 
 build: build-frontend build-backend
 
 snapshot: build-frontend build-snapshot
 
-login:
-	$(NPM_PREFIX) bash
-
 dev-frontend:
-	$(NPM_PREFIX) npm run dev
+	npm run dev
 
 dev-backend:
 	go run --tags dev .
 
 build-frontend:
-	$(NPM_PREFIX) npm run build
+	npm run build
 
 build-backend:
 	go build -o bin/

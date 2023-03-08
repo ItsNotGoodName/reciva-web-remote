@@ -3,8 +3,8 @@ package store
 import (
 	"context"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/core"
-	"github.com/ItsNotGoodName/reciva-web-remote/core/preset"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
 )
 
 type Mock struct{}
@@ -13,14 +13,14 @@ func NewMock() Mock {
 	return Mock{}
 }
 
-func (Mock) List(context.Context) ([]preset.Preset, error) {
-	return []preset.Preset{}, nil
+func (Mock) List(context.Context) ([]model.Preset, error) {
+	return []model.Preset{}, nil
 }
 
-func (Mock) Get(context.Context, string) (*preset.Preset, error) {
-	return nil, core.ErrPresetNotFound
+func (Mock) Get(context.Context, string) (*model.Preset, error) {
+	return nil, internal.ErrPresetNotFound
 }
 
-func (Mock) Update(context.Context, *preset.Preset) error {
-	return core.ErrPresetNotFound
+func (Mock) Update(context.Context, *model.Preset) error {
+	return internal.ErrPresetNotFound
 }

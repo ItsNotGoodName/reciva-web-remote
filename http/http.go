@@ -5,14 +5,17 @@ import (
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
 	"github.com/labstack/echo/v4"
-	echoSwagger "github.com/swaggo/echo-swagger"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func Start(a API, port int) {
 	e := echo.New()
 	e.HideBanner = true
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	swagger(e)
 
 	api := e.Group("/api")
 

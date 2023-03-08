@@ -10,6 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "preLaunchTask":"go: generate",
+            "buildFlags": "-tags dev",
             "program": "main.go"
         }
     ]

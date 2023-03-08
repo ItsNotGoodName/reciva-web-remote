@@ -6,8 +6,10 @@ import (
 
 var DefaultPub *Pub = NewPub()
 
+type Topic string
+
 type Message struct {
-	Topic string
+	Topic Topic
 	Data  interface{}
 }
 
@@ -18,17 +20,17 @@ type Sub struct {
 
 type Pub struct {
 	subsMapMu sync.Mutex
-	subsMap   map[string]*Sub
+	subsMap   map[Topic]*Sub
 }
 
 func NewPub() *Pub {
 	return &Pub{
 		subsMapMu: sync.Mutex{},
-		subsMap:   make(map[string]*Sub),
+		subsMap:   make(map[Topic]*Sub),
 	}
 }
 
-func (sp *Pub) Subscribe(topics []string) (<-chan Message, func()) {
+func (sp *Pub) Subscribe(topics []Topic) (<-chan Message, func()) {
 	sub := &Sub{messageC: make(chan Message, 100)}
 
 	sp.subsMapMu.Lock()
@@ -44,7 +46,7 @@ func (sp *Pub) Subscribe(topics []string) (<-chan Message, func()) {
 	return sub.messageC, sp.unsubscribeFunc(topics, sub)
 }
 
-func (sp *Pub) unsubscribeFunc(topics []string, sub *Sub) func() {
+func (sp *Pub) unsubscribeFunc(topics []Topic, sub *Sub) func() {
 	return func() {
 		sp.subsMapMu.Lock()
 		for _, topic := range topics {
@@ -69,7 +71,7 @@ func (sp *Pub) unsubscribeFunc(topics []string, sub *Sub) func() {
 	}
 }
 
-func (sp *Pub) Publish(topic string, data interface{}) {
+func (sp *Pub) Publish(topic Topic, data interface{}) {
 	msg := Message{Topic: topic, Data: data}
 
 	sp.subsMapMu.Lock()

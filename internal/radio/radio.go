@@ -12,12 +12,25 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
 )
 
-func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioStateC, updateFnC hub.RadioUpdateFnC) {
+type StateHook interface {
+	// OnStart is called when when state is first created.
+	OnStart(context.Context, *state.State, state.Changed) state.Changed
+	// OnChanged is called when state changes.
+	OnChanged(context.Context, *state.State, state.Changed) state.Changed
+}
+
+func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioStateC, updateFnC hub.RadioUpdateFnC, stateHook StateHook) {
 	handle := func(c state.Changed) {
+		c = stateHook.OnChanged(ctx, &s, c)
+		if c != state.ChangedNone {
+			pubsub.DefaultPub.Publish(pubsub.StateTopic, pubsub.StateMessage{State: s, Changed: c})
+		}
+	}
+	if c := stateHook.OnStart(ctx, &s, state.ChangedAll); c != state.ChangedNone {
 		pubsub.DefaultPub.Publish(pubsub.StateTopic, pubsub.StateMessage{State: s, Changed: c})
 	}
 
-	sub, unsub := pubsub.DefaultPub.Subscribe([]string{pubsub.PresetsMutatedTopic})
+	sub, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.ForceStateChangedTopic})
 	defer unsub()
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
@@ -33,7 +46,7 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 				}
 			}()
 		case <-sub:
-			handle(state.ChangedNone)
+			handle(state.ChangedAll)
 		case stateC <- s:
 		case fn := <-updateFnC:
 			handle(fn(&s))

@@ -9,17 +9,76 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/upnp"
 	"github.com/sethvargo/go-retry"
 )
 
-func Discover(ctx context.Context, h *hub.Hub, cp upnpsub.ControlPoint) error {
-	if !h.DiscoverMu.TryLock() {
+type DefaultStateHook struct{}
+
+func (DefaultStateHook) OnChanged(ctx context.Context, s *state.State, c state.Changed) state.Changed {
+	return c
+}
+func (DefaultStateHook) OnStart(ctx context.Context, s *state.State, c state.Changed) state.Changed {
+	return c
+}
+
+type Discoverer struct {
+	mu           sync.Mutex
+	ctxC         chan context.Context
+	hub          *hub.Hub
+	controlPoint upnpsub.ControlPoint
+	stateHook    StateHook
+}
+
+func NewDiscoverer(hub *hub.Hub, controlPoint upnpsub.ControlPoint, stateHook StateHook) *Discoverer {
+	return &Discoverer{
+		mu:           sync.Mutex{},
+		ctxC:         make(chan context.Context),
+		hub:          hub,
+		controlPoint: controlPoint,
+		stateHook:    stateHook,
+	}
+}
+
+func (d *Discoverer) Background(ctx context.Context, doneC chan<- struct{}) {
+	ctxDoneC := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ctxDoneC:
+				return
+			case d.ctxC <- ctx:
+			}
+		}
+	}()
+
+	// Wait for context
+	<-ctx.Done()
+	// Stop further discoveries
+	d.mu.Lock()
+	// Stop ctx provider
+	close(ctxDoneC)
+	// Done
+	doneC <- struct{}{}
+}
+
+func (d *Discoverer) Discover(ctx context.Context) error {
+	if !d.mu.TryLock() {
 		return internal.ErrHubDiscovering
 	}
-	defer h.DiscoverMu.Unlock()
+	pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: true})
+	defer pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: false})
+	defer d.mu.Unlock()
 
+	radioContext := <-d.ctxC
+	return discover(ctx, d.hub, func(ctx context.Context, reciva upnp.Reciva) error {
+		return create(ctx, radioContext, reciva, d.hub, d.controlPoint, d.stateHook)
+	})
+}
+
+func discover(ctx context.Context, h *hub.Hub, create func(createContext context.Context, reciva upnp.Reciva) error) error {
 	recivas, err := upnp.Discover()
 	if err != nil {
 		return err
@@ -27,14 +86,13 @@ func Discover(ctx context.Context, h *hub.Hub, cp upnpsub.ControlPoint) error {
 
 	// Create radios concurrently
 	var wg sync.WaitGroup
-	hubContext := h.Context()
 	createContext, cancel := context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 	for i := range recivas {
 		wg.Add(1)
 		go (func(idx int) {
 			// Create radio
-			if err := createAndRun(createContext, hubContext, h, cp, recivas[idx]); err != nil {
+			if err := create(createContext, recivas[idx]); err != nil {
 				log.Println("radio.Discover:", err)
 			}
 
@@ -46,7 +104,7 @@ func Discover(ctx context.Context, h *hub.Hub, cp upnpsub.ControlPoint) error {
 	return nil
 }
 
-func createAndRun(ctx context.Context, radioContext context.Context, h *hub.Hub, cp upnpsub.ControlPoint, reciva upnp.Reciva) error {
+func create(ctx context.Context, radioContext context.Context, reciva upnp.Reciva, h *hub.Hub, cp upnpsub.ControlPoint, stateHook StateHook) error {
 	// Get UUID
 	uuid, err := reciva.GetUUID()
 	if err != nil {
@@ -111,8 +169,14 @@ func createAndRun(ctx context.Context, radioContext context.Context, h *hub.Hub,
 	// Create and run radio
 	stateC := make(hub.RadioStateC)
 	updateFnC := make(hub.RadioUpdateFnC)
-	radio := h.Create(uuid, name, reciva, sub, stateC, updateFnC, close)
-	go run(radioContext, radio, s, stateC, updateFnC)
+
+	radio, err := h.Create(uuid, name, reciva, sub, stateC, updateFnC, close)
+	if err != nil {
+		close()
+		return err
+	}
+
+	go run(radioContext, radio, s, stateC, updateFnC, stateHook)
 
 	return nil
 }

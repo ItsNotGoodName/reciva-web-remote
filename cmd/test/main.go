@@ -15,24 +15,25 @@ import (
 
 func main() {
 	ctx := interrupt.Context()
-
-	// Dependencies
+	hub := hub.New()
 	cp := upnpsub.NewControlPoint()
-	h := hub.New()
-	done := background.Run(ctx, []background.Background{h, upnp.NewBackgroundControlPoint(cp)})
+	discoverer := radio.NewDiscoverer(hub, cp, radio.DefaultStateHook{})
+	done := background.Run(ctx, []background.Background{hub, upnp.NewBackgroundControlPoint(cp), discoverer})
+	sub, _ := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.DiscoverTopic})
 
-	sub, unsub := pubsub.DefaultPub.Subscribe([]string{pubsub.StateTopic})
+	// Subscription
 	go func() {
 		for msg := range sub {
 			fmt.Println(msg.Data)
-			unsub()
 		}
 	}()
 
 	// Discover radios
-	if err := radio.Discover(ctx, h, cp); err != nil {
-		log.Fatalln("failed to discover radios:", err)
-	}
+	go func() {
+		if err := discoverer.Discover(ctx); err != nil {
+			log.Fatalln("failed to discover radios:", err)
+		}
+	}()
 
 	<-done
 }

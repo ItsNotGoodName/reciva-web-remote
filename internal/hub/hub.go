@@ -51,49 +51,46 @@ func (r *Radio) Update(ctx context.Context, updateFn func(*state.State) state.Ch
 }
 
 type Hub struct {
-	DiscoverMu  sync.Mutex
+	doneC chan struct{}
+
 	radiosMapMu sync.RWMutex
 	radiosMap   map[string]Radio
-	ctxC        chan context.Context
 }
 
 func New() *Hub {
 	return &Hub{
-		DiscoverMu:  sync.Mutex{},
+		doneC:       make(chan struct{}),
 		radiosMapMu: sync.RWMutex{},
 		radiosMap:   make(map[string]Radio),
-		ctxC:        make(chan context.Context),
 	}
-}
-
-func (h *Hub) Context() context.Context {
-	return <-h.ctxC
 }
 
 func (h *Hub) Background(ctx context.Context, doneC chan<- struct{}) {
-	for {
-		select {
-		case <-ctx.Done():
-			// Close radios
-			h.radiosMapMu.RLock()
-			for _, r := range h.radiosMap {
-				<-r.Done()
-			}
-			h.radiosMap = make(map[string]Radio)
-			h.radiosMapMu.RUnlock()
+	// Wait for context
+	<-ctx.Done()
 
-			doneC <- struct{}{}
-
-			for {
-				h.ctxC <- ctx
-			}
-		case h.ctxC <- ctx:
-		}
+	// Close radios
+	h.radiosMapMu.RLock()
+	for _, r := range h.radiosMap {
+		<-r.Done()
 	}
+	h.radiosMap = make(map[string]Radio)
+	// Prevent creating new radios
+	close(h.doneC)
+	h.radiosMapMu.RUnlock()
+
+	// Done
+	doneC <- struct{}{}
 }
 
-func (h *Hub) Create(uuid, name string, reciva upnp.Reciva, subscription upnpsub.Subscription, stateC RadioStateC, updateFnC RadioUpdateFnC, close context.CancelFunc) Radio {
+func (h *Hub) Create(uuid, name string, reciva upnp.Reciva, subscription upnpsub.Subscription, stateC RadioStateC, updateFnC RadioUpdateFnC, close context.CancelFunc) (Radio, error) {
 	h.radiosMapMu.Lock()
+	select {
+	case <-h.doneC:
+		h.radiosMapMu.Unlock()
+		return Radio{}, internal.ErrHubServiceClosed
+	default:
+	}
 	h.delete(uuid)
 
 	r := Radio{
@@ -109,7 +106,7 @@ func (h *Hub) Create(uuid, name string, reciva upnp.Reciva, subscription upnpsub
 	h.radiosMap[uuid] = r
 	h.radiosMapMu.Unlock()
 
-	return r
+	return r, nil
 }
 
 func (h *Hub) Delete(uuid string) error {

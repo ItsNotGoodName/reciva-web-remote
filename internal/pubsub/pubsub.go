@@ -30,52 +30,57 @@ func NewPub() *Pub {
 	}
 }
 
-func (sp *Pub) Subscribe(topics []Topic) (<-chan Message, func()) {
-	sub := &Sub{messageC: make(chan Message, 100)}
+func (p *Pub) Subscribe(topics []Topic) (<-chan Message, func()) {
+	messageC := make(chan Message, 100)
+	subs := []*Sub{}
 
-	sp.subsMapMu.Lock()
+	p.subsMapMu.Lock()
 	for _, topic := range topics {
-		if next, ok := sp.subsMap[topic]; ok {
+		sub := &Sub{messageC: messageC}
+		subs = append(subs, sub)
+		if next, ok := p.subsMap[topic]; ok {
 			sub.next = next
 		}
 
-		sp.subsMap[topic] = sub
+		p.subsMap[topic] = sub
 	}
-	sp.subsMapMu.Unlock()
+	p.subsMapMu.Unlock()
 
-	return sub.messageC, sp.unsubscribeFunc(topics, sub)
+	return messageC, p.unsubscribeFunc(topics, subs)
 }
 
-func (sp *Pub) unsubscribeFunc(topics []Topic, sub *Sub) func() {
+func (p *Pub) unsubscribeFunc(topics []Topic, sub []*Sub) func() {
 	return func() {
-		sp.subsMapMu.Lock()
-		for _, topic := range topics {
-			next := sp.subsMap[topic]
+		p.subsMapMu.Lock()
+		for i, sub := range sub {
+			topic := topics[i]
+			next := p.subsMap[topic]
+			// Sub found in first place
 			if next == sub {
-				sp.subsMap[topic] = nil
-				break
+				p.subsMap[topic] = next.next
+				continue
 			}
 
+			// Will never be nil
 			prev := next
+
 			for next = next.next; next != nil; next = next.next {
+				// Sub found in second place or more
 				if next == sub {
 					prev.next = next.next
 					break
 				}
-				prev = next
 			}
-
-			sub.next = next
 		}
-		sp.subsMapMu.Unlock()
+		p.subsMapMu.Unlock()
 	}
 }
 
-func (sp *Pub) Publish(topic Topic, data interface{}) {
+func (p *Pub) Publish(topic Topic, data interface{}) {
 	msg := Message{Topic: topic, Data: data}
 
-	sp.subsMapMu.Lock()
-	if sub, ok := sp.subsMap[topic]; ok {
+	p.subsMapMu.Lock()
+	if sub, ok := p.subsMap[topic]; ok {
 		for sub != nil {
 			select {
 			case sub.messageC <- msg:
@@ -84,5 +89,5 @@ func (sp *Pub) Publish(topic Topic, data interface{}) {
 			sub = sub.next
 		}
 	}
-	sp.subsMapMu.Unlock()
+	p.subsMapMu.Unlock()
 }

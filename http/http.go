@@ -40,6 +40,8 @@ func Start(a API, port int) {
 	apiStates.GET("", a.GetState)
 	apiStates.PATCH("", a.PatchState)
 
+	api.GET("/ws", a.WS)
+
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
 }
 

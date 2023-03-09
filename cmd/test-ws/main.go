@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -11,8 +12,7 @@ import (
 	"nhooyr.io/websocket/wsjson"
 )
 
-func main() {
-	ctx := interrupt.Context()
+func run(ctx context.Context) {
 
 	c, _, err := websocket.Dial(ctx, "ws://localhost:8080/api/ws", nil)
 	if err != nil {
@@ -36,4 +36,14 @@ func main() {
 
 		fmt.Println(messageType, string(data))
 	}
+}
+
+func main() {
+	ctx := interrupt.Context()
+
+	for i := 0; i < 1000; i++ {
+		go run(ctx)
+	}
+
+	<-ctx.Done()
 }

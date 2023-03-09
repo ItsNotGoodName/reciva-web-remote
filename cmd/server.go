@@ -12,6 +12,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/store"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/upnp"
+	"github.com/ItsNotGoodName/reciva-web-remote/left/web"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
 )
 
@@ -31,7 +32,7 @@ func Server(cfg *config.Config) {
 			log.Println("cmd.Server:", err)
 		}
 	}()
-	go http.Start(api, cfg.Port)
+	go http.Start(api, cfg.Port, web.FS())
 
 	<-background.Run(ctx, []background.Background{hub, upnp.NewBackgroundControlPoint(controlPoint), discoverer})
 }

@@ -12,8 +12,8 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/store"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/upnp"
-	"github.com/ItsNotGoodName/reciva-web-remote/left/web"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
+	"github.com/ItsNotGoodName/reciva-web-remote/web"
 )
 
 func Server(cfg *config.Config) {

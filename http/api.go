@@ -103,6 +103,7 @@ func (a API) GetPreset(c echo.Context) error {
 //	@Summary	Update preset
 //	@Tags		presets
 //	@Param		preset	body	model.Preset	true	"Preset"
+//	@Produce	json
 //	@Success	200
 //	@Failure	400	{object}	HTTPError
 //	@Failure	404	{object}	HTTPError
@@ -130,6 +131,7 @@ func (a API) UpdatePreset(c echo.Context) error {
 
 //	@Summary	Discover radios
 //	@Tags		radios
+//	@Produce	json
 //	@Success	200
 //	@Failure	409	{object}	HTTPError	"Discovery already in progress"
 //	@Failure	500	{object}	HTTPError
@@ -159,8 +161,8 @@ func (a API) ListRadios(c echo.Context) error {
 //	@Param		uuid	path	string	true	"Radio UUID"
 //	@Produce	json
 //	@Success	200	{object}	model.Radio
-//	@Success	404
-//	@Success	500
+//	@Failure	404	{object}	HTTPError
+//	@Failure	500	{object}	HTTPError
 //	@Router		/radios/{uuid} [get]
 func (a API) GetRadio(c echo.Context) error {
 	cc := c.(*RadioContext)
@@ -172,8 +174,8 @@ func (a API) GetRadio(c echo.Context) error {
 //	@Param		uuid	path	string	true	"Radio UUID"
 //	@Produce	json
 //	@Success	200
-//	@Success	404
-//	@Success	500
+//	@Failure	404	{object}	HTTPError
+//	@Failure	500	{object}	HTTPError
 //	@Router		/radios/{uuid}/volume [post]
 func (a API) RefreshRadioVolume(c echo.Context) error {
 	cc := c.(*RadioContext)
@@ -185,8 +187,8 @@ func (a API) RefreshRadioVolume(c echo.Context) error {
 //	@Param		uuid	path	string	true	"Radio UUID"
 //	@Produce	json
 //	@Success	200
-//	@Success	404
-//	@Success	500
+//	@Failure	404	{object}	HTTPError
+//	@Failure	500	{object}	HTTPError
 //	@Router		/radios/{uuid}/subscription [post]
 func (a API) RefreshRadioSubscription(c echo.Context) error {
 	cc := c.(*RadioContext)
@@ -206,8 +208,8 @@ func (a API) ListStates(c echo.Context) error {
 //	@Tags		states
 //	@Param		uuid	path	string	true	"Radio UUID"
 //	@Produce	json
-//	@Success	200	{array}	state.State
-//	@Failure	404
+//	@Success	200	{array}		state.State
+//	@Failure	404	{object}	HTTPError
 //	@Failure	500	{object}	HTTPError
 //	@Router		/states/{uuid} [get]
 func (a API) GetState(c echo.Context) error {
@@ -230,10 +232,9 @@ type PatchState struct {
 //	@Summary	Patch state
 //	@Tags		states
 //	@Param		uuid	path	string		true	"Radio UUID"
-//	@Param		state	body	PatchState	false	"Patch state"
-//	@Produce	json
-//	@Success	200	{array}	state.State
-//	@Failure	404
+//	@Param		state	body	PatchState	true	"Patch state"
+//	@Success	200
+//	@Failure	404	{object}	HTTPError
 //	@Failure	500	{object}	HTTPError
 //	@Router		/states/{uuid} [patch]
 func (a API) PatchState(c echo.Context) error {

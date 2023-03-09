@@ -55,6 +55,9 @@
                 }
             },
             "post": {
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "presets"
                 ],
@@ -160,6 +163,9 @@
                 }
             },
             "post": {
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "radios"
                 ],
@@ -209,10 +215,16 @@
                         }
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     }
                 }
             }
@@ -240,10 +252,16 @@
                         "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     }
                 }
             }
@@ -271,10 +289,16 @@
                         "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     }
                 }
             }
@@ -330,7 +354,10 @@
                         }
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
@@ -341,9 +368,6 @@
                 }
             },
             "patch": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "states"
                 ],
@@ -360,6 +384,7 @@
                         "description": "Patch state",
                         "name": "state",
                         "in": "body",
+                        "required": true,
                         "schema": {
                             "$ref": "#/definitions/http.PatchState"
                         }
@@ -367,16 +392,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/state.State"
-                            }
-                        }
+                        "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",

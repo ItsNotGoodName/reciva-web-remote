@@ -427,7 +427,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/radios/{uuid}
      */
     radiosDetail: (uuid: string, params: RequestParams = {}) =>
-      this.request<ModelRadio, void>({
+      this.request<ModelRadio, HttpHTTPError>({
         path: `/radios/${uuid}`,
         method: "GET",
         format: "json",
@@ -443,7 +443,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/radios/{uuid}/subscription
      */
     subscriptionCreate: (uuid: string, params: RequestParams = {}) =>
-      this.request<void, void>({
+      this.request<void, HttpHTTPError>({
         path: `/radios/${uuid}/subscription`,
         method: "POST",
         ...params,
@@ -458,7 +458,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/radios/{uuid}/volume
      */
     volumeCreate: (uuid: string, params: RequestParams = {}) =>
-      this.request<void, void>({
+      this.request<void, HttpHTTPError>({
         path: `/radios/${uuid}/volume`,
         method: "POST",
         ...params,
@@ -490,7 +490,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/states/{uuid}
      */
     statesDetail: (uuid: string, params: RequestParams = {}) =>
-      this.request<StateState[], void | HttpHTTPError>({
+      this.request<StateState[], HttpHTTPError>({
         path: `/states/${uuid}`,
         method: "GET",
         format: "json",
@@ -506,12 +506,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PATCH:/states/{uuid}
      */
     statesPartialUpdate: (uuid: string, state: HttpPatchState, params: RequestParams = {}) =>
-      this.request<StateState[], void | HttpHTTPError>({
+      this.request<void, HttpHTTPError>({
         path: `/states/${uuid}`,
         method: "PATCH",
         body: state,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };

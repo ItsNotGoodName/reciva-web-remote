@@ -62,6 +62,9 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "presets"
                 ],
@@ -167,6 +170,9 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "radios"
                 ],
@@ -216,10 +222,16 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     }
                 }
             }
@@ -247,10 +259,16 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     }
                 }
             }
@@ -278,10 +296,16 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     }
                 }
             }
@@ -337,7 +361,10 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
@@ -348,9 +375,6 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "states"
                 ],
@@ -367,6 +391,7 @@ const docTemplate = `{
                         "description": "Patch state",
                         "name": "state",
                         "in": "body",
+                        "required": true,
                         "schema": {
                             "$ref": "#/definitions/http.PatchState"
                         }
@@ -374,16 +399,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/state.State"
-                            }
-                        }
+                        "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",

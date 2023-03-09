@@ -60,6 +60,9 @@ func (p *Pub) unsubscribeFunc(topics []Topic, sub []*Sub) func() {
 				p.subsMap[topic] = next.next
 				continue
 			}
+			if next == nil {
+				continue
+			}
 
 			// Will never be nil
 			prev := next
@@ -76,7 +79,7 @@ func (p *Pub) unsubscribeFunc(topics []Topic, sub []*Sub) func() {
 	}
 }
 
-func (p *Pub) Publish(topic Topic, data interface{}) {
+func (p *Pub) Publish(topic Topic, data any) {
 	msg := Message{Topic: topic, Data: data}
 
 	p.subsMapMu.Lock()
@@ -91,3 +94,25 @@ func (p *Pub) Publish(topic Topic, data interface{}) {
 	}
 	p.subsMapMu.Unlock()
 }
+
+// func stats(subs map[Topic]*Sub) {
+// 	var topics []Topic
+// 	for topic := range subs {
+// 		topics = append(topics, topic)
+// 	}
+// 	fmt.Printf("	TOPICS: %v\n", topics)
+
+// 	for _, topic := range topics {
+// 		next := subs[topic]
+// 		if next == nil {
+// 			fmt.Printf("	TOPIC_SUBS: %s: 0 subs\n", topic)
+// 			continue
+// 		}
+
+// 		count := 1
+// 		for next = next.next; next != nil; next = next.next {
+// 			count++
+// 		}
+// 		fmt.Printf("	TOPIC_SUBS: %s: %d subs\n", topic, count)
+// 	}
+// }

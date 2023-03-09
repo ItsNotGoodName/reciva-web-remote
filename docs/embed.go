@@ -4,5 +4,5 @@ import (
 	_ "embed"
 )
 
-//go:embed swagger.json
+//go:embed swagger/swagger.json
 var SwaggerJSON string

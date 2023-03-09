@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	StatusConnecting = "Connecting"
-	StatusPlaying    = "Playing"
-	StatusStopped    = "Stopped"
-	StatusUnknown    = ""
-
-	AudioSourceInternetRadio = "Internet radio"
+	StatusConnecting Status = "Connecting"
+	StatusPlaying    Status = "Playing"
+	StatusStopped    Status = "Stopped"
+	StatusUnknown    Status = ""
 )
+
+const AudioSourceInternetRadio = "Internet radio"
 
 const ChangedAll Changed = math.MaxInt
 
@@ -35,31 +35,31 @@ const (
 
 type (
 	Preset struct {
-		Number   int    `json:"number"`    // Number is the preset number.
-		Title    string `json:"title"`     // Title of the preset.
-		TitleNew string `json:"title_new"` // TitleNew is the overridden title.
-		URL      string `json:"url"`       // URL of the preset.
-		URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
+		Number   int    `json:"number" validate:"required"`    // Number is the preset number.
+		Title    string `json:"title" validate:"required"`     // Title of the preset.
+		TitleNew string `json:"title_new" validate:"required"` // TitleNew is the overridden title.
+		URL      string `json:"url" validate:"required"`       // URL of the preset.
+		URLNew   string `json:"url_new" validate:"required"`   // URLNew is the overridden URL.
 	} //	@name	state.Preset
 
 	State struct {
-		AudioSource  string   `json:"audio_source"`  // AudioSource is the audio source.
-		AudioSources []string `json:"audio_sources"` // AudioSources is the list of available audio sources.
-		IsMuted      bool     `json:"is_muted"`      // IsMuted represents if the radio is muted.
-		Metadata     string   `json:"metadata"`      // Metadata of the current playing stream.
-		ModelName    string   `json:"model_name"`    // ModelName is the model name of the device.
-		ModelNumber  string   `json:"model_number"`  // ModelNumber is the model number of the device.
-		Name         string   `json:"name"`          // Name of the radio.
-		Power        bool     `json:"power"`         // Power represents if the radio is not in standby.
-		PresetNumber int      `json:"preset_number"` // PresetNumber is the current preset that is playing.
-		Presets      []Preset `json:"presets"`       // Presets of the radio.
-		Status       Status   `json:"status"`        // Status is either playing, connecting, or stopped.
-		Title        string   `json:"title"`         // Title of the current playing stream.
-		TitleNew     string   `json:"title_new"`     // TitleNew is the overridden title.
-		URL          string   `json:"url"`           // URL of the stream that is currently selected.
-		URLNew       string   `json:"url_new"`       // URLNew is the overridden URL.
-		UUID         string   `json:"uuid"`          // UUID of the radio.
-		Volume       int      `json:"volume"`        // Volume of the radio.
+		AudioSource  string   `json:"audio_source" validate:"required"`  // AudioSource is the audio source.
+		AudioSources []string `json:"audio_sources" validate:"required"` // AudioSources is the list of available audio sources.
+		IsMuted      bool     `json:"is_muted" validate:"required"`      // IsMuted represents if the radio is muted.
+		Metadata     string   `json:"metadata" validate:"required"`      // Metadata of the current playing stream.
+		ModelName    string   `json:"model_name" validate:"required"`    // ModelName is the model name of the device.
+		ModelNumber  string   `json:"model_number" validate:"required"`  // ModelNumber is the model number of the device.
+		Name         string   `json:"name" validate:"required"`          // Name of the radio.
+		Power        bool     `json:"power" validate:"required"`         // Power represents if the radio is not in standby.
+		PresetNumber int      `json:"preset_number" validate:"required"` // PresetNumber is the current preset that is playing.
+		Presets      []Preset `json:"presets" validate:"required"`       // Presets of the radio.
+		Status       Status   `json:"status" validate:"required"`        // Status is either playing, connecting, or stopped.
+		Title        string   `json:"title" validate:"required"`         // Title of the current playing stream.
+		TitleNew     string   `json:"title_new" validate:"required"`     // TitleNew is the overridden title.
+		URL          string   `json:"url" validate:"required"`           // URL of the stream that is currently selected.
+		URLNew       string   `json:"url_new" validate:"required"`       // URLNew is the overridden URL.
+		UUID         string   `json:"uuid" validate:"required"`          // UUID of the radio.
+		Volume       int      `json:"volume" validate:"required"`        // Volume of the radio.
 	} //	@name	state.State
 
 	Partial struct {
@@ -148,11 +148,11 @@ func ParsePresetsCount(presetsCount int) (int, error) {
 
 func ParseStatus(status string) Status {
 	switch {
-	case status == StatusConnecting:
+	case status == string(StatusConnecting):
 		return StatusConnecting
-	case status == StatusPlaying:
+	case status == string(StatusPlaying):
 		return StatusPlaying
-	case status == StatusStopped:
+	case status == string(StatusStopped):
 		return StatusStopped
 	default:
 		return StatusUnknown

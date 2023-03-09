@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,6 +17,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+func init() {
+	mime.AddExtensionType(".js", "application/javascript")
+}
 
 type RadioContext struct {
 	echo.Context

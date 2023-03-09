@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "swag": "swagger-typescript-api -p ../docs/swagger/swagger.json -o ./src -n api.ts"
   },
   "license": "MIT",
   "devDependencies": {
@@ -13,12 +14,14 @@
     "postcss": "^8.4.21",
     "prettier": "^2.8.4",
     "prettier-plugin-tailwindcss": "^0.2.4",
+    "swagger-typescript-api": "^12.0.3",
     "tailwindcss": "^3.2.4",
     "typescript": "^4.9.5",
     "vite": "^4.1.1",
     "vite-plugin-solid": "^2.5.0"
   },
   "dependencies": {
+    "@tanstack/solid-query": "^4.26.1",
     "solid-js": "^1.6.10"
   }
 }

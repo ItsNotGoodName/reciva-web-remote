@@ -6,9 +6,9 @@ import (
 )
 
 type Preset struct {
-	TitleNew string `json:"title_new"` // TitleNew is the overridden title.
-	URL      string `json:"url"`       // URL of the preset.
-	URLNew   string `json:"url_new"`   // URLNew is the overridden URL.
+	TitleNew string `json:"title_new" validate:"required"` // TitleNew is the overridden title.
+	URL      string `json:"url" validate:"required"`       // URL of the preset.
+	URLNew   string `json:"url_new" validate:"required"`   // URLNew is the overridden URL.
 }
 
 func (p Preset) Validate() error {

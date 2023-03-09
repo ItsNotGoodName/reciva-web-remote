@@ -1,23 +1,24 @@
 all: npm build
 
 npm:
-	npm install
+	npm install --prefix web
+
+generate:
+	go generate ./...
 
 build: build-frontend build-backend
 
-snapshot: build-frontend build-snapshot
+snapshot: build-frontend
+	goreleaser release --snapshot --rm-dist
 
 dev-frontend:
-	npm run dev
+	npm run dev --prefix web
 
-dev-backend:
+dev-backend: generate
 	go run --tags dev .
 
 build-frontend:
-	npm run build
+	npm run build --prefix web
 
 build-backend:
 	go build -o bin/
-
-build-snapshot:
-	goreleaser release --snapshot --rm-dist

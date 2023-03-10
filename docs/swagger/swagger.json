@@ -120,10 +120,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Preset"
-                            }
+                            "$ref": "#/definitions/model.Preset"
                         }
                     },
                     "404": {

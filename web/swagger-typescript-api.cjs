@@ -7,6 +7,7 @@ generateApi({
   name: "api.ts",
   // set to `false` to prevent the tool from writing to disk
   output: path.resolve(process.cwd(), "./src/"),
+  unwrapResponseData: true,
   input: path.resolve(process.cwd(), "../docs/swagger/swagger.json"),
 })
   .then(({ files, configuration }) => {

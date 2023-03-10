@@ -13,15 +13,15 @@ import {
 } from "solid-js";
 import { type Component } from "solid-js";
 import { type StateState } from "./api";
-import { discover, radiosQuery, statePatch, stateQuery } from "./actions";
+import { radiosDiscover, radiosList, statePatch, stateResource } from "./store";
 
 const DiscoverButton: Component = () => {
   console.log("Render: DiscoverButton");
 
   return (
-    <button onClick={() => void discover.mutate(null)}>
+    <button onClick={() => void radiosDiscover.mutate(null)}>
       <Switch fallback={<>Discover</>}>
-        <Match when={discover.loading()}>
+        <Match when={radiosDiscover.loading()}>
           <>Discovering...</>
         </Match>
       </Switch>
@@ -58,7 +58,7 @@ const RadioSelect: Component<{
 }> = (props) => {
   console.log("Render: RadioSelect");
 
-  const [radios] = radiosQuery;
+  const [radios] = radiosList;
   let select: HTMLSelectElement | undefined;
 
   // Prevent select.value from defaulting to the first option when radios.data changes
@@ -66,7 +66,7 @@ const RadioSelect: Component<{
     on(
       radios,
       () => {
-        select!.value = props.radioUUID();
+        select && (select.value = props.radioUUID());
       },
       { defer: true }
     )
@@ -97,7 +97,7 @@ const RadioSelect: Component<{
 
 const App: Component = () => {
   const [radioUUID, setRadioUUID] = createSignal<string>("");
-  const [state] = stateQuery(radioUUID);
+  const [state] = stateResource(radioUUID);
 
   createEffect(on(radioUUID, () => resetErrorBoundaries()));
 

@@ -79,7 +79,7 @@ func (a API) ListPresets(c echo.Context) error {
 //	@Tags		presets
 //	@Param		url	path	string	true	"Preset URL"
 //	@Produce	json
-//	@Success	200	{array}		model.Preset
+//	@Success	200	{object}	model.Preset
 //	@Failure	404	{object}	HTTPError
 //	@Failure	500	{object}	HTTPError
 //	@Router		/presets/{url} [get]

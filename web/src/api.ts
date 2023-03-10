@@ -260,7 +260,7 @@ export class HttpClient<SecurityDataType = unknown> {
     baseUrl,
     cancelToken,
     ...params
-  }: FullRequestParams): Promise<HttpResponse<T, E>> => {
+  }: FullRequestParams): Promise<T> => {
     const secureParams =
       ((typeof secure === "boolean" ? secure : this.baseApiParams.secure) &&
         this.securityWorker &&
@@ -305,7 +305,7 @@ export class HttpClient<SecurityDataType = unknown> {
       }
 
       if (!response.ok) throw data;
-      return data;
+      return data.data;
     });
   };
 }
@@ -379,7 +379,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/presets/{url}
      */
     presetsDetail: (url: string, params: RequestParams = {}) =>
-      this.request<ModelPreset[], HttpHTTPError>({
+      this.request<ModelPreset, HttpHTTPError>({
         path: `/presets/${url}`,
         method: "GET",
         format: "json",

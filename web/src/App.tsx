@@ -17,7 +17,7 @@ import { Api, HttpPatchState, ModelRadio, StateState } from "./api";
 import { API_URL } from "./constant";
 import { createMutation } from "./util";
 
-const api = new Api({ baseUrl: API_URL + "/api" }); // TODO: get api path from swagger.json
+const api = new Api({ baseUrl: API_URL });
 
 // Queries
 

@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "swag": "swagger-typescript-api -p ../docs/swagger/swagger.json -o ./src -n api.ts"
+    "swag": "node swagger-typescript-api.js"
   },
   "license": "MIT",
   "devDependencies": {

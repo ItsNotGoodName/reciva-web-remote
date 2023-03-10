@@ -4,67 +4,24 @@ import {
   For,
   Show,
   createSignal,
-  Setter,
-  Accessor,
+  type Setter,
+  type Accessor,
   createEffect,
-  createResource,
   ErrorBoundary,
   resetErrorBoundaries,
   on,
 } from "solid-js";
-import type { Component } from "solid-js";
-import { Api, HttpPatchState, ModelRadio, StateState } from "./api";
-import { API_URL } from "./constant";
-import { createMutation } from "./util";
-
-const api = new Api({ baseUrl: API_URL });
-
-// Queries
-
-const radiosQuery = createResource<ModelRadio[], string>(() =>
-  api.radios.radiosList().then((res) => res.data)
-);
-const [stateState, setStaleState] = createSignal<string>("", { equals: false });
-const stateQuery = (uuid: Accessor<string | undefined>) => {
-  const query = createResource<StateState, string>(
-    () => uuid() || undefined,
-    (uuid: string) => api.states.statesDetail(uuid).then((res) => res.data)
-  );
-
-  createEffect(
-    on(
-      stateState,
-      () => {
-        if (stateState() == uuid()) return query[1].refetch();
-      },
-      { defer: true }
-    )
-  );
-
-  return query;
-};
-
-// Mutations
-
-const discoverMutation = createMutation(
-  () => api.radios.radiosCreate(),
-  [radiosQuery]
-);
-const stateMutation = createMutation<HttpPatchState & { uuid: string }>((req) =>
-  api.states
-    .statesPartialUpdate(req.uuid, req)
-    .then(() => setStaleState(req.uuid))
-);
-
-// Components
+import { type Component } from "solid-js";
+import { type StateState } from "./api";
+import { discover, radiosQuery, statePatch, stateQuery } from "./actions";
 
 const DiscoverButton: Component = () => {
   console.log("Render: DiscoverButton");
 
   return (
-    <button onClick={() => discoverMutation[1].refetch({})}>
+    <button onClick={() => void discover.mutate(null)}>
       <Switch fallback={<>Discover</>}>
-        <Match when={discoverMutation[0].loading}>
+        <Match when={discover.loading()}>
           <>Discovering...</>
         </Match>
       </Switch>
@@ -79,7 +36,7 @@ const RadioPowerButton: Component<{
   console.log("Render: RadioPowerButton");
 
   function toggle() {
-    stateMutation[1].refetch({
+    void statePatch.mutate({
       uuid: props.radioUUID(),
       power: !props.state().power,
     });
@@ -104,11 +61,15 @@ const RadioSelect: Component<{
   const [radios] = radiosQuery;
   let select: HTMLSelectElement | undefined;
 
-  // Prevent select.value from defaulting to first option when radios.data changes
+  // Prevent select.value from defaulting to the first option when radios.data changes
   createEffect(
-    on(radios, () => {
-      select!.value = props.radioUUID();
-    })
+    on(
+      radios,
+      () => {
+        select!.value = props.radioUUID();
+      },
+      { defer: true }
+    )
   );
 
   return (
@@ -123,10 +84,8 @@ const RadioSelect: Component<{
       <option disabled value="">
         <Switch fallback={<>Select Radio</>}>
           <Match when={radios.loading}>Loading...</Match>
-          <Match when={radios.error}>Network Error</Match>
-          <Match when={radios() !== undefined && radios()!.length == 0}>
-            No Radios Found
-          </Match>
+          <Match when={radios.error !== undefined}>Network Error</Match>
+          <Match when={radios()?.length == 0}>No Radios Found</Match>
         </Switch>
       </option>
       <For each={radios()}>

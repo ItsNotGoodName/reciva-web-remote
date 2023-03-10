@@ -11,5 +11,7 @@
     "noEmit": true,
     "isolatedModules": true,
     "strict": true
-  }
+  },
+  "include": [".eslintrc.cjs", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs"],
+  "exclude": ["node_modules"]
 }

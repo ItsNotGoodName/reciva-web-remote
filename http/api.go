@@ -208,7 +208,7 @@ func (a API) ListStates(c echo.Context) error {
 //	@Tags		states
 //	@Param		uuid	path	string	true	"Radio UUID"
 //	@Produce	json
-//	@Success	200	{array}		state.State
+//	@Success	200	{object}	state.State
 //	@Failure	404	{object}	HTTPError
 //	@Failure	500	{object}	HTTPError
 //	@Router		/states/{uuid} [get]

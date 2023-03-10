@@ -490,7 +490,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/states/{uuid}
      */
     statesDetail: (uuid: string, params: RequestParams = {}) =>
-      this.request<StateState[], HttpHTTPError>({
+      this.request<StateState, HttpHTTPError>({
         path: `/states/${uuid}`,
         method: "GET",
         format: "json",

@@ -6,28 +6,30 @@ import {
   type StateState,
 } from "./api";
 import { type ModelRadio } from "./api";
-import { API_URL } from "./constant";
+import { API_URL } from "./constants";
 import { createMutation, once, checkStale, createStaleSignal } from "./utils";
 import { type WSDataReturn } from "./ws";
 
 const api = new Api({ baseUrl: API_URL });
 
 // Build get
-export const buildGet = once(() => createResource(() => api.build.buildList()));
+export const buildGetQuery = once(() =>
+  createResource(() => api.build.buildList())
+);
 
 // Radios list
-export const radiosList = createResource<ModelRadio[], string>(() =>
+export const radiosListQuery = createResource<ModelRadio[], string>(() =>
   api.radios.radiosList()
 );
 
 // Presets list
-export const presetsList = once(() =>
+export const presetListQuery = once(() =>
   createResource(() => api.presets.presetsList())
 );
 
 // Preset get
 const [stalePresets, setStalePresets] = createStaleSignal(undefined);
-export const presetResource = (url: Accessor<string | undefined>) =>
+export const usePresetQuery = (url: Accessor<string | undefined>) =>
   checkStale(
     createResource<ModelPreset, string>(
       () => url() || undefined,
@@ -38,7 +40,7 @@ export const presetResource = (url: Accessor<string | undefined>) =>
 
 // State get
 const [staleStateUUID, setStaleStateUUID] = createStaleSignal("");
-export const stateResource = (uuid: Accessor<string | undefined>) =>
+export const useStateQuery = (uuid: Accessor<string | undefined>) =>
   checkStale(
     createResource<StateState, string>(
       () => uuid() || undefined,
@@ -49,23 +51,23 @@ export const stateResource = (uuid: Accessor<string | undefined>) =>
   );
 
 // Radios discover
-export const radiosDiscover = createMutation(
+export const discoverRadios = createMutation(
   () => api.radios.radiosCreate(),
-  [radiosList]
+  [radiosListQuery]
 );
 
 // Radio volume refresh
-export const radioVolumeRefresh = createMutation((uuid: string) =>
+export const refreshRadioVolume = createMutation((uuid: string) =>
   api.radios.volumeCreate(uuid).then(() => setStaleStateUUID(uuid))
 );
 
 // Radio subscription refresh
-export const radioSubscriptionRefresh = createMutation((uuid: string) =>
+export const refreshRadioSubscription = createMutation((uuid: string) =>
   api.radios.subscriptionCreate(uuid)
 );
 
 // State update
-export const statePatch = createMutation(
+export const patchState = createMutation(
   (req: HttpPatchState & { uuid: string }) =>
     api.states
       .statesPartialUpdate(req.uuid, req)
@@ -73,15 +75,15 @@ export const statePatch = createMutation(
 );
 
 // Preset update
-export const presetUpdate = createMutation((preset: ModelPreset) =>
+export const updatePreset = createMutation((preset: ModelPreset) =>
   api.presets.presetsCreate(preset).then(() => setStalePresets())
 );
 
-// Websocket
-export const websocketBind = (data: WSDataReturn) => {
+// Websocket data hook
+export const hookWSData = (data: WSDataReturn) => {
   createEffect(() => {
     if (!data.discovering()) {
-      void radiosList[1].refetch();
+      void radiosListQuery[1].refetch();
     }
   });
 };

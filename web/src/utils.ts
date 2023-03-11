@@ -18,17 +18,17 @@ export function createStaleSignal<T>(value: T): Signal<T> {
 
 export function checkStale<T, R>(
   query: ResourceReturn<T, R>,
-  checkFn: Accessor<boolean>,
-  onD: Accessor<unknown> = checkFn
+  fn: Accessor<boolean>,
+  deps: Accessor<unknown> = fn
 ): ResourceReturn<T, R> {
   createEffect(
     on(
-      onD,
+      deps,
       () => {
-        console.log("stale check");
-        if (checkFn()) {
+        console.log("Stale: Check");
+        if (fn()) {
           void query[1].refetch();
-          console.log("stale REFETCH");
+          console.log("Stale: Refetch");
         }
       },
       { defer: true }
@@ -75,4 +75,13 @@ export function createMutation<T, R>(
   }
 
   return { loading, mutate };
+}
+
+export type ClassProps = { class?: string };
+
+export function mergeClass(first: string, second?: string) {
+  if (second) {
+    return first + " " + second;
+  }
+  return first;
 }

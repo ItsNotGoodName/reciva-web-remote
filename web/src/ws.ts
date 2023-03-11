@@ -7,9 +7,9 @@ import {
   StateStatus,
   type WsEvent,
 } from "./api";
-import { WS_URL } from "./constant";
+import { WS_URL } from "./constants";
 
-const wsSubscribe = (ws: WebSocket, radioUUID: string) => {
+const subscribe = (ws: WebSocket, radioUUID: string) => {
   const topics: Array<PubsubTopic> = [PubsubTopic.DiscoverTopic];
   if (radioUUID != "") {
     topics.push(PubsubTopic.StateTopic);
@@ -23,7 +23,7 @@ const wsSubscribe = (ws: WebSocket, radioUUID: string) => {
   );
 };
 
-const wsInitialState: StateState = {
+const defaultState: StateState = {
   audio_source: "",
   audio_sources: [],
   is_muted: false,
@@ -64,7 +64,7 @@ export function useWS(
   const [connected, setConnected] = createSignal(false);
   const [disconnected, setDisconnected] = createSignal(false);
   const [discovering, setDiscovering] = createSignal(false);
-  const [state, setState] = createStore(wsInitialState);
+  const [state, setState] = createStore(defaultState);
 
   //   const stateSelected = () => state.uuid != "";
   //   const stateLoading = () => state.uuid != stateUUID() || connecting();
@@ -79,7 +79,7 @@ export function useWS(
       setConnecting(false);
       setConnected(true);
       setDisconnected(false);
-      wsSubscribe(ws, stateUUID());
+      subscribe(ws, stateUUID());
     });
 
     ws.addEventListener("message", (event) => {
@@ -102,7 +102,7 @@ export function useWS(
       setConnecting(false);
       setConnected(false);
       setDisconnected(true);
-      setState(wsInitialState);
+      setState(defaultState);
     });
 
     return ws;
@@ -128,8 +128,8 @@ export function useWS(
         return;
       }
 
-      setState(wsInitialState);
-      wsSubscribe(ws, stateUUID());
+      setState(defaultState);
+      subscribe(ws, stateUUID());
     })
   );
 

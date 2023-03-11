@@ -508,6 +508,21 @@ const docTemplate = `{
                 }
             }
         },
+        "pubsub.Topic": {
+            "type": "string",
+            "enum": [
+                "error",
+                "state",
+                "force.state.changed",
+                "discover"
+            ],
+            "x-enum-varnames": [
+                "ErrorTopic",
+                "StateTopic",
+                "ForceStateChangedTopic",
+                "DiscoverTopic"
+            ]
+        },
         "state.Preset": {
             "type": "object",
             "required": [
@@ -656,6 +671,59 @@ const docTemplate = `{
                 "StatusStopped",
                 "StatusUnknown"
             ]
+        },
+        "ws.Command": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "$ref": "#/definitions/ws.CommandState"
+                },
+                "subscribe": {
+                    "$ref": "#/definitions/ws.CommandSubscribe"
+                }
+            }
+        },
+        "ws.CommandState": {
+            "type": "object",
+            "required": [
+                "partial",
+                "uuid"
+            ],
+            "properties": {
+                "partial": {
+                    "type": "boolean"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "ws.CommandSubscribe": {
+            "type": "object",
+            "required": [
+                "topics"
+            ],
+            "properties": {
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pubsub.Topic"
+                    }
+                }
+            }
+        },
+        "ws.Event": {
+            "type": "object",
+            "required": [
+                "data",
+                "topic"
+            ],
+            "properties": {
+                "data": {},
+                "topic": {
+                    "$ref": "#/definitions/pubsub.Topic"
+                }
+            }
         }
     }
 }`

@@ -2,26 +2,40 @@ import {
   Switch,
   Match,
   For,
-  Show,
   createSignal,
   type Setter,
   type Accessor,
   createEffect,
   ErrorBoundary,
   resetErrorBoundaries,
+  Index,
   on,
 } from "solid-js";
 import { type Component } from "solid-js";
 import { type StateState } from "./api";
-import { radiosDiscover, radiosList, statePatch, stateResource } from "./store";
+import {
+  websocketBind,
+  presetsList,
+  radiosDiscover,
+  radiosList,
+  statePatch,
+} from "./store";
+import { useWS } from "./ws";
 
-const DiscoverButton: Component = () => {
+const DiscoverButton: Component<{ discovering: Accessor<boolean> }> = (
+  props
+) => {
   console.log("Render: DiscoverButton");
 
+  const loading = () => radiosDiscover.loading() || props.discovering();
+
   return (
-    <button onClick={() => void radiosDiscover.mutate(null)}>
+    <button
+      onClick={() => void radiosDiscover.mutate(null)}
+      disabled={loading()}
+    >
       <Switch fallback={<>Discover</>}>
-        <Match when={radiosDiscover.loading()}>
+        <Match when={loading()}>
           <>Discovering...</>
         </Match>
       </Switch>
@@ -31,22 +45,22 @@ const DiscoverButton: Component = () => {
 
 const RadioPowerButton: Component<{
   radioUUID: Accessor<string>;
-  state: Accessor<StateState>;
+  state: StateState;
 }> = (props) => {
   console.log("Render: RadioPowerButton");
 
   function toggle() {
     void statePatch.mutate({
       uuid: props.radioUUID(),
-      power: !props.state().power,
+      power: !props.state.power,
     });
   }
 
   return (
     <button onClick={toggle}>
       <Switch>
-        <Match when={props.state().power}>ON</Match>
-        <Match when={!props.state().power}>OFF</Match>
+        <Match when={props.state.power}>ON</Match>
+        <Match when={!props.state.power}>OFF</Match>
       </Switch>
     </button>
   );
@@ -95,24 +109,32 @@ const RadioSelect: Component<{
   );
 };
 
+const PresetList: Component = () => {
+  const [presets, { refetch }] = presetsList();
+  return (
+    <>
+      <Index each={presets()}>{(preset) => <div>{preset().url}</div>}</Index>
+      <button onClick={() => void refetch()}>Refresh</button>
+    </>
+  );
+};
+
 const App: Component = () => {
   const [radioUUID, setRadioUUID] = createSignal<string>("");
-  const [state] = stateResource(radioUUID);
+  const [data] = useWS(radioUUID);
+  websocketBind(data);
+  const { state, discovering } = data;
 
   createEffect(on(radioUUID, () => resetErrorBoundaries()));
 
   return (
     <>
-      <DiscoverButton />
+      <DiscoverButton discovering={discovering} />
       <RadioSelect radioUUID={radioUUID} setRadioUUID={setRadioUUID} />
       <ErrorBoundary fallback={<>Could not fetch state</>}>
-        <Show when={state() !== undefined}>
-          <RadioPowerButton
-            radioUUID={radioUUID}
-            state={state as Accessor<StateState>}
-          />
-        </Show>
+        <RadioPowerButton radioUUID={radioUUID} state={state} />
       </ErrorBoundary>
+      <PresetList />
     </>
   );
 };

@@ -43,6 +43,13 @@ export interface ModelRadio {
   uuid: string;
 }
 
+export enum PubsubTopic {
+  ErrorTopic = "error",
+  StateTopic = "state",
+  ForceStateChangedTopic = "force.state.changed",
+  DiscoverTopic = "discover",
+}
+
 export interface StatePreset {
   /** Number is the preset number. */
   number: number;
@@ -98,6 +105,25 @@ export enum StateStatus {
   StatusPlaying = "Playing",
   StatusStopped = "Stopped",
   StatusUnknown = "",
+}
+
+export interface WsCommand {
+  state?: WsCommandState;
+  subscribe?: WsCommandSubscribe;
+}
+
+export interface WsCommandState {
+  partial: boolean;
+  uuid: string;
+}
+
+export interface WsCommandSubscribe {
+  topics: PubsubTopic[];
+}
+
+export interface WsEvent {
+  data: any;
+  topic: PubsubTopic;
 }
 
 export type QueryParamsType = Record<string | number, any>;

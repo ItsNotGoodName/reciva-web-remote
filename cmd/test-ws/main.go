@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ItsNotGoodName/reciva-web-remote/http"
+	"github.com/ItsNotGoodName/reciva-web-remote/http/ws"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
 	"nhooyr.io/websocket"
@@ -20,9 +20,9 @@ func run(ctx context.Context) {
 	}
 	defer c.Close(websocket.StatusInternalError, "the sky is falling")
 
-	command := http.WSCommand{
-		Subscribe: &http.WSCommandSubscribe{Topics: []string{string(pubsub.StateTopic), string(pubsub.DiscoverTopic)}},
-		State:     &http.WSCommandState{Partial: true},
+	command := ws.Command{
+		Subscribe: &ws.CommandSubscribe{Topics: []pubsub.Topic{pubsub.StateTopic, pubsub.DiscoverTopic}},
+		State:     &ws.CommandState{Partial: true},
 	}
 	if err := wsjson.Write(ctx, c, &command); err != nil {
 		log.Fatalln("could not write:", err)

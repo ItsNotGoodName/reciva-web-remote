@@ -1,4 +1,4 @@
-import { createResource, type Accessor } from "solid-js";
+import { createEffect, createResource, type Accessor } from "solid-js";
 import {
   Api,
   type ModelPreset,
@@ -8,6 +8,7 @@ import {
 import { type ModelRadio } from "./api";
 import { API_URL } from "./constant";
 import { createMutation, once, checkStale, createStaleSignal } from "./utils";
+import { type WSDataReturn } from "./ws";
 
 const api = new Api({ baseUrl: API_URL });
 
@@ -75,3 +76,12 @@ export const statePatch = createMutation(
 export const presetUpdate = createMutation((preset: ModelPreset) =>
   api.presets.presetsCreate(preset).then(() => setStalePresets())
 );
+
+// Websocket
+export const websocketBind = (data: WSDataReturn) => {
+  createEffect(() => {
+    if (!data.discovering()) {
+      void radiosList[1].refetch();
+    }
+  });
+};

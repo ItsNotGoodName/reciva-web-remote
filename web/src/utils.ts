@@ -5,6 +5,7 @@ import {
   createEffect,
   on,
   type Signal,
+  onCleanup,
 } from "solid-js";
 
 export type Mutation<T = void, R = unknown> = {
@@ -84,4 +85,26 @@ export function mergeClass(first: string, second?: string) {
     return first + " " + second;
   }
   return first;
+}
+
+export function clickOutside(
+  el: HTMLInputElement,
+  accessor: Accessor<() => void>
+) {
+  const onClick = (e: MouseEvent) => {
+    !el.contains(e.target as Node) && accessor()();
+  };
+  document.body.addEventListener("click", onClick);
+
+  onCleanup(() => document.body.removeEventListener("click", onClick));
+}
+
+declare module "solid-js" {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface Directives {
+      // use:clickOutside
+      clickOutside: () => void;
+    }
+  }
 }

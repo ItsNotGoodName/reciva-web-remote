@@ -51,33 +51,32 @@ export const useStateQuery = (uuid: Accessor<string | undefined>) =>
   );
 
 // Radios discover
-export const discoverRadios = createMutation(
-  () => api.radios.radiosCreate(),
-  [radiosListQuery]
-);
+export const useDiscoverRadios = () =>
+  createMutation(() => api.radios.radiosCreate(), [radiosListQuery]);
 
 // Radio volume refresh
-export const refreshRadioVolume = createMutation((uuid: string) =>
+export const useRefreshRadioVolume = createMutation((uuid: string) =>
   api.radios.volumeCreate(uuid).then(() => setStaleStateUUID(uuid))
 );
 
 // Radio subscription refresh
-export const refreshRadioSubscription = createMutation((uuid: string) =>
+export const useRefreshRadioSubscription = createMutation((uuid: string) =>
   api.radios.subscriptionCreate(uuid)
 );
 
 // State update
-export const patchState = createMutation(
-  (req: HttpPatchState & { uuid: string }) =>
+export const usePatchState = () =>
+  createMutation((req: HttpPatchState & { uuid: string }) =>
     api.states
       .statesPartialUpdate(req.uuid, req)
       .then(() => setStaleStateUUID(req.uuid))
-);
+  );
 
 // Preset update
-export const updatePreset = createMutation((preset: ModelPreset) =>
-  api.presets.presetsCreate(preset).then(() => setStalePresets())
-);
+export const useUpdatePreset = () =>
+  createMutation((preset: ModelPreset) =>
+    api.presets.presetsCreate(preset).then(() => setStalePresets())
+  );
 
 // Websocket data hook
 export const hookWSData = (data: WSDataReturn) => {

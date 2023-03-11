@@ -72,6 +72,7 @@ export function useWS(
   const connect = () => {
     const ws = new WebSocket(WS_URL);
     setConnecting(true);
+    setState(defaultState);
     console.log("WS: Connecting");
 
     ws.addEventListener("open", () => {

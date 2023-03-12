@@ -1,4 +1,13 @@
 import {
+  FaSolidPlay,
+  FaSolidPowerOff,
+  FaSolidQuestion,
+  FaSolidRadio,
+  FaSolidStop,
+} from "solid-icons/fa";
+import { IoSearch } from "solid-icons/io";
+import { FiRefreshCw } from "solid-icons/fi";
+import {
   Switch,
   Match,
   For,
@@ -28,9 +37,9 @@ import { useWS } from "./ws";
 // Prevent TypeScript from removing clickOutside directive
 false && clickOutside;
 
-const DiscoverButton: Component<{ discovering: boolean } & ClassProps> = (
-  props
-) => {
+const DiscoverButton: Component<
+  { discovering: boolean; classButton: string } & ClassProps
+> = (props) => {
   console.log("Render: DiscoverButton");
   const discoverRadios = useDiscoverRadios();
   const loading = (): boolean => discoverRadios.loading() || props.discovering;
@@ -40,14 +49,16 @@ const DiscoverButton: Component<{ discovering: boolean } & ClassProps> = (
   };
 
   return (
-    <button
-      class={mergeClass("btn-primary btn", props.class)}
-      classList={{ loading: loading() }}
-      onClick={onClick}
-      disabled={loading()}
-    >
-      Discover
-    </button>
+    <DaisyTooltip class={props.class} tooltip="Discover">
+      <button
+        class={mergeClass("btn-primary btn", props.classButton)}
+        classList={{ loading: loading() }}
+        onClick={onClick}
+        aria-label="Discover"
+      >
+        {!loading() && <IoSearch size={20} />}
+      </button>
+    </DaisyTooltip>
   );
 };
 
@@ -58,18 +69,31 @@ const RadioPlayerStatusButton: Component<
   } & ClassProps
 > = (props) => {
   console.log("Render: RadioPlayerStatus");
-  const data = (): { class: string; status: string } => {
+  const data = (): { class: string; status: string; element: JSX.Element } => {
     switch (props.status) {
       case StateStatus.StatusConnecting:
-        return { class: "btn btn-circle btn-warning", status: props.status };
+        return {
+          class: "btn btn-circle btn-warning animate-spin",
+          status: props.status,
+          element: <FiRefreshCw size={20} />,
+        };
       case StateStatus.StatusPlaying:
-        return { class: "btn btn-circle btn-success", status: props.status };
+        return {
+          class: "btn btn-circle btn-success pl-1",
+          status: props.status,
+          element: <FaSolidPlay size={20} />,
+        };
       case StateStatus.StatusStopped:
-        return { class: "btn btn-circle btn-error", status: props.status };
+        return {
+          class: "btn btn-circle btn-error",
+          status: props.status,
+          element: <FaSolidStop size={20} />,
+        };
       default:
         return {
           class: "btn btn-circle no-animation btn-info",
           status: "Unknown",
+          element: <FaSolidQuestion size={20} />,
         };
     }
   };
@@ -81,7 +105,7 @@ const RadioPlayerStatusButton: Component<
         classList={{ loading: props.loading }}
         aria-label={data().status}
       >
-        {!props.loading && data().status}
+        {!props.loading && data().element}
       </button>
     </DaisyTooltip>
   );
@@ -187,7 +211,7 @@ const RadioTypeDropdown: Component<
         tabindex="0"
         class={mergeClass("btn-primary btn", props.classButton)}
       >
-        Radio
+        <FaSolidRadio size={20} />
       </label>
       <div
         tabindex="0"
@@ -299,13 +323,18 @@ const RadioPowerButton: Component<
         "btn-error": !props.state.power,
         loading: patchState.loading(),
       }}
-      disabled={patchState.loading()}
       onClick={toggle}
     >
-      <Switch>
-        <Match when={props.state.power}>ON</Match>
-        <Match when={!props.state.power}>OFF</Match>
-      </Switch>
+      <Show when={!patchState.loading()}>
+        <Switch>
+          <Match when={props.state.power}>
+            <FaSolidPowerOff size={20} />
+          </Match>
+          <Match when={!props.state.power}>
+            <FaSolidPowerOff size={20} />
+          </Match>
+        </Switch>
+      </Show>
     </button>
   );
 };
@@ -450,12 +479,10 @@ const App: Component = () => {
       </div>
       <BottomBar class="flex gap-2">
         <div class="flex flex-1">
-          <DaisyTooltip tooltip="Discover">
-            <DiscoverButton
-              class="rounded-r-none"
-              discovering={discovering()}
-            />
-          </DaisyTooltip>
+          <DiscoverButton
+            classButton="rounded-r-none"
+            discovering={discovering()}
+          />
           <RadioSelect
             class="w-full flex-1 rounded-l-none"
             radioUUID={radioUUID()}

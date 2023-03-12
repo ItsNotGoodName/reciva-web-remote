@@ -5,7 +5,6 @@ import {
   createEffect,
   on,
   type Signal,
-  onCleanup,
 } from "solid-js";
 
 export function createStaleSignal<T>(value: T): Signal<T> {
@@ -51,21 +50,42 @@ export function mergeClass(first: string, second?: string) {
   return first;
 }
 
-export function clickOutside(el: HTMLInputElement) {
-  const onClick = (e: MouseEvent) => {
-    !el.contains(e.target as Node) && el.blur();
-  };
-  document.body.addEventListener("click", onClick);
+export function useDropdown() {
+  const [show, setShow] = createSignal(false);
+  const toggleShow = (
+    e: Event & {
+      currentTarget: HTMLElement;
+      target: Element;
+    }
+  ) => {
+    if (e.type == "focusout") {
+      setShow(false);
+      return;
+    }
 
-  onCleanup(() => document.body.removeEventListener("click", onClick));
+    if (!show()) {
+      setShow(true);
+    } else {
+      setShow(false);
+      e.currentTarget.blur();
+    }
+  };
+
+  return { showDropdown: show, toggleDropdown: toggleShow };
 }
 
-declare module "solid-js" {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface Directives {
-      // use:clickOutside
-      clickOutside: string;
-    }
-  }
+// https://stackoverflow.com/a/9039885
+export function IOS() {
+  return (
+    [
+      "iPad Simulator",
+      "iPhone Simulator",
+      "iPod Simulator",
+      "iPad",
+      "iPhone",
+      "iPod",
+    ].includes(navigator.platform) ||
+    // iPad on iOS 13 detection
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+  );
 }

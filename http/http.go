@@ -33,7 +33,10 @@ func Start(a API, port int, fs fs.FS) {
 	e.HideBanner = true
 	e.HidePort = true
 
-	e.Use(middleware.Logger())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "[${time_rfc3339}] ${status} ${method} ${path} (${remote_ip}) ${latency_human}\n",
+		Output: e.Logger.Output(),
+	}))
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 

@@ -20,7 +20,6 @@ import {
   createEffect,
   on,
   Show,
-  type ParentComponent,
   type JSX,
   splitProps,
   batch,
@@ -36,7 +35,7 @@ import {
   useRefreshRadioVolume,
   useRefreshRadioSubscription,
 } from "./store";
-import { clickOutside, type ClassProps, mergeClass } from "./utils";
+import { type ClassProps, mergeClass, useDropdown, IOS } from "./utils";
 import { useWS } from "./ws";
 import {
   DaisyButton,
@@ -45,9 +44,6 @@ import {
   DaisyTooltip,
   DaisyDropdownButton,
 } from "./Daisy";
-
-// Prevent TypeScript from removing clickOutside directive
-false && clickOutside;
 
 const DiscoverButton: Component<
   { discovering: boolean; classButton?: string } & ClassProps
@@ -186,17 +182,20 @@ const RadioPlayerTitleDropdown: Component<
       ),
     },
   ];
+  const { showDropdown, toggleDropdown } = useDropdown();
 
   return (
     <div
       class={mergeClass("dropdown no-animation", props.class)}
-      use:clickOutside=""
+      classList={{ "dropdown-show": showDropdown() }}
+      onFocusOut={toggleDropdown}
     >
       <DaisyDropdownButton
         class={mergeClass(
           "btn-primary justify-start gap-2 truncate",
           props.classButton
         )}
+        onClick={toggleDropdown}
         loading={props.loading}
       >
         <>
@@ -209,7 +208,7 @@ const RadioPlayerTitleDropdown: Component<
       <div
         tabindex="0"
         class={mergeClass(
-          "card-compact card dropdown-content w-full bg-primary p-2 text-primary-content shadow",
+          "card dropdown-content card-compact w-full bg-primary p-2 text-primary-content shadow",
           props.classDropdown
         )}
       >
@@ -232,15 +231,24 @@ const RadioTypeDropdown: Component<
     { key: "Model Number", value: props.state.model_number },
   ];
 
+  const { showDropdown, toggleDropdown } = useDropdown();
+
   return (
-    <div class={mergeClass("dropdown", props.class)} use:clickOutside="">
-      <DaisyDropdownButton class={mergeClass("btn-primary", props.classButton)}>
+    <div
+      class={mergeClass("dropdown", props.class)}
+      classList={{ "dropdown-show": showDropdown() }}
+      onFocusOut={toggleDropdown}
+    >
+      <DaisyDropdownButton
+        class={mergeClass("btn-primary", props.classButton)}
+        onClick={toggleDropdown}
+      >
         <FaSolidRadio size={20} />
       </DaisyDropdownButton>
       <div
         tabindex="0"
         class={mergeClass(
-          "card-compact card dropdown-content w-80 bg-primary p-2 text-primary-content shadow",
+          "card dropdown-content card-compact w-80 bg-primary p-2 text-primary-content shadow",
           props.classDropdown
         )}
       >
@@ -441,12 +449,19 @@ const RadioAudioSourceDropdown: Component<
     });
   };
 
+  const { showDropdown, toggleDropdown } = useDropdown();
+
   return (
-    <div class={mergeClass("dropdown", props.class)}>
+    <div
+      class={mergeClass("dropdown", props.class)}
+      classList={{ "dropdown-open": showDropdown() }}
+      onFocusOut={toggleDropdown}
+    >
       <DaisyDropdownButton
         class={props.classButton}
         classList={{ "btn-secondary": !!props.state.audio_source }}
         aria-label="Audio Source"
+        onclick={toggleDropdown}
       >
         <FaBrandsItunesNote size={20} />
       </DaisyDropdownButton>
@@ -543,10 +558,10 @@ const App: Component = () => {
           loading={loading()}
         />
       </div>
-      <div class="container mx-auto py-20 px-4">
+      <div class="container mx-auto px-4 pt-20 pb-36">
         <RadioPresetsList radioUUID={radioUUID} state={state} />
       </div>
-      <div class="fixed bottom-0 z-50 w-full space-y-2">
+      <div class="fixed bottom-0 z-50 w-full space-y-2 ">
         <div class="ml-auto max-w-screen-sm space-y-2 px-2">
           <Show when={!!radiosListQuery[0].error}>
             <div class="alert alert-error shadow-lg">
@@ -570,33 +585,46 @@ const App: Component = () => {
             </div>
           </Show>
         </div>
-        <div class="flex gap-2 border-t-2 border-accent border-t-base-300 bg-base-200 p-2">
-          <div class="flex flex-1">
-            <DiscoverButton
-              classButton="rounded-r-none"
-              discovering={discovering()}
-            />
-            <RadioSelect
-              class="w-full flex-1 rounded-l-none"
-              radioUUID={radioUUID}
-              setRadioUUID={setRadioUUID}
-            />
+        <div
+          class="flex flex-wrap-reverse gap-2 border-t-2 border-accent border-t-base-300 bg-base-200 p-2"
+          classList={{ "pb-5": IOS() }}
+        >
+          <div class="flex flex-auto gap-2">
+            <div class="flex flex-1">
+              <DiscoverButton
+                classButton="rounded-r-none"
+                discovering={discovering()}
+              />
+              <RadioSelect
+                class="w-full min-w-fit flex-1 rounded-l-none"
+                radioUUID={radioUUID}
+                setRadioUUID={setRadioUUID}
+              />
+            </div>
+            <Show when={radioSelected()}>
+              <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
+            </Show>
           </div>
           <Show when={radioSelected()}>
-            <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
-            <RadioPowerButton radioUUID={radioUUID} state={state} />
-            <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
-            <RadioAudioSourceDropdown
-              class="dropdown-top dropdown-end"
-              classDropdown="mb-2"
-              radioUUID={radioUUID}
-              state={state}
-            />
-            <RadioTypeDropdown
-              class="dropdown-top dropdown-end"
-              classDropdown="mb-2"
-              state={state}
-            />
+            <div class="flex flex-auto gap-2">
+              <RadioPowerButton
+                class="flex-auto"
+                radioUUID={radioUUID}
+                state={state}
+              />
+              <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
+              <RadioAudioSourceDropdown
+                class="dropdown-top dropdown-end"
+                classDropdown="mb-2"
+                radioUUID={radioUUID}
+                state={state}
+              />
+              <RadioTypeDropdown
+                class="dropdown-top dropdown-end"
+                classDropdown="mb-2"
+                state={state}
+              />
+            </div>
           </Show>
         </div>
       </div>

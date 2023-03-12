@@ -518,32 +518,6 @@ const RadioSelect: Component<
   );
 };
 
-const TopBar: ParentComponent<ClassProps> = (props) => {
-  return (
-    <div
-      class={mergeClass(
-        "fixed top-0 z-50 w-full border-b-2 border-accent border-b-base-300 bg-base-200 p-2",
-        props.class
-      )}
-    >
-      {props.children}
-    </div>
-  );
-};
-
-const BottomBar: ParentComponent<ClassProps> = (props) => {
-  return (
-    <div
-      class={mergeClass(
-        "fixed bottom-0 z-50 w-full border-t-2 border-accent border-t-base-300 bg-base-200 p-2",
-        props.class
-      )}
-    >
-      {props.children}
-    </div>
-  );
-};
-
 const App: Component = () => {
   const [radioUUID, setRadioUUID] = createSignal<string>("");
   const radioSelected = () => radioUUID() != "";
@@ -555,7 +529,7 @@ const App: Component = () => {
 
   return (
     <div class="h-screen">
-      <TopBar class="flex gap-2">
+      <div class="fixed top-0 z-50 flex w-full gap-2 border-b-2 border-accent border-b-base-300 bg-base-200 p-2">
         <RadioPlayerStatusButton
           class="tooltip-bottom flex"
           status={state.status}
@@ -568,39 +542,64 @@ const App: Component = () => {
           state={state}
           loading={loading()}
         />
-      </TopBar>
+      </div>
       <div class="container mx-auto py-20 px-4">
         <RadioPresetsList radioUUID={radioUUID} state={state} />
       </div>
-      <BottomBar class="flex gap-2">
-        <div class="flex flex-1">
-          <DiscoverButton
-            classButton="rounded-r-none"
-            discovering={discovering()}
-          />
-          <RadioSelect
-            class="w-full flex-1 rounded-l-none"
-            radioUUID={radioUUID}
-            setRadioUUID={setRadioUUID}
-          />
+      <div class="fixed bottom-0 z-50 w-full space-y-2">
+        <div class="ml-auto max-w-screen-sm space-y-2 px-2">
+          <Show when={!!radiosListQuery[0].error}>
+            <div class="alert alert-error shadow-lg">
+              Failed to list radios.
+            </div>
+          </Show>
+          <Show when={ws.disconnected()}>
+            <div class="alert shadow-lg">
+              <div>
+                <span>Disconnected from server.</span>
+              </div>
+              <div class="flex-none">
+                <DaisyButton
+                  class="btn-primary btn-sm"
+                  loading={ws.connecting()}
+                  onClick={ws.reconnect}
+                >
+                  Reconnect
+                </DaisyButton>
+              </div>
+            </div>
+          </Show>
         </div>
-        <Show when={radioSelected()}>
-          <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
-          <RadioPowerButton radioUUID={radioUUID} state={state} />
-          <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
-          <RadioAudioSourceDropdown
-            class="dropdown-top dropdown-end"
-            classDropdown="mb-2"
-            radioUUID={radioUUID}
-            state={state}
-          />
-          <RadioTypeDropdown
-            class="dropdown-top dropdown-end"
-            classDropdown="mb-2"
-            state={state}
-          />
-        </Show>
-      </BottomBar>
+        <div class="flex gap-2 border-t-2 border-accent border-t-base-300 bg-base-200 p-2">
+          <div class="flex flex-1">
+            <DiscoverButton
+              classButton="rounded-r-none"
+              discovering={discovering()}
+            />
+            <RadioSelect
+              class="w-full flex-1 rounded-l-none"
+              radioUUID={radioUUID}
+              setRadioUUID={setRadioUUID}
+            />
+          </div>
+          <Show when={radioSelected()}>
+            <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
+            <RadioPowerButton radioUUID={radioUUID} state={state} />
+            <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
+            <RadioAudioSourceDropdown
+              class="dropdown-top dropdown-end"
+              classDropdown="mb-2"
+              radioUUID={radioUUID}
+              state={state}
+            />
+            <RadioTypeDropdown
+              class="dropdown-top dropdown-end"
+              classDropdown="mb-2"
+              state={state}
+            />
+          </Show>
+        </div>
+      </div>
     </div>
   );
 };

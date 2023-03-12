@@ -12,6 +12,7 @@ import {
   type JSX,
   splitProps,
   batch,
+  type Accessor,
 } from "solid-js";
 import { type Component } from "solid-js";
 import { type StatePreset, StateStatus, type StateState } from "./api";
@@ -34,9 +35,9 @@ const DiscoverButton: Component<{ discovering: boolean } & ClassProps> = (
   const discoverRadios = useDiscoverRadios();
   const loading = (): boolean => discoverRadios.loading() || props.discovering;
 
-  function onClick() {
+  const onClick = () => {
     void discoverRadios.mutate(null);
-  }
+  };
 
   return (
     <button
@@ -50,7 +51,7 @@ const DiscoverButton: Component<{ discovering: boolean } & ClassProps> = (
   );
 };
 
-const RadioPlayerStatus: Component<
+const RadioPlayerStatusButton: Component<
   {
     status: StateStatus;
     loading?: boolean;
@@ -86,7 +87,7 @@ const RadioPlayerStatus: Component<
   );
 };
 
-const RadioPlayerTitle: Component<
+const RadioPlayerTitleDropdown: Component<
   {
     state: StateState;
     loading?: boolean;
@@ -94,10 +95,9 @@ const RadioPlayerTitle: Component<
     classDropdown?: string;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioPlayerTitle");
-  const [show, setShow] = createSignal(false);
+  console.log("Render: RadioPlayerTitleDropdown");
 
-  const data = () => [
+  const data = (): DaisyStaticTableCardBodyData[] => [
     {
       key: "Metadata",
       value: props.state.metadata,
@@ -116,21 +116,26 @@ const RadioPlayerTitle: Component<
     },
     {
       key: "URL",
-      value: props.state.url,
+      value: (
+        <a class="link-hover link" href={props.state.url}>
+          {props.state.url}
+        </a>
+      ),
     },
     {
       key: "New URL",
-      value: props.state.url_new,
+      value: (
+        <a class="link-hover link" href={props.state.url_new}>
+          {props.state.url_new}
+        </a>
+      ),
     },
   ];
 
   return (
     <div
       class={mergeClass("dropdown no-animation", props.class)}
-      classList={{ "dropdown-open": show() }}
-      use:clickOutside={() => {
-        setShow(false);
-      }}
+      use:clickOutside=""
     >
       <label
         tabindex="0"
@@ -139,7 +144,6 @@ const RadioPlayerTitle: Component<
           props.classButton
         )}
         classList={{ loading: props.loading }}
-        onClick={() => setShow(true)}
       >
         {!props.loading && (
           <>
@@ -157,27 +161,42 @@ const RadioPlayerTitle: Component<
           props.classDropdown
         )}
       >
-        <div class="card-body">
-          <h3 class="card-title">Stream Information</h3>
-          <table class="table-fixed">
-            <tbody>
-              <Index each={data()}>
-                {(data) => (
-                  <tr>
-                    <td>
-                      <span class="text badge-info badge mr-2 whitespace-nowrap">
-                        {data().key}
-                      </span>
-                    </td>
-                    <td class="w-full break-all">
-                      <p>{data().value}</p>
-                    </td>
-                  </tr>
-                )}
-              </Index>
-            </tbody>
-          </table>
-        </div>
+        <DaisyStaticTableCardBody data={data()} title="Stream Information" />
+      </div>
+    </div>
+  );
+};
+
+const RadioTypeDropdown: Component<
+  {
+    state: StateState;
+    classButton?: string;
+    classDropdown?: string;
+  } & ClassProps
+> = (props) => {
+  console.log("Render: RadioTypeDropdown");
+  const data = (): DaisyStaticTableCardBodyData[] => [
+    { key: "Name", value: props.state.name },
+    { key: "Model Name", value: props.state.model_name },
+    { key: "Model Number", value: props.state.model_number },
+  ];
+
+  return (
+    <div class={mergeClass("dropdown", props.class)} use:clickOutside="">
+      <label
+        tabindex="0"
+        class={mergeClass("btn-primary btn", props.classButton)}
+      >
+        Radio
+      </label>
+      <div
+        tabindex="0"
+        class={mergeClass(
+          "card-compact card dropdown-content w-80 bg-primary p-2 text-primary-content shadow",
+          props.classDropdown
+        )}
+      >
+        <DaisyStaticTableCardBody data={data()} title="Radio Information" />
       </div>
     </div>
   );
@@ -218,18 +237,20 @@ const RadioPresetButton: Component<
 
 const RadioPresetsList: Component<
   {
+    radioUUID: Accessor<string>;
     state: StateState;
   } & ClassProps
 > = (props) => {
   console.log("Render: RadioPresetList");
-  const statePatch = usePatchState();
+  const statePatch = usePatchState(props.radioUUID);
   const [lastLoadingNumber, setLoadingNumber] = createSignal(-1);
   const loadingNumber = (): number =>
     statePatch.loading() ? lastLoadingNumber() : -1;
 
   const onClick = (preset: number) => {
     batch(() => {
-      void statePatch.mutate({ uuid: props.state.uuid, preset: preset });
+      statePatch.cancel();
+      void statePatch.mutate({ preset: preset });
       setLoadingNumber(preset);
     });
   };
@@ -257,18 +278,18 @@ const RadioPresetsList: Component<
 
 const RadioPowerButton: Component<
   {
+    radioUUID: Accessor<string>;
     state: StateState;
   } & ClassProps
 > = (props) => {
   console.log("Render: RadioPowerButton");
-  const patchState = usePatchState();
+  const patchState = usePatchState(props.radioUUID);
 
-  function toggle() {
+  const toggle = () => {
     void patchState.mutate({
-      uuid: props.state.uuid,
       power: !props.state.power,
     });
-  }
+  };
 
   return (
     <button
@@ -344,6 +365,35 @@ const DaisyTooltip: ParentComponent<{ tooltip: string } & ClassProps> = (
   );
 };
 
+type DaisyStaticTableCardBodyData = { key: string; value: JSX.Element };
+
+const DaisyStaticTableCardBody: Component<{
+  title: string;
+  data: DaisyStaticTableCardBodyData[];
+}> = (props) => {
+  return (
+    <div class="card-body">
+      <h3 class="card-title">{props.title}</h3>
+      <table class="table-fixed">
+        <tbody>
+          <Index each={props.data}>
+            {(data) => (
+              <tr>
+                <td>
+                  <span class="text badge-info badge mr-2 w-full whitespace-nowrap">
+                    {data().key}
+                  </span>
+                </td>
+                <td class="w-full break-all">{data().value}</td>
+              </tr>
+            )}
+          </Index>
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 const TopBar: ParentComponent<ClassProps> = (props) => {
   return (
     <div
@@ -382,12 +432,12 @@ const App: Component = () => {
   return (
     <div class="h-screen">
       <TopBar class="flex gap-2">
-        <RadioPlayerStatus
+        <RadioPlayerStatusButton
           class="tooltip-bottom flex"
           status={state.status}
           loading={loading()}
         />
-        <RadioPlayerTitle
+        <RadioPlayerTitleDropdown
           class="dropdown-end flex-1"
           classButton="w-full"
           classDropdown="mt-2"
@@ -396,7 +446,7 @@ const App: Component = () => {
         />
       </TopBar>
       <div class="container mx-auto py-20 px-4">
-        <RadioPresetsList state={state} />
+        <RadioPresetsList radioUUID={radioUUID} state={state} />
       </div>
       <BottomBar class="flex gap-2">
         <div class="flex flex-1">
@@ -413,7 +463,12 @@ const App: Component = () => {
           />
         </div>
         <Show when={radioSelected()}>
-          <RadioPowerButton state={state} />
+          <RadioPowerButton radioUUID={radioUUID} state={state} />
+          <RadioTypeDropdown
+            class="dropdown-top dropdown-end"
+            classDropdown="mb-2"
+            state={state}
+          />
         </Show>
       </BottomBar>
     </div>

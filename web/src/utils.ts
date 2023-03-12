@@ -8,11 +8,6 @@ import {
   onCleanup,
 } from "solid-js";
 
-export type Mutation<T = void, R = unknown> = {
-  mutate: (data: T) => R | Promise<R>;
-  loading: Accessor<boolean>;
-};
-
 export function createStaleSignal<T>(value: T): Signal<T> {
   return createSignal(value, { equals: false });
 }
@@ -47,37 +42,6 @@ export function once<T>(fn: () => T): () => T {
   };
 }
 
-export function createMutation<T, R>(
-  mutateFn: (data: T) => R | Promise<R>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  invalidateQueries: ResourceReturn<any, any>[] = []
-): Mutation<T, R> {
-  const [loading, setloading] = createSignal(false);
-  let mutationResult: R | Promise<R>;
-
-  function mutate(data: T): Promise<R> | R {
-    if (loading()) return mutationResult;
-
-    setloading(true);
-
-    mutationResult = mutateFn(data);
-
-    void Promise.resolve(mutationResult)
-      .finally(() => {
-        setloading(false);
-      })
-      .then(() =>
-        Promise.allSettled(
-          invalidateQueries.map((query) => void query[1].refetch())
-        )
-      );
-
-    return mutationResult;
-  }
-
-  return { loading, mutate };
-}
-
 export type ClassProps = { class?: string };
 
 export function mergeClass(first: string, second?: string) {
@@ -87,12 +51,9 @@ export function mergeClass(first: string, second?: string) {
   return first;
 }
 
-export function clickOutside(
-  el: HTMLInputElement,
-  accessor: Accessor<() => void>
-) {
+export function clickOutside(el: HTMLInputElement) {
   const onClick = (e: MouseEvent) => {
-    !el.contains(e.target as Node) && accessor()();
+    !el.contains(e.target as Node) && el.blur();
   };
   document.body.addEventListener("click", onClick);
 
@@ -104,7 +65,7 @@ declare module "solid-js" {
   namespace JSX {
     interface Directives {
       // use:clickOutside
-      clickOutside: () => void;
+      clickOutside: string;
     }
   }
 }

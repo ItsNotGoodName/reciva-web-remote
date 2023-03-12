@@ -24,16 +24,23 @@ import {
   splitProps,
   batch,
   type Accessor,
+  type Resource,
+  createReaction,
+  onCleanup,
 } from "solid-js";
 import { type Component } from "solid-js";
-import { type StatePreset, StateStatus, type StateState } from "./api";
 import {
-  bindWSData,
+  type StatePreset,
+  StateStatus,
+  type StateState,
+  type ModelRadio,
+} from "./api";
+import {
   useDiscoverRadios,
-  radiosListQuery,
   usePatchState,
   useRefreshRadioVolume,
   useRefreshRadioSubscription,
+  useRadiosListQuery,
 } from "./store";
 import { type ClassProps, mergeClass, useDropdown, IOS } from "./utils";
 import { useWS } from "./ws";
@@ -493,15 +500,15 @@ const RadioSelect: Component<
   {
     radioUUID: Accessor<string>;
     setRadioUUID: Setter<string>;
+    radios: Resource<ModelRadio[]>;
   } & ClassProps
 > = (props) => {
-  const [radios] = radiosListQuery;
   let select: HTMLSelectElement | undefined;
 
   // Prevent select.value from defaulting to the first option when radios.data changes
   createEffect(
     on(
-      radios,
+      props.radios,
       () => {
         select && (select.value = props.radioUUID());
       },
@@ -513,7 +520,7 @@ const RadioSelect: Component<
     <select
       class={mergeClass("select-primary select", props.class)}
       ref={select}
-      disabled={radios.loading}
+      disabled={props.radios.loading}
       value={props.radioUUID()}
       onChange={(e) => {
         props.setRadioUUID(e.currentTarget.value);
@@ -521,26 +528,59 @@ const RadioSelect: Component<
     >
       <option disabled value="">
         <Switch fallback={<>Select Radio</>}>
-          <Match when={radios.loading}>Loading...</Match>
-          <Match when={radios.error !== undefined}>Network Error</Match>
-          <Match when={radios()?.length == 0}>No Radios Found</Match>
+          <Match when={props.radios.loading}>Loading...</Match>
+          <Match when={!!props.radios.error}>Network Error</Match>
+          <Match when={props.radios()?.length == 0}>No Radios Found</Match>
         </Switch>
       </option>
-      <For each={radios()}>
-        {(radio) => <option value={radio.uuid}>{radio.name}</option>}
-      </For>
+      <Show when={!props.radios.error}>
+        <For each={props.radios()}>
+          {(radio) => <option value={radio.uuid}>{radio.name}</option>}
+        </For>
+      </Show>
     </select>
   );
 };
 
 const App: Component = () => {
-  const [radioUUID, setRadioUUID] = createSignal<string>("");
-  const radioSelected = () => radioUUID() != "";
+  const [radioUUID, setRadioUUID] = createSignal(
+    localStorage.getItem("lastRadioUUID") || ""
+  );
+  createEffect(() => {
+    localStorage.setItem("lastRadioUUID", radioUUID());
+  });
 
   const [data, ws] = useWS(radioUUID);
-  bindWSData(data);
+  const wsReconnecting = () => ws.connecting() && ws.disconnected();
+
   const { state, discovering } = data;
-  const loading = () => state.uuid != radioUUID() || ws.connecting();
+  const radioLoading = () => state.uuid != radioUUID() || ws.connecting();
+  const radioLoaded = () => radioUUID() == state.uuid && ws.connected();
+
+  const radiosListQuery = useRadiosListQuery();
+
+  // Invalidate radios list based on websocket
+  const trackRadiosListQuery = createReaction(() => {
+    void radiosListQuery[1].refetch("");
+  });
+  createEffect(() => {
+    (discovering() == true || ws.connecting() == true) &&
+      trackRadiosListQuery(discovering);
+  });
+  createEffect(() => {
+    ws.connected() == false && trackRadiosListQuery(ws.connected);
+  });
+
+  // Reconnect websocket when document is visible
+  const onVisibilityChange = () => {
+    if (!document.hidden) {
+      ws.reconnect();
+    }
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  onCleanup(() => {
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+  });
 
   return (
     <div class="h-screen">
@@ -548,14 +588,14 @@ const App: Component = () => {
         <RadioPlayerStatusButton
           class="tooltip-bottom flex"
           status={state.status}
-          loading={loading()}
+          loading={radioLoading()}
         />
         <RadioPlayerTitleDropdown
           class="dropdown-end flex-1"
           classButton="w-full"
           classDropdown="mt-2"
           state={state}
-          loading={loading()}
+          loading={radioLoading()}
         />
       </div>
       <div class="container mx-auto px-4 pt-20 pb-36">
@@ -563,9 +603,11 @@ const App: Component = () => {
       </div>
       <div class="fixed bottom-0 z-50 w-full space-y-2 ">
         <div class="ml-auto max-w-screen-sm space-y-2 px-2">
-          <Show when={!!radiosListQuery[0].error}>
-            <div class="alert alert-error shadow-lg">
-              Failed to list radios.
+          <Show when={ws.connecting() && !wsReconnecting()}>
+            <div class="alert shadow-lg">
+              <div>
+                <span>Connecting to server...</span>
+              </div>
             </div>
           </Show>
           <Show when={ws.disconnected()}>
@@ -599,13 +641,14 @@ const App: Component = () => {
                 class="w-full min-w-fit flex-1 rounded-l-none"
                 radioUUID={radioUUID}
                 setRadioUUID={setRadioUUID}
+                radios={radiosListQuery[0]}
               />
             </div>
-            <Show when={radioSelected()}>
+            <Show when={radioLoaded()}>
               <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
             </Show>
           </div>
-          <Show when={radioSelected()}>
+          <Show when={radioLoaded()}>
             <div class="flex flex-auto gap-2">
               <RadioPowerButton
                 class="flex-auto"

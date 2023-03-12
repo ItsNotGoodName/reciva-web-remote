@@ -1,4 +1,4 @@
-import { type Accessor, createSignal, createEffect, on } from "solid-js";
+import { type Accessor, createSignal, createEffect, on, batch } from "solid-js";
 import { type Store, createStore, produce } from "solid-js/store";
 import {
   PubsubTopic,
@@ -46,8 +46,6 @@ const defaultState: StateState = {
 export type WSDataReturn = {
   state: Store<StateState>;
   discovering: Accessor<boolean>;
-  //   stateLoading: Accessor<boolean>;
-  //   stateSelected: Accessor<boolean>;
 };
 
 export type WSStatusReturn = {
@@ -57,30 +55,32 @@ export type WSStatusReturn = {
   reconnect: () => void;
 };
 
-export function useWS(
-  stateUUID: Accessor<string>
-): [WSDataReturn, WSStatusReturn] {
+export type WSReturn = [WSDataReturn, WSStatusReturn];
+
+export function useWS(radioUUID: Accessor<string>): WSReturn {
   const [connecting, setConnecting] = createSignal(true);
   const [connected, setConnected] = createSignal(false);
   const [disconnected, setDisconnected] = createSignal(false);
+
   const [discovering, setDiscovering] = createSignal(false);
   const [state, setState] = createStore(defaultState);
 
-  //   const stateSelected = () => state.uuid != "";
-  //   const stateLoading = () => state.uuid != stateUUID() || connecting();
-
   const connect = () => {
     const ws = new WebSocket(WS_URL);
-    setConnecting(true);
-    setState(defaultState);
+    batch(() => {
+      setConnecting(true);
+      setState(defaultState);
+    });
     console.log("WS: Connecting");
 
     ws.addEventListener("open", () => {
       console.log("WS: Connected");
-      setConnecting(false);
-      setConnected(true);
-      setDisconnected(false);
-      subscribe(ws, stateUUID());
+      batch(() => {
+        setConnecting(false);
+        setConnected(true);
+        setDisconnected(false);
+      });
+      subscribe(ws, radioUUID());
     });
 
     ws.addEventListener("message", (event) => {
@@ -88,7 +88,7 @@ export function useWS(
       const msg = JSON.parse(event.data as string) as WsEvent;
       if (msg.topic == PubsubTopic.StateTopic) {
         const data = msg.data as StateState;
-        if (data.uuid == stateUUID()) {
+        if (data.uuid == radioUUID()) {
           setState(
             produce((state) => Object.assign(state, msg.data as StateState))
           );
@@ -100,10 +100,12 @@ export function useWS(
 
     ws.addEventListener("close", () => {
       console.log("WS: Close");
-      setConnecting(false);
-      setConnected(false);
-      setDisconnected(true);
-      setState(defaultState);
+      batch(() => {
+        setConnecting(false);
+        setConnected(false);
+        setDisconnected(true);
+        setState(defaultState);
+      });
     });
 
     return ws;
@@ -120,7 +122,7 @@ export function useWS(
   };
 
   createEffect(
-    on(stateUUID, () => {
+    on(radioUUID, () => {
       if (!connected()) {
         reconnect();
         return;
@@ -130,7 +132,7 @@ export function useWS(
       }
 
       setState(defaultState);
-      subscribe(ws, stateUUID());
+      subscribe(ws, radioUUID());
     })
   );
 
@@ -138,8 +140,6 @@ export function useWS(
     {
       state,
       discovering,
-      //   stateLoading,
-      //   stateSelected,
     },
     {
       connecting,

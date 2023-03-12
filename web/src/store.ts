@@ -17,7 +17,6 @@ import {
 import { type ModelRadio } from "./api";
 import { API_URL } from "./constants";
 import { once, checkStale, createStaleSignal } from "./utils";
-import { type WSDataReturn } from "./ws";
 
 const api = new Api({ baseUrl: API_URL });
 
@@ -82,15 +81,6 @@ export const cancelOn = <T, R, U>(
   return mutation;
 };
 
-// Websocket data bind
-export const bindWSData = (data: WSDataReturn) => {
-  createEffect(() => {
-    if (!data.discovering()) {
-      void radiosListQuery[1].refetch();
-    }
-  });
-};
-
 ////////////// Queries
 
 // Build get
@@ -99,9 +89,8 @@ export const buildGetQuery = once(() =>
 );
 
 // Radios list
-export const radiosListQuery = createResource<ModelRadio[], string>(() =>
-  api.radios.radiosList()
-);
+export const useRadiosListQuery = () =>
+  createResource<ModelRadio[], string>(() => api.radios.radiosList());
 
 // Presets list
 export const presetListQuery = once(() =>
@@ -135,10 +124,7 @@ export const useStateQuery = (uuid: Accessor<string | undefined>) =>
 
 // Radios discover
 export const useDiscoverRadios = () =>
-  createMutation(
-    (params) => api.radios.radiosCreate(params),
-    [radiosListQuery]
-  );
+  createMutation((params) => api.radios.radiosCreate(params));
 
 // Radio volume refresh
 export const useRefreshRadioVolume = (uuid: Accessor<string>) =>

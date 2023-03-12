@@ -14,6 +14,7 @@ import (
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/store"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -62,7 +63,7 @@ func Start(a API, port int, fs fs.FS) {
 		apiStates.GET("", a.GetState)
 		apiStates.PATCH("", a.PatchState)
 
-		api.GET("/ws", a.WS)
+		api.GET("/ws", a.WS(upgrader()))
 	}
 
 	mountFS(e, fs)
@@ -70,6 +71,12 @@ func Start(a API, port int, fs fs.FS) {
 
 	printAddresses(strconv.Itoa(port))
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
+}
+
+func upgrader() *websocket.Upgrader {
+	return &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 }
 
 // mountPresets mounts all presets from the given preset store.

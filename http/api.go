@@ -1,11 +1,12 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"nhooyr.io/websocket"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/http/ws"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal"
@@ -280,14 +281,15 @@ func (a API) PatchState(c echo.Context) error {
 //	@Tags		websocket
 //	@Param		Command	body	ws.Command	false	"Command"
 //	@Param		Event	body	ws.Event	false	"Event"
-func (a API) WS(c echo.Context) error {
-	conn, err := websocket.Accept(c.Response(), c.Request(), &websocket.AcceptOptions{OriginPatterns: []string{"*"}})
-	if err != nil {
-		return err
+func (a API) WS(upgrader *websocket.Upgrader) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+		if err != nil {
+			return c.NoContent(http.StatusInternalServerError)
+		}
+
+		go ws.Handle(context.Background(), conn, a.Hub)
+
+		return nil
 	}
-	defer conn.Close(websocket.StatusInternalError, "the sky is falling")
-
-	ws.Handle(c.Request().Context(), conn, a.Hub)
-
-	return conn.Close(websocket.StatusNormalClosure, "")
 }

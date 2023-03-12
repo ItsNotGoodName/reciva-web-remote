@@ -2,107 +2,85 @@ package ws
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
+	"github.com/gorilla/websocket"
 )
 
-type CommandSubscribe struct {
-	Topics []pubsub.Topic `json:"topics" validate:"required"`
-}
+const (
+	// Time allowed to write a message to the peer.
+	wsWriteWait = 10 * time.Second
 
-type CommandState struct {
-	UUID    string `json:"uuid" validate:"required"`
-	Partial bool   `json:"partial" validate:"required"`
-}
+	// Time allowed to read the next pong message from the peer.
+	wsPongWait = 60 * time.Second
 
-type Command struct {
-	Subscribe *CommandSubscribe `json:"subscribe"`
-	State     *CommandState     `json:"state"`
-}
+	// Send pings to peer with this period. Must be less than pongWait.
+	wsPingPeriod = (wsPongWait * 9) / 10
 
-type Event struct {
-	Topic pubsub.Topic `json:"topic" validate:"required"`
-	Data  any          `json:"data" validate:"required"`
-}
+	// Maximum message size allowed from peer.
+	wsMaxMessageSize = 512
+)
 
-func validateTopic(topic pubsub.Topic) (pubsub.Topic, error) {
-	switch pubsub.Topic(topic) {
-	case pubsub.DiscoverTopic:
-		return pubsub.DiscoverTopic, nil
-	case pubsub.StateTopic:
-		return pubsub.StateTopic, nil
-	// case pubsub.ErrorTopic:
-	// 	return pubsub.ErrorTopic, nil
-	default:
-		return "", fmt.Errorf("invalid topic")
-	}
-}
+func handleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.Conn, read chan<- Command) {
+	defer cancel()
 
-func filterValidTopics(topics []pubsub.Topic) []pubsub.Topic {
-	pubsubTopics := []pubsub.Topic{}
-	for _, topic := range topics {
-		pubsubTopic, err := validateTopic(topic)
-		if err != nil {
-			log.Println("http.wsParseTopics: invalid topic:", topic)
-			continue
-		}
+	conn.SetReadLimit(wsMaxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(wsPongWait))
+	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(wsPongWait)); return nil })
 
-		pubsubTopics = append(pubsubTopics, pubsubTopic)
-	}
-
-	return pubsubTopics
-}
-
-func handleRead(conn *websocket.Conn) (<-chan Command, context.CancelFunc) {
-	read := make(chan Command)
-	readCtx, readCancel := context.WithCancel(context.Background())
-	go func() {
+	for {
+		// Read command or end on error
 		var command Command
-		for {
-			if err := wsjson.Read(readCtx, conn, &command); err != nil {
-				log.Println("http.wsHandleRead: could not read:", err)
-				close(read)
-				return
+		err := conn.ReadJSON(&command)
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("api.wsHandleRead: could not read from %s: %s", conn.RemoteAddr(), err)
 			}
-
-			select {
-			case read <- command:
-			case <-readCtx.Done():
-				close(read)
-				return
-			}
+			return
 		}
-	}()
-	return read, readCancel
-}
 
-func writeFunc(ctx context.Context, conn *websocket.Conn) func(topic pubsub.Topic, data any) {
-	return func(topic pubsub.Topic, data any) {
-		if err := wsjson.Write(ctx, conn, Event{Topic: topic, Data: data}); err != nil {
-			log.Println("wsWrite:", err)
+		// Send command to handler
+		select {
+		case read <- command:
+		case <-ctx.Done():
+			return
 		}
 	}
 }
 
 func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
+	ctx, cancel := context.WithCancel(ctx)
+	read := make(chan Command)
+	go handleRead(ctx, cancel, conn, read)
+	ticker := time.NewTicker(wsPingPeriod)
 	sub, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{})
-	read, readCancel := handleRead(conn)
 	defer func() {
+		cancel()
+		ticker.Stop()
 		unsub()
-		readCancel()
 	}()
+
+	write := func(topic pubsub.Topic, data any) {
+		if err := conn.WriteJSON(Event{Topic: topic, Data: data}); err != nil {
+			log.Printf("ws.Handle: could not write to %s: %s", conn.RemoteAddr(), err)
+			cancel()
+			return
+		}
+	}
+
 	stateCommand := CommandState{}
-	write := writeFunc(ctx, conn)
 
 	for {
 		select {
+		case <-ctx.Done():
+			// Send close message and end
+			conn.WriteMessage(websocket.CloseMessage, []byte{})
+			return
 		case command, ok := <-read:
 			if !ok {
 				return
@@ -113,8 +91,8 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 			}
 
 			if command.Subscribe != nil {
-				unsub()
 				topics := filterValidTopics(command.Subscribe.Topics)
+				unsub()
 				sub, unsub = pubsub.DefaultPub.Subscribe(topics)
 				for _, t := range topics {
 					if t == pubsub.StateTopic {
@@ -143,6 +121,7 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 				}
 			}
 		case msg := <-sub:
+			// Parse data from pubsub message
 			data := func() any {
 				if msg.Topic == pubsub.DiscoverTopic {
 					return msg.Data.(pubsub.DiscoverMessage).Discovering
@@ -156,10 +135,23 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 				}
 				return nil
 			}()
+			if data == nil {
+				continue
+			}
 
+			conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
+
+			// Send event
 			write(msg.Topic, data)
-		case <-ctx.Done():
-			return
+		case <-ticker.C:
+			conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
+
+			// Send ping or end on error
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("ws.Handle: could not write ping %s: %s", conn.RemoteAddr(), err)
+				return
+			}
 		}
 	}
+
 }

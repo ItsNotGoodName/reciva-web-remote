@@ -82,8 +82,8 @@ export const cancelOn = <T, R, U>(
   return mutation;
 };
 
-// Websocket data hook
-export const hookWSData = (data: WSDataReturn) => {
+// Websocket data bind
+export const bindWSData = (data: WSDataReturn) => {
   createEffect(() => {
     if (!data.discovering()) {
       void radiosListQuery[1].refetch();

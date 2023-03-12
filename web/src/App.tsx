@@ -1,11 +1,15 @@
 import {
+  FaBrandsItunesNote,
   FaSolidPlay,
   FaSolidPowerOff,
   FaSolidQuestion,
   FaSolidRadio,
   FaSolidStop,
+  FaSolidVolumeHigh,
+  FaSolidVolumeLow,
+  FaSolidVolumeOff,
 } from "solid-icons/fa";
-import { IoSearch } from "solid-icons/io";
+import { IoSearchSharp } from "solid-icons/io";
 import { FiRefreshCw } from "solid-icons/fi";
 import {
   Switch,
@@ -17,7 +21,6 @@ import {
   on,
   Show,
   type ParentComponent,
-  Index,
   type JSX,
   splitProps,
   batch,
@@ -26,38 +29,69 @@ import {
 import { type Component } from "solid-js";
 import { type StatePreset, StateStatus, type StateState } from "./api";
 import {
-  hookWSData,
+  bindWSData,
   useDiscoverRadios,
   radiosListQuery,
   usePatchState,
+  useRefreshRadioVolume,
+  useRefreshRadioSubscription,
 } from "./store";
 import { clickOutside, type ClassProps, mergeClass } from "./utils";
 import { useWS } from "./ws";
+import {
+  DaisyButton,
+  DaisyStaticTableCardBody,
+  type DaisyStaticTableCardBodyData,
+  DaisyTooltip,
+  DaisyDropdownButton,
+} from "./Daisy";
 
 // Prevent TypeScript from removing clickOutside directive
 false && clickOutside;
 
 const DiscoverButton: Component<
-  { discovering: boolean; classButton: string } & ClassProps
+  { discovering: boolean; classButton?: string } & ClassProps
 > = (props) => {
-  console.log("Render: DiscoverButton");
   const discoverRadios = useDiscoverRadios();
   const loading = (): boolean => discoverRadios.loading() || props.discovering;
 
-  const onClick = () => {
+  const discover = () => {
     void discoverRadios.mutate(null);
   };
 
   return (
     <DaisyTooltip class={props.class} tooltip="Discover">
-      <button
-        class={mergeClass("btn-primary btn", props.classButton)}
-        classList={{ loading: loading() }}
-        onClick={onClick}
+      <DaisyButton
+        class={mergeClass("btn-primary w-14", props.classButton)}
+        loading={loading()}
+        onClick={discover}
         aria-label="Discover"
       >
-        {!loading() && <IoSearch size={20} />}
-      </button>
+        <IoSearchSharp size={20} />
+      </DaisyButton>
+    </DaisyTooltip>
+  );
+};
+
+const RadioRefreshSubscriptionButton: Component<
+  { radioUUID: Accessor<string>; classButton?: string } & ClassProps
+> = (props) => {
+  const refreshRadioSubscription = useRefreshRadioSubscription(props.radioUUID);
+
+  const refreshSubscription = () => {
+    void refreshRadioSubscription.mutate(null);
+  };
+
+  return (
+    <DaisyTooltip class={props.class} tooltip="Refresh">
+      <DaisyButton
+        class={mergeClass("btn-primary w-14", props.classButton)}
+        loading={refreshRadioSubscription.loading()}
+        onClick={refreshSubscription}
+        aria-label="Refresh"
+      >
+        <FiRefreshCw size={20} />
+      </DaisyButton>
     </DaisyTooltip>
   );
 };
@@ -68,30 +102,29 @@ const RadioPlayerStatusButton: Component<
     loading?: boolean;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioPlayerStatus");
   const data = (): { class: string; status: string; element: JSX.Element } => {
     switch (props.status) {
       case StateStatus.StatusConnecting:
         return {
-          class: "btn btn-circle btn-warning animate-spin",
+          class: "btn-circle btn-warning animate-spin",
           status: props.status,
           element: <FiRefreshCw size={20} />,
         };
       case StateStatus.StatusPlaying:
         return {
-          class: "btn btn-circle btn-success pl-1",
+          class: "btn-circle btn-success pl-1",
           status: props.status,
           element: <FaSolidPlay size={20} />,
         };
       case StateStatus.StatusStopped:
         return {
-          class: "btn btn-circle btn-error",
+          class: "btn-circle btn-error",
           status: props.status,
           element: <FaSolidStop size={20} />,
         };
       default:
         return {
-          class: "btn btn-circle no-animation btn-info",
+          class: "btn-circle no-animation btn-info",
           status: "Unknown",
           element: <FaSolidQuestion size={20} />,
         };
@@ -100,13 +133,13 @@ const RadioPlayerStatusButton: Component<
 
   return (
     <DaisyTooltip class={props.class} tooltip={data().status}>
-      <button
+      <DaisyButton
         class={data().class}
-        classList={{ loading: props.loading }}
+        loading={props.loading}
         aria-label={data().status}
       >
-        {!props.loading && data().element}
-      </button>
+        {data().element}
+      </DaisyButton>
     </DaisyTooltip>
   );
 };
@@ -119,8 +152,6 @@ const RadioPlayerTitleDropdown: Component<
     classDropdown?: string;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioPlayerTitleDropdown");
-
   const data = (): DaisyStaticTableCardBodyData[] => [
     {
       key: "Metadata",
@@ -161,23 +192,20 @@ const RadioPlayerTitleDropdown: Component<
       class={mergeClass("dropdown no-animation", props.class)}
       use:clickOutside=""
     >
-      <label
-        tabindex="0"
+      <DaisyDropdownButton
         class={mergeClass(
-          "btn-primary btn justify-start gap-2 truncate",
+          "btn-primary justify-start gap-2 truncate",
           props.classButton
         )}
-        classList={{ loading: props.loading }}
+        loading={props.loading}
       >
-        {!props.loading && (
-          <>
-            <span class="badge-info badge badge-lg rounded-md">
-              {props.state.preset_number}
-            </span>
-            {props.state.title_new || props.state.title}
-          </>
-        )}
-      </label>
+        <>
+          <span class="badge-info badge badge-lg rounded-md">
+            {props.state.preset_number}
+          </span>
+          {props.state.title_new || props.state.title}
+        </>
+      </DaisyDropdownButton>
       <div
         tabindex="0"
         class={mergeClass(
@@ -198,7 +226,6 @@ const RadioTypeDropdown: Component<
     classDropdown?: string;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioTypeDropdown");
   const data = (): DaisyStaticTableCardBodyData[] => [
     { key: "Name", value: props.state.name },
     { key: "Model Name", value: props.state.model_name },
@@ -207,12 +234,9 @@ const RadioTypeDropdown: Component<
 
   return (
     <div class={mergeClass("dropdown", props.class)} use:clickOutside="">
-      <label
-        tabindex="0"
-        class={mergeClass("btn-primary btn", props.classButton)}
-      >
+      <DaisyDropdownButton class={mergeClass("btn-primary", props.classButton)}>
         <FaSolidRadio size={20} />
-      </label>
+      </DaisyDropdownButton>
       <div
         tabindex="0"
         class={mergeClass(
@@ -233,7 +257,6 @@ const RadioPresetButton: Component<
     loading?: boolean;
   } & JSX.HTMLAttributes<HTMLButtonElement>
 > = (props) => {
-  console.log("Render: RadioPresetButton");
   const [, other] = splitProps(props, [
     "selected",
     "preset",
@@ -242,9 +265,10 @@ const RadioPresetButton: Component<
   ]);
 
   return (
-    <button
-      class={mergeClass("btn flex gap-2", props.class)}
-      classList={{ "btn-primary": props.selected, loading: props.loading }}
+    <DaisyButton
+      class={mergeClass("flex gap-2", props.class)}
+      classList={{ "btn-primary": props.selected }}
+      loading={props.loading}
       {...other}
     >
       <Show when={!props.loading}>
@@ -255,7 +279,7 @@ const RadioPresetButton: Component<
           {props.preset.title_new ? props.preset.title_new : props.preset.title}{" "}
         </span>
       </Show>
-    </button>
+    </DaisyButton>
   );
 };
 
@@ -265,13 +289,12 @@ const RadioPresetsList: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioPresetList");
   const statePatch = usePatchState(props.radioUUID);
   const [lastLoadingNumber, setLoadingNumber] = createSignal(-1);
   const loadingNumber = (): number =>
     statePatch.loading() ? lastLoadingNumber() : -1;
 
-  const onClick = (preset: number) => {
+  const setPreset = (preset: number) => {
     batch(() => {
       statePatch.cancel();
       void statePatch.mutate({ preset: preset });
@@ -291,12 +314,72 @@ const RadioPresetsList: Component<
           <RadioPresetButton
             selected={props.state.preset_number == preset.number}
             loading={loadingNumber() == preset.number}
-            onclick={[onClick, preset.number]}
+            onclick={[setPreset, preset.number]}
             preset={preset}
           />
         )}
       </For>
     </div>
+  );
+};
+
+const RadioVolumeButtonGroup: Component<
+  {
+    radioUUID: Accessor<string>;
+    state: StateState;
+  } & ClassProps
+> = (props) => {
+  const statePatch = usePatchState(props.radioUUID);
+  const refreshRadioVolume = useRefreshRadioVolume(props.radioUUID);
+
+  const changeVolume = (volumeChange: number) => {
+    void statePatch.mutate({ volume: props.state.volume + volumeChange });
+  };
+
+  const refreshVolume = () => {
+    void refreshRadioVolume.mutate(null);
+  };
+
+  return (
+    <Show
+      when={!props.state.is_muted}
+      fallback={
+        <DaisyButton
+          class={mergeClass("btn-error", props.class)}
+          loading={statePatch.loading()}
+          aria-label="Volume Muted"
+        >
+          <FaSolidVolumeOff size={20} />
+        </DaisyButton>
+      }
+    >
+      <div class={mergeClass("btn-group flex-nowrap", props.class)}>
+        <DaisyButton
+          class="btn-info w-14"
+          loading={statePatch.loading()}
+          aria-label="Lower Volume"
+          onClick={[changeVolume, -5]}
+        >
+          <FaSolidVolumeLow size={20} />
+        </DaisyButton>
+        <DaisyButton
+          class="btn-info w-12 px-0"
+          loading={refreshRadioVolume.loading()}
+          aria-label={`Volume ${props.state.volume}%`}
+          onClick={refreshVolume}
+        >
+          {props.state.volume}%
+        </DaisyButton>
+        <DaisyButton
+          class="btn-info w-14"
+          loading={statePatch.loading()}
+          aria-label="Raise Volume"
+          onClick={[changeVolume, 5]}
+        >
+          <FaSolidVolumeHigh size={20} />
+        </DaisyButton>
+      </div>
+    </Show>
   );
 };
 
@@ -306,46 +389,97 @@ const RadioPowerButton: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioPowerButton");
   const patchState = usePatchState(props.radioUUID);
 
-  const toggle = () => {
+  const togglePower = () => {
     void patchState.mutate({
       power: !props.state.power,
     });
   };
 
   return (
-    <button
-      class={mergeClass("btn", props.class)}
+    <DaisyButton
+      class={mergeClass("btn w-14", props.class)}
       classList={{
         "btn-success": props.state.power,
         "btn-error": !props.state.power,
-        loading: patchState.loading(),
       }}
-      onClick={toggle}
+      loading={patchState.loading()}
+      onClick={togglePower}
+      aria-label={"Power " + (props.state.power ? "On" : "Off")}
     >
-      <Show when={!patchState.loading()}>
-        <Switch>
-          <Match when={props.state.power}>
-            <FaSolidPowerOff size={20} />
-          </Match>
-          <Match when={!props.state.power}>
-            <FaSolidPowerOff size={20} />
-          </Match>
-        </Switch>
-      </Show>
-    </button>
+      <Switch>
+        <Match when={props.state.power}>
+          <FaSolidPowerOff size={20} />
+        </Match>
+        <Match when={!props.state.power}>
+          <FaSolidPowerOff size={20} />
+        </Match>
+      </Switch>
+    </DaisyButton>
+  );
+};
+
+const RadioAudioSourceDropdown: Component<
+  {
+    radioUUID: Accessor<string>;
+    state: StateState;
+    classButton?: string;
+    classDropdown?: string;
+  } & ClassProps
+> = (props) => {
+  const statePatch = usePatchState(props.radioUUID);
+  const [lastLoadingAudioSource, setLastLoadingAudioSource] = createSignal("");
+  const loadingAudioSource = (): string =>
+    statePatch.loading() ? lastLoadingAudioSource() : "";
+
+  const setAudioSource = (audioSource: string) => {
+    batch(() => {
+      statePatch.cancel();
+      void statePatch.mutate({ audio_source: audioSource });
+      setLastLoadingAudioSource(audioSource);
+    });
+  };
+
+  return (
+    <div class={mergeClass("dropdown", props.class)}>
+      <DaisyDropdownButton
+        class={props.classButton}
+        classList={{ "btn-secondary": !!props.state.audio_source }}
+        aria-label="Audio Source"
+      >
+        <FaBrandsItunesNote size={20} />
+      </DaisyDropdownButton>
+      <ul
+        tabindex="0"
+        class={mergeClass(
+          "dropdown-content menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow",
+          props.classDropdown
+        )}
+      >
+        <span class="mx-auto">Audio Source</span>
+        <For each={props.state.audio_sources}>
+          {(a) => (
+            <DaisyButton
+              loading={loadingAudioSource() == a}
+              classList={{ "btn-secondary": a == props.state.audio_source }}
+              onClick={[setAudioSource, a]}
+            >
+              {a}
+            </DaisyButton>
+          )}
+        </For>
+      </ul>
+    </div>
   );
 };
 
 const RadioSelect: Component<
   {
-    radioUUID: string;
+    radioUUID: Accessor<string>;
     setRadioUUID: Setter<string>;
   } & ClassProps
 > = (props) => {
-  console.log("Render: RadioSelect");
   const [radios] = radiosListQuery;
   let select: HTMLSelectElement | undefined;
 
@@ -354,7 +488,7 @@ const RadioSelect: Component<
     on(
       radios,
       () => {
-        select && (select.value = props.radioUUID);
+        select && (select.value = props.radioUUID());
       },
       { defer: true }
     )
@@ -365,7 +499,7 @@ const RadioSelect: Component<
       class={mergeClass("select-primary select", props.class)}
       ref={select}
       disabled={radios.loading}
-      value={props.radioUUID}
+      value={props.radioUUID()}
       onChange={(e) => {
         props.setRadioUUID(e.currentTarget.value);
       }}
@@ -381,45 +515,6 @@ const RadioSelect: Component<
         {(radio) => <option value={radio.uuid}>{radio.name}</option>}
       </For>
     </select>
-  );
-};
-
-const DaisyTooltip: ParentComponent<{ tooltip: string } & ClassProps> = (
-  props
-) => {
-  return (
-    <div class={mergeClass("tooltip", props.class)} data-tip={props.tooltip}>
-      {props.children}
-    </div>
-  );
-};
-
-type DaisyStaticTableCardBodyData = { key: string; value: JSX.Element };
-
-const DaisyStaticTableCardBody: Component<{
-  title: string;
-  data: DaisyStaticTableCardBodyData[];
-}> = (props) => {
-  return (
-    <div class="card-body">
-      <h3 class="card-title">{props.title}</h3>
-      <table class="table-fixed">
-        <tbody>
-          <Index each={props.data}>
-            {(data) => (
-              <tr>
-                <td>
-                  <span class="text badge-info badge mr-2 w-full whitespace-nowrap">
-                    {data().key}
-                  </span>
-                </td>
-                <td class="w-full break-all">{data().value}</td>
-              </tr>
-            )}
-          </Index>
-        </tbody>
-      </table>
-    </div>
   );
 };
 
@@ -454,7 +549,7 @@ const App: Component = () => {
   const radioSelected = () => radioUUID() != "";
 
   const [data, ws] = useWS(radioUUID);
-  hookWSData(data);
+  bindWSData(data);
   const { state, discovering } = data;
   const loading = () => state.uuid != radioUUID() || ws.connecting();
 
@@ -485,12 +580,20 @@ const App: Component = () => {
           />
           <RadioSelect
             class="w-full flex-1 rounded-l-none"
-            radioUUID={radioUUID()}
+            radioUUID={radioUUID}
             setRadioUUID={setRadioUUID}
           />
         </div>
         <Show when={radioSelected()}>
+          <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
           <RadioPowerButton radioUUID={radioUUID} state={state} />
+          <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
+          <RadioAudioSourceDropdown
+            class="dropdown-top dropdown-end"
+            classDropdown="mb-2"
+            radioUUID={radioUUID}
+            state={state}
+          />
           <RadioTypeDropdown
             class="dropdown-top dropdown-end"
             classDropdown="mb-2"

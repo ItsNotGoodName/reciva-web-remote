@@ -63,9 +63,12 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 		cancel()
 		ticker.Stop()
 		unsub()
+		conn.Close()
 	}()
 
 	write := func(topic pubsub.Topic, data any) {
+		conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
+
 		if err := conn.WriteJSON(Event{Topic: topic, Data: data}); err != nil {
 			log.Printf("ws.Handle: could not write to %s: %s", conn.RemoteAddr(), err)
 			cancel()
@@ -138,8 +141,6 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 			if data == nil {
 				continue
 			}
-
-			conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
 
 			// Send event
 			write(msg.Topic, data)

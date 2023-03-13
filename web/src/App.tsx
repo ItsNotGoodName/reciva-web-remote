@@ -469,6 +469,17 @@ const RadioSelect: Component<
 > = (props) => {
   let select: HTMLSelectElement | undefined;
 
+  // Prevent select.value from defaulting to the first option when props.radios() changes
+  createEffect(
+    on(
+      () => !props.radios.error && props.radios(),
+      () => {
+        select && (select.value = props.radioUUID());
+      },
+      { defer: true }
+    )
+  );
+
   return (
     <select
       class={mergeClass("select-primary select", props.class)}
@@ -483,24 +494,11 @@ const RadioSelect: Component<
         Select Radio
       </option>
       <Show when={!props.radios.error}>
-        {() => {
-          // Prevent select.value from defaulting to the first option when radios.data changes
-          createEffect(
-            on(
-              props.radios,
-              () => {
-                select && (select.value = props.radioUUID());
-              },
-              { defer: true }
-            )
-          );
-
-          return (
-            <For each={props.radios()}>
-              {(radio) => <option value={radio.uuid}>{radio.name}</option>}
-            </For>
-          );
-        }}
+        {() => (
+          <For each={props.radios()}>
+            {(radio) => <option value={radio.uuid}>{radio.name}</option>}
+          </For>
+        )}
       </Show>
     </select>
   );
@@ -514,10 +512,10 @@ const App: Component = () => {
     localStorage.setItem("lastRadioUUID", radioUUID());
   });
 
-  const [data, ws] = useWS(radioUUID);
+  // WebSocket
+  const [{ state, discovering }, ws] = useWS(radioUUID);
   const wsReconnecting = () => ws.connecting() && ws.disconnected();
 
-  const { state, discovering } = data;
   const radioLoading = () => state.uuid != radioUUID() || ws.connecting();
   const radioLoaded = () => radioUUID() == state.uuid && ws.connected();
 
@@ -541,8 +539,10 @@ const App: Component = () => {
     }
   };
   document.addEventListener("visibilitychange", onVisibilityChange);
+  window.addEventListener("focus", onVisibilityChange);
   onCleanup(() => {
     document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.removeEventListener("focus", onVisibilityChange);
   });
 
   return (

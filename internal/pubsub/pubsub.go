@@ -54,25 +54,23 @@ func (p *Pub) unsubscribeFunc(topics []Topic, sub []*Sub) func() {
 		p.subsMapMu.Lock()
 		for i, sub := range sub {
 			topic := topics[i]
+			// There should only be 1 or 0 sub in next because the unsubscribe function might be called twice
 			next := p.subsMap[topic]
-			// Sub found in first place
+			if next == nil {
+				continue
+			}
 			if next == sub {
 				p.subsMap[topic] = next.next
 				continue
 			}
-			if next == nil {
-				continue
-			}
 
-			// Will never be nil
 			prev := next
-
 			for next = next.next; next != nil; next = next.next {
-				// Sub found in second place or more
 				if next == sub {
 					prev.next = next.next
 					break
 				}
+				prev = next
 			}
 		}
 		p.subsMapMu.Unlock()

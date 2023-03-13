@@ -89,15 +89,18 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
       console.log("WS: Message");
       batch(() => {
         const msg = JSON.parse(event.data as string) as WsEvent;
-        if (msg.topic == PubsubTopic.StateTopic) {
-          const data = msg.data as StateState;
-          if (data.uuid == radioUUID()) {
-            setState(
-              produce((state) => Object.assign(state, msg.data as StateState))
-            );
-          }
-        } else if (msg.topic == PubsubTopic.DiscoverTopic) {
-          setDiscovering(msg.data as boolean);
+        switch (msg.topic) {
+          case PubsubTopic.StateTopic:
+            const data = msg.data as StateState;
+            if (data.uuid == radioUUID()) {
+              setState(
+                produce((state) => Object.assign(state, msg.data as StateState))
+              );
+            }
+            break;
+          case PubsubTopic.DiscoverTopic:
+            setDiscovering(msg.data as boolean);
+            break;
         }
         setSynced(true);
       });

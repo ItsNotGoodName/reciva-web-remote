@@ -1,5 +1,6 @@
 import {
   FaBrandsItunesNote,
+  FaSolidCircleInfo,
   FaSolidPlay,
   FaSolidPowerOff,
   FaSolidQuestion,
@@ -8,9 +9,11 @@ import {
   FaSolidVolumeHigh,
   FaSolidVolumeLow,
   FaSolidVolumeOff,
+  FaSolidArrowRotateRight,
+  FaSolidArrowsRotate,
+  FaSolidMagnifyingGlass,
+  FaSolidCircleXmark,
 } from "solid-icons/fa";
-import { IoSearchSharp } from "solid-icons/io";
-import { FiRefreshCw } from "solid-icons/fi";
 import {
   Switch,
   Match,
@@ -70,7 +73,7 @@ const DiscoverButton: Component<
         onClick={discover}
         aria-label="Discover"
       >
-        <IoSearchSharp size={20} />
+        <FaSolidMagnifyingGlass size={20} />
       </DaisyButton>
     </DaisyTooltip>
   );
@@ -93,7 +96,7 @@ const RadioRefreshSubscriptionButton: Component<
         onClick={refreshSubscription}
         aria-label="Refresh"
       >
-        <FiRefreshCw size={20} />
+        <FaSolidArrowRotateRight size={20} />
       </DaisyButton>
     </DaisyTooltip>
   );
@@ -111,7 +114,7 @@ const RadioPlayerStatusButton: Component<
         return {
           class: "btn-circle btn-warning animate-spin",
           status: props.status,
-          element: <FiRefreshCw size={20} />,
+          element: <FaSolidArrowsRotate size={20} />,
         };
       case StateStatus.StatusPlaying:
         return {
@@ -127,7 +130,7 @@ const RadioPlayerStatusButton: Component<
         };
       default:
         return {
-          class: "btn-circle no-animation btn-info",
+          class: "btn-circle btn-info",
           status: "Unknown",
           element: <FaSolidQuestion size={20} />,
         };
@@ -151,8 +154,6 @@ const RadioPlayerTitleDropdown: Component<
   {
     state: StateState;
     loading?: boolean;
-    classButton?: string;
-    classDropdown?: string;
   } & ClassProps
 > = (props) => {
   const data = (): DaisyStaticTableCardBodyData[] => [
@@ -194,24 +195,19 @@ const RadioPlayerTitleDropdown: Component<
     <DaisyDropdown
       class={mergeClass("no-animation", props.class)}
       buttonProps={{
-        class: mergeClass(
-          "btn-primary justify-start gap-2 truncate",
-          props.classButton
-        ),
+        class: "btn-primary w-full justify-start truncate",
       }}
       buttonChildren={
-        <>
-          <span class="badge-info badge badge-lg rounded-md">
+        <div class="w-0">
+          <span class="badge-info badge badge-lg mr-2 rounded-md">
             {props.state.preset_number}
           </span>
           {props.state.title_new || props.state.title}
-        </>
+        </div>
       }
       dropdownProps={{
-        class: mergeClass(
-          "card-compact card w-full bg-primary p-2 text-primary-content shadow",
-          props.classDropdown
-        ),
+        class:
+          "card-compact card w-full bg-primary p-2 text-primary-content shadow my-2",
       }}
       loading={props.loading}
     >
@@ -223,8 +219,6 @@ const RadioPlayerTitleDropdown: Component<
 const RadioTypeDropdown: Component<
   {
     state: StateState;
-    classButton?: string;
-    classDropdown?: string;
   } & ClassProps
 > = (props) => {
   const data = (): DaisyStaticTableCardBodyData[] => [
@@ -239,10 +233,8 @@ const RadioTypeDropdown: Component<
       buttonProps={{ class: "btn-primary" }}
       buttonChildren={<FaSolidRadio size={20} />}
       dropdownProps={{
-        class: mergeClass(
-          "card dropdown-content card-compact w-80 bg-primary p-2 text-primary-content shadow",
-          props.classDropdown
-        ),
+        class:
+          "card-compact card w-80 bg-primary p-2 text-primary-content shadow my-2",
       }}
     >
       <DaisyStaticTableCardBody data={data()} title="Radio Information" />
@@ -424,8 +416,6 @@ const RadioAudioSourceDropdown: Component<
   {
     radioUUID: Accessor<string>;
     state: StateState;
-    classButton?: string;
-    classDropdown?: string;
   } & ClassProps
 > = (props) => {
   const statePatch = usePatchState(props.radioUUID);
@@ -450,10 +440,8 @@ const RadioAudioSourceDropdown: Component<
       }}
       buttonChildren={<FaBrandsItunesNote size={20} />}
       dropdownProps={{
-        class: mergeClass(
-          "menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow",
-          props.classDropdown
-        ),
+        class:
+          "menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow my-2",
       }}
     >
       <span class="mx-auto">Audio Source</span>
@@ -481,17 +469,6 @@ const RadioSelect: Component<
 > = (props) => {
   let select: HTMLSelectElement | undefined;
 
-  // Prevent select.value from defaulting to the first option when radios.data changes
-  createEffect(
-    on(
-      props.radios,
-      () => {
-        select && (select.value = props.radioUUID());
-      },
-      { defer: true }
-    )
-  );
-
   return (
     <select
       class={mergeClass("select-primary select", props.class)}
@@ -503,16 +480,27 @@ const RadioSelect: Component<
       }}
     >
       <option disabled value="">
-        <Switch fallback={<>Select Radio</>}>
-          <Match when={props.radios.loading}>Loading...</Match>
-          <Match when={!!props.radios.error}>Network Error</Match>
-          <Match when={props.radios()?.length == 0}>No Radios Found</Match>
-        </Switch>
+        Select Radio
       </option>
       <Show when={!props.radios.error}>
-        <For each={props.radios()}>
-          {(radio) => <option value={radio.uuid}>{radio.name}</option>}
-        </For>
+        {() => {
+          // Prevent select.value from defaulting to the first option when radios.data changes
+          createEffect(
+            on(
+              props.radios,
+              () => {
+                select && (select.value = props.radioUUID());
+              },
+              { defer: true }
+            )
+          );
+
+          return (
+            <For each={props.radios()}>
+              {(radio) => <option value={radio.uuid}>{radio.name}</option>}
+            </For>
+          );
+        }}
       </Show>
     </select>
   );
@@ -540,11 +528,10 @@ const App: Component = () => {
     void radiosListQuery[1].refetch("");
   });
   createEffect(() => {
-    (discovering() == true || ws.connecting() == true) &&
-      trackRadiosListQuery(discovering);
+    ws.synced() == false && trackRadiosListQuery(ws.synced);
   });
   createEffect(() => {
-    ws.connected() == false && trackRadiosListQuery(ws.connected);
+    discovering() == true && trackRadiosListQuery(discovering);
   });
 
   // Reconnect websocket when document is visible
@@ -568,8 +555,6 @@ const App: Component = () => {
         />
         <RadioPlayerTitleDropdown
           class="dropdown-end flex-1"
-          classButton="w-full"
-          classDropdown="mt-2"
           state={state}
           loading={radioLoading()}
         />
@@ -579,9 +564,18 @@ const App: Component = () => {
       </div>
       <div class="fixed bottom-0 z-50 w-full space-y-2 ">
         <div class="ml-auto max-w-screen-sm space-y-2 px-2">
+          <Show when={!!radiosListQuery[0].error}>
+            <div class="alert alert-error shadow-lg">
+              <div>
+                <FaSolidCircleXmark size={20} />
+                <span>Failed to list radios.</span>
+              </div>
+            </div>
+          </Show>
           <Show when={ws.connecting() && !wsReconnecting()}>
             <div class="alert shadow-lg">
               <div>
+                <FaSolidCircleInfo class="fill-info" size={20} />
                 <span>Connecting to server...</span>
               </div>
             </div>
@@ -589,6 +583,7 @@ const App: Component = () => {
           <Show when={ws.disconnected()}>
             <div class="alert shadow-lg">
               <div>
+                <FaSolidCircleInfo class="fill-info" size={20} />
                 <span>Disconnected from server.</span>
               </div>
               <div class="flex-none">
@@ -634,13 +629,11 @@ const App: Component = () => {
               <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
               <RadioAudioSourceDropdown
                 class="dropdown-top dropdown-end"
-                classDropdown="mb-2"
                 radioUUID={radioUUID}
                 state={state}
               />
               <RadioTypeDropdown
                 class="dropdown-top dropdown-end"
-                classDropdown="mb-2"
                 state={state}
               />
             </div>

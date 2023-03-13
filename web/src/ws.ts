@@ -52,6 +52,7 @@ export type WSStatusReturn = {
   connecting: Accessor<boolean>;
   connected: Accessor<boolean>;
   disconnected: Accessor<boolean>;
+  synced: Accessor<boolean>;
   reconnect: () => void;
 };
 
@@ -61,6 +62,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
   const [connecting, setConnecting] = createSignal(true);
   const [connected, setConnected] = createSignal(false);
   const [disconnected, setDisconnected] = createSignal(false);
+  const [synced, setSynced] = createSignal(false);
 
   const [discovering, setDiscovering] = createSignal(false);
   const [state, setState] = createStore(defaultState);
@@ -85,17 +87,20 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
 
     ws.addEventListener("message", (event) => {
       console.log("WS: Message");
-      const msg = JSON.parse(event.data as string) as WsEvent;
-      if (msg.topic == PubsubTopic.StateTopic) {
-        const data = msg.data as StateState;
-        if (data.uuid == radioUUID()) {
-          setState(
-            produce((state) => Object.assign(state, msg.data as StateState))
-          );
+      batch(() => {
+        const msg = JSON.parse(event.data as string) as WsEvent;
+        if (msg.topic == PubsubTopic.StateTopic) {
+          const data = msg.data as StateState;
+          if (data.uuid == radioUUID()) {
+            setState(
+              produce((state) => Object.assign(state, msg.data as StateState))
+            );
+          }
+        } else if (msg.topic == PubsubTopic.DiscoverTopic) {
+          setDiscovering(msg.data as boolean);
         }
-      } else if (msg.topic == PubsubTopic.DiscoverTopic) {
-        setDiscovering(msg.data as boolean);
-      }
+        setSynced(true);
+      });
     });
 
     ws.addEventListener("close", () => {
@@ -104,6 +109,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setConnecting(false);
         setConnected(false);
         setDisconnected(true);
+        setSynced(false);
         setState(defaultState);
       });
     });
@@ -146,6 +152,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
       connected,
       disconnected,
       reconnect,
+      synced,
     },
   ];
 }

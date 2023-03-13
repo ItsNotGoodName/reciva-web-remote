@@ -64,6 +64,15 @@ func (d *Discoverer) Background(ctx context.Context, doneC chan<- struct{}) {
 	doneC <- struct{}{}
 }
 
+func (d *Discoverer) Discovering() bool {
+	if d.mu.TryLock() {
+		d.mu.Unlock()
+		return false
+	}
+
+	return true
+}
+
 func (d *Discoverer) Discover(ctx context.Context) error {
 	if !d.mu.TryLock() {
 		return internal.ErrHubDiscovering

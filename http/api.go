@@ -288,7 +288,7 @@ func (a API) WS(upgrader *websocket.Upgrader) echo.HandlerFunc {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		go ws.Handle(context.Background(), conn, a.Hub)
+		go ws.Handle(context.Background(), conn, a.Hub, a.Discoverer)
 
 		return nil
 	}

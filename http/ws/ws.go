@@ -39,7 +39,7 @@ func handleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.
 		err := conn.ReadJSON(&command)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("api.wsHandleRead: could not read from %s: %s", conn.RemoteAddr(), err)
+				log.Printf("ws.handleRead: could not read from %s: %s", conn.RemoteAddr(), err)
 			}
 			return
 		}
@@ -53,7 +53,7 @@ func handleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.
 	}
 }
 
-func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
+func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Discoverer) {
 	ctx, cancel := context.WithCancel(ctx)
 	read := make(chan Command)
 	go handleRead(ctx, cancel, conn, read)
@@ -63,17 +63,17 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 		cancel()
 		ticker.Stop()
 		unsub()
-		conn.Close()
 	}()
 
-	write := func(topic pubsub.Topic, data any) {
+	write := func(topic pubsub.Topic, data any) bool {
 		conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
 
 		if err := conn.WriteJSON(Event{Topic: topic, Data: data}); err != nil {
 			log.Printf("ws.Handle: could not write to %s: %s", conn.RemoteAddr(), err)
-			cancel()
-			return
+			return false
 		}
+
+		return true
 	}
 
 	stateCommand := CommandState{}
@@ -96,7 +96,10 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 			if command.Subscribe != nil {
 				topics := filterValidTopics(command.Subscribe.Topics)
 				unsub()
+				// Subscribe
 				sub, unsub = pubsub.DefaultPub.Subscribe(topics)
+
+				// Sync
 				for _, t := range topics {
 					if t == pubsub.StateTopic {
 						if stateCommand.UUID == "" {
@@ -104,7 +107,9 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 								if s, err := radio.GetState(ctx, r); err != nil {
 									log.Println("ws.Handle:", err)
 								} else {
-									write(pubsub.StateTopic, s)
+									if !write(pubsub.StateTopic, s) {
+										return
+									}
 								}
 
 							}
@@ -115,10 +120,16 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 								if s, err := radio.GetState(ctx, r); err != nil {
 									log.Println("ws.Handle:", err)
 								} else {
-									write(pubsub.StateTopic, s)
+									if !write(pubsub.StateTopic, s) {
+										return
+									}
 								}
 							}
 
+						}
+					} else if t == pubsub.DiscoverTopic {
+						if !write(pubsub.DiscoverTopic, d.Discovering()) {
+							return
 						}
 					}
 				}
@@ -143,7 +154,9 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub) {
 			}
 
 			// Send event
-			write(msg.Topic, data)
+			if !write(msg.Topic, data) {
+				return
+			}
 		case <-ticker.C:
 			conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
 

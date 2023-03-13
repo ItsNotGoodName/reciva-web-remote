@@ -6,7 +6,7 @@ import {
   Index,
   type Component,
 } from "solid-js";
-import { type ClassProps, mergeClass } from "./utils";
+import { type ClassProps, mergeClass, useDropdown } from "./utils";
 
 export const DaisyButton: ParentComponent<
   { loading?: boolean } & JSX.HTMLAttributes<HTMLButtonElement>
@@ -26,28 +26,6 @@ export const DaisyButton: ParentComponent<
     >
       <Show when={!props.loading}>{props.children}</Show>
     </button>
-  );
-};
-
-export const DaisyDropdownButton: ParentComponent<
-  { loading?: boolean } & JSX.HTMLAttributes<HTMLLabelElement>
-> = (props) => {
-  const [, other] = splitProps(props, [
-    "class",
-    "classList",
-    "loading",
-    "children",
-  ]);
-
-  return (
-    <label
-      tabindex="0"
-      class={mergeClass("btn touch-manipulation", props.class)}
-      classList={{ loading: props.loading, ...props.classList }}
-      {...other}
-    >
-      <Show when={!props.loading}>{props.children}</Show>
-    </label>
   );
 };
 
@@ -86,6 +64,57 @@ export const DaisyStaticTableCardBody: Component<{
           </Index>
         </tbody>
       </table>
+    </div>
+  );
+};
+
+export const DaisyDropdown: ParentComponent<
+  {
+    buttonProps?: Omit<
+      Omit<Omit<JSX.HTMLAttributes<HTMLLabelElement>, "children">, "tabindex">,
+      "onClick"
+    >;
+    buttonChildren?: JSX.Element;
+    dropdownProps?: Omit<
+      Omit<JSX.HTMLAttributes<HTMLDivElement>, "children">,
+      "tabindex"
+    >;
+    loading?: boolean;
+  } & ClassProps
+> = (props) => {
+  const [dropdownProps, otherDropdownProps] = splitProps(
+    props.dropdownProps || {},
+    ["class"]
+  );
+  const [buttonProps, otherButtonProps] = splitProps(props.buttonProps || {}, [
+    "class",
+    "classList",
+  ]);
+
+  const { showDropdown, toggleDropdown } = useDropdown();
+
+  return (
+    <div
+      class={mergeClass("dropdown", props.class)}
+      classList={{ "dropdown-open": showDropdown() }}
+      onFocusOut={toggleDropdown}
+    >
+      <label
+        tabindex="0"
+        class={mergeClass("btn touch-manipulation", buttonProps.class)}
+        classList={{ loading: props.loading, ...buttonProps.classList }}
+        onClick={toggleDropdown}
+        {...otherButtonProps}
+      >
+        <Show when={!props.loading}>{props.buttonChildren}</Show>
+      </label>
+      <div
+        tabindex="0"
+        class={mergeClass("dropdown-content", dropdownProps.class)}
+        {...otherDropdownProps}
+      >
+        {props.children}
+      </div>
     </div>
   );
 };

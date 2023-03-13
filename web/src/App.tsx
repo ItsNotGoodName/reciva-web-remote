@@ -42,14 +42,14 @@ import {
   useRefreshRadioSubscription,
   useRadiosListQuery,
 } from "./store";
-import { type ClassProps, mergeClass, useDropdown, IOS } from "./utils";
+import { type ClassProps, mergeClass, IOS } from "./utils";
 import { useWS } from "./ws";
 import {
   DaisyButton,
   DaisyStaticTableCardBody,
   type DaisyStaticTableCardBodyData,
   DaisyTooltip,
-  DaisyDropdownButton,
+  DaisyDropdown,
 } from "./Daisy";
 
 const DiscoverButton: Component<
@@ -189,39 +189,34 @@ const RadioPlayerTitleDropdown: Component<
       ),
     },
   ];
-  const { showDropdown, toggleDropdown } = useDropdown();
 
   return (
-    <div
-      class={mergeClass("dropdown no-animation", props.class)}
-      classList={{ "dropdown-show": showDropdown() }}
-      onFocusOut={toggleDropdown}
-    >
-      <DaisyDropdownButton
-        class={mergeClass(
+    <DaisyDropdown
+      class={mergeClass("no-animation", props.class)}
+      buttonProps={{
+        class: mergeClass(
           "btn-primary justify-start gap-2 truncate",
           props.classButton
-        )}
-        onClick={toggleDropdown}
-        loading={props.loading}
-      >
+        ),
+      }}
+      buttonChildren={
         <>
           <span class="badge-info badge badge-lg rounded-md">
             {props.state.preset_number}
           </span>
           {props.state.title_new || props.state.title}
         </>
-      </DaisyDropdownButton>
-      <div
-        tabindex="0"
-        class={mergeClass(
-          "card dropdown-content card-compact w-full bg-primary p-2 text-primary-content shadow",
+      }
+      dropdownProps={{
+        class: mergeClass(
+          "card-compact card w-full bg-primary p-2 text-primary-content shadow",
           props.classDropdown
-        )}
-      >
-        <DaisyStaticTableCardBody data={data()} title="Stream Information" />
-      </div>
-    </div>
+        ),
+      }}
+      loading={props.loading}
+    >
+      <DaisyStaticTableCardBody data={data()} title="Stream Information" />
+    </DaisyDropdown>
   );
 };
 
@@ -238,30 +233,20 @@ const RadioTypeDropdown: Component<
     { key: "Model Number", value: props.state.model_number },
   ];
 
-  const { showDropdown, toggleDropdown } = useDropdown();
-
   return (
-    <div
-      class={mergeClass("dropdown", props.class)}
-      classList={{ "dropdown-show": showDropdown() }}
-      onFocusOut={toggleDropdown}
-    >
-      <DaisyDropdownButton
-        class={mergeClass("btn-primary", props.classButton)}
-        onClick={toggleDropdown}
-      >
-        <FaSolidRadio size={20} />
-      </DaisyDropdownButton>
-      <div
-        tabindex="0"
-        class={mergeClass(
+    <DaisyDropdown
+      class={props.class}
+      buttonProps={{ class: "btn-primary" }}
+      buttonChildren={<FaSolidRadio size={20} />}
+      dropdownProps={{
+        class: mergeClass(
           "card dropdown-content card-compact w-80 bg-primary p-2 text-primary-content shadow",
           props.classDropdown
-        )}
-      >
-        <DaisyStaticTableCardBody data={data()} title="Radio Information" />
-      </div>
-    </div>
+        ),
+      }}
+    >
+      <DaisyStaticTableCardBody data={data()} title="Radio Information" />
+    </DaisyDropdown>
   );
 };
 
@@ -456,43 +441,34 @@ const RadioAudioSourceDropdown: Component<
     });
   };
 
-  const { showDropdown, toggleDropdown } = useDropdown();
-
   return (
-    <div
-      class={mergeClass("dropdown", props.class)}
-      classList={{ "dropdown-open": showDropdown() }}
-      onFocusOut={toggleDropdown}
-    >
-      <DaisyDropdownButton
-        class={props.classButton}
-        classList={{ "btn-secondary": !!props.state.audio_source }}
-        aria-label="Audio Source"
-        onclick={toggleDropdown}
-      >
-        <FaBrandsItunesNote size={20} />
-      </DaisyDropdownButton>
-      <ul
-        tabindex="0"
-        class={mergeClass(
-          "dropdown-content menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow",
+    <DaisyDropdown
+      class={props.class}
+      buttonProps={{
+        "aria-label": "Audio Source",
+        classList: { "btn-secondary": !!props.state.audio_source },
+      }}
+      buttonChildren={<FaBrandsItunesNote size={20} />}
+      dropdownProps={{
+        class: mergeClass(
+          "menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow",
           props.classDropdown
+        ),
+      }}
+    >
+      <span class="mx-auto">Audio Source</span>
+      <For each={props.state.audio_sources}>
+        {(a) => (
+          <DaisyButton
+            loading={loadingAudioSource() == a}
+            classList={{ "btn-secondary": a == props.state.audio_source }}
+            onClick={[setAudioSource, a]}
+          >
+            {a}
+          </DaisyButton>
         )}
-      >
-        <span class="mx-auto">Audio Source</span>
-        <For each={props.state.audio_sources}>
-          {(a) => (
-            <DaisyButton
-              loading={loadingAudioSource() == a}
-              classList={{ "btn-secondary": a == props.state.audio_source }}
-              onClick={[setAudioSource, a]}
-            >
-              {a}
-            </DaisyButton>
-          )}
-        </For>
-      </ul>
-    </div>
+      </For>
+    </DaisyDropdown>
   );
 };
 

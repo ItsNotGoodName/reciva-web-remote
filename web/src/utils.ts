@@ -11,7 +11,7 @@ export function createStaleSignal<T>(value: T): Signal<T> {
   return createSignal(value, { equals: false });
 }
 
-export function checkStale<T, R>(
+export function staleWhen<T, R>(
   query: ResourceReturn<T, R>,
   fn: Accessor<boolean>,
   deps: Accessor<unknown> = fn
@@ -20,10 +20,8 @@ export function checkStale<T, R>(
     on(
       deps,
       () => {
-        console.log("Stale: Check");
         if (fn()) {
           void query[1].refetch();
-          console.log("Stale: Refetch");
         }
       },
       { defer: true }

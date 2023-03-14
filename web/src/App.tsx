@@ -9,7 +9,6 @@ import {
   FaSolidVolumeHigh,
   FaSolidVolumeLow,
   FaSolidVolumeOff,
-  FaSolidArrowRotateRight,
   FaSolidArrowsRotate,
   FaSolidMagnifyingGlass,
   FaSolidCircleXmark,
@@ -35,6 +34,7 @@ import {
   type Accessor,
   type Resource,
   onCleanup,
+  Index,
 } from "solid-js";
 import { type Component } from "solid-js";
 import {
@@ -56,14 +56,10 @@ import {
 } from "./store";
 import { type ClassProps, mergeClass, IOS } from "./utils";
 import { useWS } from "./ws";
-import {
-  DaisyButton,
-  DaisyStaticTableCardBody,
-  type DaisyStaticTableCardBodyData,
-  DaisyTooltip,
-  DaisyDropdown,
-} from "./Daisy";
+import { DaisyButton, DaisyTooltip, DaisyDropdown } from "./Daisy";
 import { GITHUB_URL, ICON_SIZE, PAGE_EDIT, PAGE_HOME } from "./constants";
+
+type TableRowData = { key: string; value: JSX.Element };
 
 const DiscoverButton: Component<
   { discovering: boolean; classButton?: string } & ClassProps
@@ -84,29 +80,6 @@ const DiscoverButton: Component<
         aria-label="Discover"
       >
         <FaSolidMagnifyingGlass size={ICON_SIZE} />
-      </DaisyButton>
-    </DaisyTooltip>
-  );
-};
-
-const RadioRefreshSubscriptionButton: Component<
-  { radioUUID: Accessor<string>; classButton?: string } & ClassProps
-> = (props) => {
-  const refreshRadioSubscription = useRefreshRadioSubscription(props.radioUUID);
-
-  const refreshSubscription = () => {
-    void refreshRadioSubscription.mutate(null);
-  };
-
-  return (
-    <DaisyTooltip class={props.class} tooltip="Refresh">
-      <DaisyButton
-        class={mergeClass("btn-primary w-14", props.classButton)}
-        loading={refreshRadioSubscription.loading()}
-        onClick={refreshSubscription}
-        aria-label="Refresh"
-      >
-        <FaSolidArrowRotateRight size={ICON_SIZE} />
       </DaisyButton>
     </DaisyTooltip>
   );
@@ -166,7 +139,7 @@ const RadioPlayerTitleDropdown: Component<
     loading?: boolean;
   } & ClassProps
 > = (props) => {
-  const data = (): DaisyStaticTableCardBodyData[] => [
+  const data = (): TableRowData[] => [
     {
       key: "Metadata",
       value: props.state.metadata,
@@ -216,7 +189,25 @@ const RadioPlayerTitleDropdown: Component<
       dropdownClass="card-compact card w-full bg-primary p-2 text-primary-content shadow my-2"
       loading={props.loading}
     >
-      <DaisyStaticTableCardBody data={data()} title="Stream Information" />
+      <div class="card-body">
+        <h2 class="card-title">Stream Information</h2>
+        <table class="table-fixed">
+          <tbody>
+            <Index each={data()}>
+              {(data) => (
+                <tr>
+                  <td class="pb-1 pr-1">
+                    <span class="text badge-info badge w-full whitespace-nowrap">
+                      {data().key}
+                    </span>
+                  </td>
+                  <td class="w-full break-all">{data().value}</td>
+                </tr>
+              )}
+            </Index>
+          </tbody>
+        </table>
+      </div>
     </DaisyDropdown>
   );
 };
@@ -227,12 +218,13 @@ const RadioTypeDropdown: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  const data = (): DaisyStaticTableCardBodyData[] => [
+  const data = (): TableRowData[] => [
     { key: "Name", value: props.state.name },
     { key: "Model Name", value: props.state.model_name },
     { key: "Model Number", value: props.state.model_number },
   ];
 
+  const refreshRadioSubscription = useRefreshRadioSubscription(props.radioUUID);
   const deleteRadio = useDeleteRadio(props.radioUUID);
 
   return (
@@ -240,17 +232,44 @@ const RadioTypeDropdown: Component<
       class={props.class}
       buttonClass="btn-primary"
       buttonChildren={<FaSolidRadio size={ICON_SIZE} />}
-      dropdownClass="card-compact card w-80 bg-primary p-2 text-primary-content shadow my-2"
+      dropdownClass="card-compact card bg-primary p-2 text-primary-content shadow my-2"
     >
-      <DaisyStaticTableCardBody data={data()} title="Radio Information" />
-      <div class="mx-2 mb-2 flex">
-        <DaisyButton
-          class="btn-error btn-sm ml-auto"
-          loading={deleteRadio.loading()}
-          onClick={() => void deleteRadio.mutate(null)}
-        >
-          Remove
-        </DaisyButton>
+      <div class="card-body">
+        <h2 class="card-title">Radio Information</h2>
+        <table class="table-fixed">
+          <tbody>
+            <Index each={data()}>
+              {(d) => (
+                <tr>
+                  <td class="pb-1 pr-1">
+                    <span class="text badge-info badge w-full whitespace-nowrap">
+                      {d().key}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="whitespace-nowrap">{d().value}</div>
+                  </td>
+                </tr>
+              )}
+            </Index>
+          </tbody>
+        </table>
+        <div class="card-actions">
+          <DaisyButton
+            class="btn-info btn-sm ml-auto flex-1"
+            loading={refreshRadioSubscription.loading()}
+            onClick={() => void refreshRadioSubscription.mutate(null)}
+          >
+            Refresh
+          </DaisyButton>
+          <DaisyButton
+            class="btn-error btn-sm ml-auto flex-1"
+            loading={deleteRadio.loading()}
+            onClick={() => void deleteRadio.mutate(null)}
+          >
+            Remove
+          </DaisyButton>
+        </div>
       </div>
     </DaisyDropdown>
   );
@@ -698,14 +717,18 @@ const App: Component = () => {
                 discovering={discovering()}
               />
               <RadioSelect
-                class="w-full min-w-fit flex-1 rounded-l-none"
+                class="w-full flex-1 rounded-l-none"
                 radioUUID={radioUUID}
                 setRadioUUID={setRadioUUID}
                 radios={radiosListQuery[0]}
               />
             </div>
             <Show when={radioLoaded()}>
-              <RadioRefreshSubscriptionButton radioUUID={radioUUID} />
+              <RadioTypeDropdown
+                class="dropdown-top dropdown-end"
+                radioUUID={radioUUID}
+                state={state}
+              />
             </Show>
           </div>
           <Show when={radioLoaded()}>
@@ -717,11 +740,6 @@ const App: Component = () => {
               />
               <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
               <RadioAudioSourceDropdown
-                class="dropdown-top dropdown-end"
-                radioUUID={radioUUID}
-                state={state}
-              />
-              <RadioTypeDropdown
                 class="dropdown-top dropdown-end"
                 radioUUID={radioUUID}
                 state={state}

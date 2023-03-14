@@ -16,7 +16,7 @@ import {
 } from "./api";
 import { type ModelRadio } from "./api";
 import { API_URL } from "./constants";
-import { once, checkStale, createStaleSignal } from "./utils";
+import { once, staleWhen, createStaleSignal } from "./utils";
 
 const api = new Api({ baseUrl: API_URL });
 
@@ -65,7 +65,7 @@ function createMutation<T, R>(
   return { loading, mutate, cancel };
 }
 
-export const cancelOn = <T, R, U>(
+export const cancelWhen = <T, R, U>(
   deps: Accessor<U> | AccessorArray<U>,
   mutation: MutationReturn<T, R>
 ): MutationReturn<T, R> => {
@@ -93,14 +93,14 @@ export const useRadiosListQuery = () =>
   createResource<ModelRadio[], string>(() => api.radios.radiosList());
 
 // Presets list
-export const presetListQuery = once(() =>
+export const usePresetListQuery = once(() =>
   createResource(() => api.presets.presetsList())
 );
 
 // Preset get
 const [stalePresets, setStalePresets] = createStaleSignal(undefined);
 export const usePresetQuery = (url: Accessor<string | undefined>) =>
-  checkStale(
+  staleWhen(
     createResource<ModelPreset, string>(
       () => url() || undefined,
       (url: string) => api.presets.presetsDetail(url)
@@ -111,7 +111,7 @@ export const usePresetQuery = (url: Accessor<string | undefined>) =>
 // State get
 const [staleStateUUID, setStaleStateUUID] = createStaleSignal("");
 export const useStateQuery = (uuid: Accessor<string | undefined>) =>
-  checkStale(
+  staleWhen(
     createResource<StateState, string>(
       () => uuid() || undefined,
       (uuid: string) => api.states.statesDetail(uuid)
@@ -127,14 +127,14 @@ export const useDiscoverRadios = () =>
   createMutation((params) => api.radios.radiosCreate(params));
 
 export const useDeleteRadio = (uuid: Accessor<string>) =>
-  cancelOn(
+  cancelWhen(
     uuid,
     createMutation((params) => api.radios.radiosDelete(uuid(), params))
   );
 
 // Radio volume refresh
 export const useRefreshRadioVolume = (uuid: Accessor<string>) =>
-  cancelOn(
+  cancelWhen(
     uuid,
     createMutation((params) =>
       api.radios
@@ -145,24 +145,22 @@ export const useRefreshRadioVolume = (uuid: Accessor<string>) =>
 
 // Radio subscription refresh
 export const useRefreshRadioSubscription = (uuid: Accessor<string>) =>
-  cancelOn(
+  cancelWhen(
     uuid,
     createMutation((params) => api.radios.subscriptionCreate(uuid(), params))
   );
 
 // State update
 export const usePatchState = (uuid: Accessor<string>) =>
-  cancelOn(
+  cancelWhen(
     uuid,
     createMutation((params, req: HttpPatchState) =>
-      api.states
-        .statesPartialUpdate(uuid(), req, params)
-        .then(() => setStaleStateUUID(uuid))
+      api.states.statesPartialUpdate(uuid(), req, params)
     )
   );
 
 // Preset update
 export const useUpdatePreset = () =>
   createMutation((params, preset: ModelPreset) =>
-    api.presets.presetsCreate(preset, params).then(() => setStalePresets())
+    api.presets.presetsCreate(preset, params)
   );

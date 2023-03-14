@@ -194,9 +194,7 @@ const RadioPlayerTitleDropdown: Component<
   return (
     <DaisyDropdown
       class={mergeClass("no-animation", props.class)}
-      buttonProps={{
-        class: "btn-primary w-full justify-start truncate",
-      }}
+      buttonClass="btn-primary w-full justify-start truncate"
       buttonChildren={
         <div class="w-0">
           <span class="badge-info badge badge-lg mr-2 rounded-md">
@@ -205,10 +203,7 @@ const RadioPlayerTitleDropdown: Component<
           {props.state.title_new || props.state.title}
         </div>
       }
-      dropdownProps={{
-        class:
-          "card-compact card w-full bg-primary p-2 text-primary-content shadow my-2",
-      }}
+      dropdownClass="card-compact card w-full bg-primary p-2 text-primary-content shadow my-2"
       loading={props.loading}
     >
       <DaisyStaticTableCardBody data={data()} title="Stream Information" />
@@ -230,12 +225,9 @@ const RadioTypeDropdown: Component<
   return (
     <DaisyDropdown
       class={props.class}
-      buttonProps={{ class: "btn-primary" }}
+      buttonClass="btn-primary"
       buttonChildren={<FaSolidRadio size={20} />}
-      dropdownProps={{
-        class:
-          "card-compact card w-80 bg-primary p-2 text-primary-content shadow my-2",
-      }}
+      dropdownClass="card-compact card w-80 bg-primary p-2 text-primary-content shadow my-2"
     >
       <DaisyStaticTableCardBody data={data()} title="Radio Information" />
     </DaisyDropdown>
@@ -434,15 +426,10 @@ const RadioAudioSourceDropdown: Component<
   return (
     <DaisyDropdown
       class={props.class}
-      buttonProps={{
-        "aria-label": "Audio Source",
-        classList: { "btn-secondary": !!props.state.audio_source },
-      }}
+      aria-label="Audio Source"
+      buttonClassList={{ "btn-secondary": !!props.state.audio_source }}
       buttonChildren={<FaBrandsItunesNote size={20} />}
-      dropdownProps={{
-        class:
-          "menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow my-2",
-      }}
+      dropdownClass="menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow my-2"
     >
       <span class="mx-auto">Audio Source</span>
       <For each={props.state.audio_sources}>
@@ -494,11 +481,9 @@ const RadioSelect: Component<
         Select Radio
       </option>
       <Show when={!props.radios.error}>
-        {() => (
-          <For each={props.radios()}>
-            {(radio) => <option value={radio.uuid}>{radio.name}</option>}
-          </For>
-        )}
+        <For each={props.radios()}>
+          {(radio) => <option value={radio.uuid}>{radio.name}</option>}
+        </For>
       </Show>
     </select>
   );

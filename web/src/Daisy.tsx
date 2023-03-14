@@ -70,27 +70,15 @@ export const DaisyStaticTableCardBody: Component<{
 
 export const DaisyDropdown: ParentComponent<
   {
-    buttonProps?: Omit<
-      Omit<Omit<JSX.HTMLAttributes<HTMLLabelElement>, "children">, "tabindex">,
-      "onClick"
-    >;
+    buttonClass?: string;
+    buttonClassList?: {
+      [k: string]: boolean | undefined;
+    };
     buttonChildren?: JSX.Element;
-    dropdownProps?: Omit<
-      Omit<JSX.HTMLAttributes<HTMLDivElement>, "children">,
-      "tabindex"
-    >;
+    dropdownClass?: string;
     loading?: boolean;
   } & ClassProps
 > = (props) => {
-  const [dropdownProps, otherDropdownProps] = splitProps(
-    props.dropdownProps || {},
-    ["class"]
-  );
-  const [buttonProps, otherButtonProps] = splitProps(props.buttonProps || {}, [
-    "class",
-    "classList",
-  ]);
-
   const { showDropdown, toggleDropdown } = useDropdown();
 
   return (
@@ -101,17 +89,15 @@ export const DaisyDropdown: ParentComponent<
     >
       <label
         tabindex="0"
-        class={mergeClass("btn touch-manipulation", buttonProps.class)}
-        classList={{ loading: props.loading, ...buttonProps.classList }}
+        class={mergeClass("btn touch-manipulation", props.buttonClass)}
+        classList={{ loading: props.loading, ...props.buttonClassList }}
         onClick={toggleDropdown}
-        {...otherButtonProps}
       >
         <Show when={!props.loading}>{props.buttonChildren}</Show>
       </label>
       <div
         tabindex="0"
-        class={mergeClass("dropdown-content", dropdownProps.class)}
-        {...otherDropdownProps}
+        class={mergeClass("dropdown-content", props.dropdownClass)}
       >
         {props.children}
       </div>

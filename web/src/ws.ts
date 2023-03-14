@@ -1,5 +1,5 @@
 import { type Accessor, createSignal, createEffect, on, batch } from "solid-js";
-import { type Store, createStore, produce } from "solid-js/store";
+import { type Store, createStore } from "solid-js/store";
 import {
   PubsubTopic,
   type WsCommand,
@@ -93,9 +93,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
           case PubsubTopic.StateTopic:
             const data = msg.data as StateState;
             if (data.uuid == radioUUID()) {
-              setState(
-                produce((state) => Object.assign(state, msg.data as StateState))
-              );
+              setState(data);
             }
             break;
           case PubsubTopic.DiscoverTopic:

@@ -84,7 +84,7 @@ export const cancelOn = <T, R, U>(
 ////////////// Queries
 
 // Build get
-export const buildGetQuery = once(() =>
+export const useBuildGetQuery = once(() =>
   createResource(() => api.build.buildList())
 );
 

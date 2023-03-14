@@ -13,6 +13,12 @@ import {
   FaSolidArrowsRotate,
   FaSolidMagnifyingGlass,
   FaSolidCircleXmark,
+  FaSolidBars,
+  FaBrandsGithub,
+  FaSolidSpinner,
+  FaSolidTag,
+  FaSolidHouse,
+  FaSolidPen,
 } from "solid-icons/fa";
 import {
   Switch,
@@ -37,6 +43,7 @@ import {
   StateStatus,
   type StateState,
   type ModelRadio,
+  type ModelBuild,
 } from "./api";
 import {
   useDiscoverRadios,
@@ -44,6 +51,7 @@ import {
   useRefreshRadioVolume,
   useRefreshRadioSubscription,
   useRadiosListQuery,
+  useBuildGetQuery,
 } from "./store";
 import { type ClassProps, mergeClass, IOS } from "./utils";
 import { useWS } from "./ws";
@@ -54,6 +62,7 @@ import {
   DaisyTooltip,
   DaisyDropdown,
 } from "./Daisy";
+import { GITHUB_URL, ICON_SIZE, PAGE_EDIT, PAGE_HOME } from "./constants";
 
 const DiscoverButton: Component<
   { discovering: boolean; classButton?: string } & ClassProps
@@ -73,7 +82,7 @@ const DiscoverButton: Component<
         onClick={discover}
         aria-label="Discover"
       >
-        <FaSolidMagnifyingGlass size={20} />
+        <FaSolidMagnifyingGlass size={ICON_SIZE} />
       </DaisyButton>
     </DaisyTooltip>
   );
@@ -96,7 +105,7 @@ const RadioRefreshSubscriptionButton: Component<
         onClick={refreshSubscription}
         aria-label="Refresh"
       >
-        <FaSolidArrowRotateRight size={20} />
+        <FaSolidArrowRotateRight size={ICON_SIZE} />
       </DaisyButton>
     </DaisyTooltip>
   );
@@ -114,25 +123,25 @@ const RadioPlayerStatusButton: Component<
         return {
           class: "btn-circle btn-warning animate-spin",
           status: props.status,
-          element: <FaSolidArrowsRotate size={20} />,
+          element: <FaSolidArrowsRotate size={ICON_SIZE} />,
         };
       case StateStatus.StatusPlaying:
         return {
           class: "btn-circle btn-success pl-1",
           status: props.status,
-          element: <FaSolidPlay size={20} />,
+          element: <FaSolidPlay size={ICON_SIZE} />,
         };
       case StateStatus.StatusStopped:
         return {
           class: "btn-circle btn-error",
           status: props.status,
-          element: <FaSolidStop size={20} />,
+          element: <FaSolidStop size={ICON_SIZE} />,
         };
       default:
         return {
           class: "btn-circle btn-info",
           status: "Unknown",
-          element: <FaSolidQuestion size={20} />,
+          element: <FaSolidQuestion size={ICON_SIZE} />,
         };
     }
   };
@@ -226,7 +235,7 @@ const RadioTypeDropdown: Component<
     <DaisyDropdown
       class={props.class}
       buttonClass="btn-primary"
-      buttonChildren={<FaSolidRadio size={20} />}
+      buttonChildren={<FaSolidRadio size={ICON_SIZE} />}
       dropdownClass="card-compact card w-80 bg-primary p-2 text-primary-content shadow my-2"
     >
       <DaisyStaticTableCardBody data={data()} title="Radio Information" />
@@ -333,7 +342,7 @@ const RadioVolumeButtonGroup: Component<
           loading={statePatch.loading()}
           aria-label="Volume Muted"
         >
-          <FaSolidVolumeOff size={20} />
+          <FaSolidVolumeOff size={ICON_SIZE} />
         </DaisyButton>
       }
     >
@@ -344,7 +353,7 @@ const RadioVolumeButtonGroup: Component<
           aria-label="Lower Volume"
           onClick={[changeVolume, -5]}
         >
-          <FaSolidVolumeLow size={20} />
+          <FaSolidVolumeLow size={ICON_SIZE} />
         </DaisyButton>
         <DaisyButton
           class="btn-info w-12 px-0"
@@ -360,7 +369,7 @@ const RadioVolumeButtonGroup: Component<
           aria-label="Raise Volume"
           onClick={[changeVolume, 5]}
         >
-          <FaSolidVolumeHigh size={20} />
+          <FaSolidVolumeHigh size={ICON_SIZE} />
         </DaisyButton>
       </div>
     </Show>
@@ -394,10 +403,10 @@ const RadioPowerButton: Component<
     >
       <Switch>
         <Match when={props.state.power}>
-          <FaSolidPowerOff size={20} />
+          <FaSolidPowerOff size={ICON_SIZE} />
         </Match>
         <Match when={!props.state.power}>
-          <FaSolidPowerOff size={20} />
+          <FaSolidPowerOff size={ICON_SIZE} />
         </Match>
       </Switch>
     </DaisyButton>
@@ -428,7 +437,7 @@ const RadioAudioSourceDropdown: Component<
       class={props.class}
       aria-label="Audio Source"
       buttonClassList={{ "btn-secondary": !!props.state.audio_source }}
-      buttonChildren={<FaBrandsItunesNote size={20} />}
+      buttonChildren={<FaBrandsItunesNote size={ICON_SIZE} />}
       dropdownClass="menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow my-2"
     >
       <span class="mx-auto">Audio Source</span>
@@ -462,6 +471,15 @@ const RadioSelect: Component<
       () => !props.radios.error && props.radios(),
       () => {
         select && (select.value = props.radioUUID());
+
+        if (!props.radios.error) {
+          for (const r of props.radios() || []) {
+            if (r.uuid == props.radioUUID()) {
+              return;
+            }
+          }
+          props.setRadioUUID("");
+        }
       },
       { defer: true }
     )
@@ -489,6 +507,66 @@ const RadioSelect: Component<
   );
 };
 
+const MenuDropdown: Component<
+  {
+    build: Resource<ModelBuild>;
+    page: Accessor<string>;
+    setPage: Setter<string>;
+  } & ClassProps
+> = (props) => {
+  return (
+    <DaisyDropdown
+      class={props.class}
+      buttonClassList={{ "btn-success": props.page() != PAGE_HOME }}
+      buttonChildren={<FaSolidBars size={ICON_SIZE} />}
+    >
+      <ul class="menu rounded-box menu-compact mb-2 w-52 min-w-max bg-base-200 p-2 shadow">
+        <li>
+          <a
+            classList={{ active: props.page() == PAGE_HOME }}
+            onClick={() => props.setPage(PAGE_HOME)}
+          >
+            <FaSolidHouse size={ICON_SIZE} />
+            Home Page
+          </a>
+        </li>
+        <li>
+          <a
+            classList={{ active: props.page() == PAGE_EDIT }}
+            onClick={() => props.setPage(PAGE_EDIT)}
+          >
+            <FaSolidPen size={ICON_SIZE} />
+            Edit Presets
+          </a>
+        </li>
+        <li>
+          <a href={GITHUB_URL}>
+            <FaBrandsGithub size={ICON_SIZE} />
+            Source Code
+          </a>
+        </li>
+        <Switch>
+          <Match when={props.build.loading}>
+            <li>
+              <a>
+                <FaSolidSpinner size={ICON_SIZE} class="animate-spin" /> Version
+              </a>
+            </li>
+          </Match>
+          <Match when={!props.build.error}>
+            <li>
+              <a href={props.build()?.release_url || "#"}>
+                <FaSolidTag size={ICON_SIZE} />
+                {props.build()?.summary}
+              </a>
+            </li>
+          </Match>
+        </Switch>
+      </ul>
+    </DaisyDropdown>
+  );
+};
+
 const App: Component = () => {
   const [radioUUID, setRadioUUID] = createSignal(
     localStorage.getItem("lastRadioUUID") || ""
@@ -502,11 +580,14 @@ const App: Component = () => {
   const wsReconnecting = () => ws.connecting() && ws.disconnected();
 
   const radioLoading = () => state.uuid != radioUUID() || ws.connecting();
-  const radioLoaded = () => radioUUID() == state.uuid && ws.connected();
+  const radioLoaded = () =>
+    radioUUID() == state.uuid && radioUUID() != "" && ws.connected();
 
+  // Queries
+  const buildGetQuery = useBuildGetQuery();
   const radiosListQuery = useRadiosListQuery();
 
-  // Invalidate radios list based on websocket
+  // Invalidate radios list based on WebSocket
   const trackRadiosListQuery = createReaction(() => {
     void radiosListQuery[1].refetch("");
   });
@@ -530,6 +611,8 @@ const App: Component = () => {
     window.removeEventListener("focus", onVisibilityChange);
   });
 
+  const [page, setPage] = createSignal(PAGE_HOME);
+
   return (
     <div class="h-screen">
       <div class="fixed top-0 z-50 flex w-full gap-2 border-b-2 border-accent border-b-base-300 bg-base-200 p-2">
@@ -545,14 +628,21 @@ const App: Component = () => {
         />
       </div>
       <div class="container mx-auto px-4 pt-20 pb-36">
-        <RadioPresetsList radioUUID={radioUUID} state={state} />
+        <Switch>
+          <Match when={page() == PAGE_HOME}>
+            <RadioPresetsList radioUUID={radioUUID} state={state} />
+          </Match>
+          <Match when={page() == PAGE_EDIT}>
+            <h1>Edit Presets</h1>
+          </Match>
+        </Switch>
       </div>
       <div class="fixed bottom-0 z-50 w-full space-y-2 ">
         <div class="ml-auto max-w-screen-sm space-y-2 px-2">
           <Show when={!!radiosListQuery[0].error}>
             <div class="alert alert-error shadow-lg">
               <div>
-                <FaSolidCircleXmark size={20} />
+                <FaSolidCircleXmark size={ICON_SIZE} />
                 <span>Failed to list radios.</span>
               </div>
             </div>
@@ -560,7 +650,7 @@ const App: Component = () => {
           <Show when={ws.connecting() && !wsReconnecting()}>
             <div class="alert shadow-lg">
               <div>
-                <FaSolidCircleInfo class="fill-info" size={20} />
+                <FaSolidCircleInfo class="fill-info" size={ICON_SIZE} />
                 <span>Connecting to server...</span>
               </div>
             </div>
@@ -568,7 +658,7 @@ const App: Component = () => {
           <Show when={ws.disconnected()}>
             <div class="alert shadow-lg">
               <div>
-                <FaSolidCircleInfo class="fill-info" size={20} />
+                <FaSolidCircleInfo class="fill-info" size={ICON_SIZE} />
                 <span>Disconnected from server.</span>
               </div>
               <div class="flex-none">
@@ -588,6 +678,12 @@ const App: Component = () => {
           classList={{ "pb-5": IOS() }}
         >
           <div class="flex flex-auto gap-2">
+            <MenuDropdown
+              class="dropdown-top"
+              build={buildGetQuery[0]}
+              page={page}
+              setPage={setPage}
+            />
             <div class="flex flex-1">
               <DiscoverButton
                 classButton="rounded-r-none"

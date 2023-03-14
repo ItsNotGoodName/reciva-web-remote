@@ -147,6 +147,9 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 					}
 					return data.State
 				}
+				if msg.Topic == pubsub.StaleTopic {
+					return msg.Data
+				}
 				return nil
 			}()
 			if data == nil {

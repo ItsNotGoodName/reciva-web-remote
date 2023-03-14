@@ -231,6 +231,41 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "radios"
+                ],
+                "summary": "Delete radio",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Radio UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HTTPError"
+                        }
+                    }
+                }
             }
         },
         "/radios/{uuid}/subscription": {
@@ -508,19 +543,32 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Stale": {
+            "type": "string",
+            "enum": [
+                "radios",
+                "presets"
+            ],
+            "x-enum-varnames": [
+                "StaleRadios",
+                "StalePresets"
+            ]
+        },
         "pubsub.Topic": {
             "type": "string",
             "enum": [
                 "error",
                 "state",
-                "force.state.changed",
-                "discover"
+                "state.hook.stale",
+                "discover",
+                "stale"
             ],
             "x-enum-varnames": [
                 "ErrorTopic",
                 "StateTopic",
-                "ForceStateChangedTopic",
-                "DiscoverTopic"
+                "StateHookStaleTopic",
+                "DiscoverTopic",
+                "StaleTopic"
             ]
         },
         "state.Preset": {

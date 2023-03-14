@@ -126,6 +126,12 @@ export const useStateQuery = (uuid: Accessor<string | undefined>) =>
 export const useDiscoverRadios = () =>
   createMutation((params) => api.radios.radiosCreate(params));
 
+export const useDeleteRadio = (uuid: Accessor<string>) =>
+  cancelOn(
+    uuid,
+    createMutation((params) => api.radios.radiosDelete(uuid(), params))
+  );
+
 // Radio volume refresh
 export const useRefreshRadioVolume = (uuid: Accessor<string>) =>
   cancelOn(

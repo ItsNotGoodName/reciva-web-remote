@@ -43,11 +43,17 @@ export interface ModelRadio {
   uuid: string;
 }
 
+export enum ModelStale {
+  StaleRadios = "radios",
+  StalePresets = "presets",
+}
+
 export enum PubsubTopic {
   ErrorTopic = "error",
   StateTopic = "state",
-  ForceStateChangedTopic = "force.state.changed",
+  StateHookStaleTopic = "state.hook.stale",
   DiscoverTopic = "discover",
+  StaleTopic = "stale",
 }
 
 export interface StatePreset {
@@ -457,6 +463,21 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/radios/${uuid}`,
         method: "GET",
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags radios
+     * @name RadiosDelete
+     * @summary Delete radio
+     * @request DELETE:/radios/{uuid}
+     */
+    radiosDelete: (uuid: string, params: RequestParams = {}) =>
+      this.request<void, HttpHTTPError>({
+        path: `/radios/${uuid}`,
+        method: "DELETE",
         ...params,
       }),
 

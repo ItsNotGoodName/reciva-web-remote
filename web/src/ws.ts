@@ -6,11 +6,15 @@ import {
   type StateState,
   StateStatus,
   type WsEvent,
+  type ModelStale,
 } from "./api";
 import { WS_URL } from "./constants";
 
 const subscribe = (ws: WebSocket, radioUUID: string) => {
-  const topics: Array<PubsubTopic> = [PubsubTopic.DiscoverTopic];
+  const topics: Array<PubsubTopic> = [
+    PubsubTopic.DiscoverTopic,
+    PubsubTopic.StaleTopic,
+  ];
   if (radioUUID != "") {
     topics.push(PubsubTopic.StateTopic);
   }
@@ -46,13 +50,13 @@ const defaultState: StateState = {
 export type WSDataReturn = {
   state: Store<StateState>;
   discovering: Accessor<boolean>;
+  stale: Accessor<ModelStale | undefined>;
 };
 
 export type WSStatusReturn = {
   connecting: Accessor<boolean>;
   connected: Accessor<boolean>;
   disconnected: Accessor<boolean>;
-  synced: Accessor<boolean>;
   reconnect: () => void;
 };
 
@@ -62,10 +66,12 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
   const [connecting, setConnecting] = createSignal(true);
   const [connected, setConnected] = createSignal(false);
   const [disconnected, setDisconnected] = createSignal(false);
-  const [synced, setSynced] = createSignal(false);
 
+  const [stale, setStale] = createSignal<ModelStale | undefined>(undefined, {
+    equals: false,
+  });
   const [discovering, setDiscovering] = createSignal(false);
-  const [state, setState] = createStore(defaultState);
+  const [state, setState] = createStore({ ...defaultState });
 
   const connect = () => {
     const ws = new WebSocket(WS_URL);
@@ -87,21 +93,21 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
 
     ws.addEventListener("message", (event) => {
       console.log("WS: Message");
-      batch(() => {
-        const msg = JSON.parse(event.data as string) as WsEvent;
-        switch (msg.topic) {
-          case PubsubTopic.StateTopic:
-            const data = msg.data as StateState;
-            if (data.uuid == radioUUID()) {
-              setState(data);
-            }
-            break;
-          case PubsubTopic.DiscoverTopic:
-            setDiscovering(msg.data as boolean);
-            break;
-        }
-        setSynced(true);
-      });
+      const msg = JSON.parse(event.data as string) as WsEvent;
+      switch (msg.topic) {
+        case PubsubTopic.StateTopic:
+          const data = msg.data as StateState;
+          if (data.uuid == radioUUID()) {
+            setState(data);
+          }
+          break;
+        case PubsubTopic.DiscoverTopic:
+          setDiscovering(msg.data as boolean);
+          break;
+        case PubsubTopic.StaleTopic:
+          setStale(msg.data as ModelStale);
+          break;
+      }
     });
 
     ws.addEventListener("close", () => {
@@ -110,7 +116,6 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setConnecting(false);
         setConnected(false);
         setDisconnected(true);
-        setSynced(false);
         setState(defaultState);
       });
     });
@@ -146,6 +151,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
   return [
     {
       state,
+      stale,
       discovering,
     },
     {
@@ -153,7 +159,6 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
       connected,
       disconnected,
       reconnect,
-      synced,
     },
   ];
 }

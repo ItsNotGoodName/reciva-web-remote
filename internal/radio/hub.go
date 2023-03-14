@@ -6,6 +6,7 @@ import (
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
 )
 
@@ -33,4 +34,14 @@ func ListStates(ctx context.Context, h *hub.Hub) []state.State {
 	}
 
 	return states
+}
+
+func DeleteRadio(h *hub.Hub, r hub.Radio) error {
+	if err := h.Delete(r.UUID); err != nil {
+		return err
+	}
+
+	pubsub.DefaultPub.Publish(pubsub.StaleTopic, model.StaleRadios)
+
+	return nil
 }

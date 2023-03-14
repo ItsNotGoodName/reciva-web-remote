@@ -1,6 +1,9 @@
 package pubsub
 
-import "github.com/ItsNotGoodName/reciva-web-remote/internal/state"
+import (
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
+)
 
 const ErrorTopic Topic = "error"
 
@@ -15,9 +18,9 @@ type StateMessage struct {
 	Changed state.Changed
 }
 
-const ForceStateChangedTopic Topic = "force.state.changed"
+const StateHookStaleTopic Topic = "state.hook.stale"
 
-type ForceStateChangedMessage struct {
+type StateHookStaleMessage struct {
 	Changed state.Changed
 }
 
@@ -26,3 +29,7 @@ const DiscoverTopic Topic = "discover"
 type DiscoverMessage struct {
 	Discovering bool
 }
+
+const StaleTopic Topic = "stale"
+
+type StaleMessage = model.Stale

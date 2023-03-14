@@ -34,7 +34,6 @@ import {
   batch,
   type Accessor,
   type Resource,
-  createReaction,
   onCleanup,
 } from "solid-js";
 import { type Component } from "solid-js";
@@ -44,6 +43,7 @@ import {
   type StateState,
   type ModelRadio,
   type ModelBuild,
+  ModelStale,
 } from "./api";
 import {
   useDiscoverRadios,
@@ -52,6 +52,7 @@ import {
   useRefreshRadioSubscription,
   useRadiosListQuery,
   useBuildGetQuery,
+  useDeleteRadio,
 } from "./store";
 import { type ClassProps, mergeClass, IOS } from "./utils";
 import { useWS } from "./ws";
@@ -222,6 +223,7 @@ const RadioPlayerTitleDropdown: Component<
 
 const RadioTypeDropdown: Component<
   {
+    radioUUID: Accessor<string>;
     state: StateState;
   } & ClassProps
 > = (props) => {
@@ -231,6 +233,8 @@ const RadioTypeDropdown: Component<
     { key: "Model Number", value: props.state.model_number },
   ];
 
+  const deleteRadio = useDeleteRadio(props.radioUUID);
+
   return (
     <DaisyDropdown
       class={props.class}
@@ -239,6 +243,15 @@ const RadioTypeDropdown: Component<
       dropdownClass="card-compact card w-80 bg-primary p-2 text-primary-content shadow my-2"
     >
       <DaisyStaticTableCardBody data={data()} title="Radio Information" />
+      <div class="mx-2 mb-2 flex">
+        <DaisyButton
+          class="btn-error btn-sm ml-auto"
+          loading={deleteRadio.loading()}
+          onClick={() => void deleteRadio.mutate(null)}
+        >
+          Remove
+        </DaisyButton>
+      </div>
     </DaisyDropdown>
   );
 };
@@ -576,10 +589,11 @@ const App: Component = () => {
   });
 
   // WebSocket
-  const [{ state, discovering }, ws] = useWS(radioUUID);
+  const [{ state, discovering, stale }, ws] = useWS(radioUUID);
   const wsReconnecting = () => ws.connecting() && ws.disconnected();
 
-  const radioLoading = () => state.uuid != radioUUID() || ws.connecting();
+  const radioLoading = () =>
+    (state.uuid != radioUUID() && radioUUID() != "") || ws.connecting();
   const radioLoaded = () =>
     radioUUID() == state.uuid && radioUUID() != "" && ws.connected();
 
@@ -588,14 +602,8 @@ const App: Component = () => {
   const radiosListQuery = useRadiosListQuery();
 
   // Invalidate radios list based on WebSocket
-  const trackRadiosListQuery = createReaction(() => {
-    void radiosListQuery[1].refetch("");
-  });
   createEffect(() => {
-    ws.synced() == false && trackRadiosListQuery(ws.synced);
-  });
-  createEffect(() => {
-    discovering() == true && trackRadiosListQuery(discovering);
+    stale() == ModelStale.StaleRadios && void radiosListQuery[1].refetch();
   });
 
   // Reconnect websocket when document is visible
@@ -715,6 +723,7 @@ const App: Component = () => {
               />
               <RadioTypeDropdown
                 class="dropdown-top dropdown-end"
+                radioUUID={radioUUID}
                 state={state}
               />
             </div>

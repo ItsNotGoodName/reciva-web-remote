@@ -26,12 +26,19 @@ type Event struct {
 	Data  any          `json:"data" validate:"required"`
 }
 
+type StaleEvent struct {
+	Topic pubsub.Topic        `json:"topic" validate:"required"`
+	Data  pubsub.StaleMessage `json:"data" validate:"required"`
+}
+
 func validateTopic(topic pubsub.Topic) (pubsub.Topic, error) {
 	switch pubsub.Topic(topic) {
 	case pubsub.DiscoverTopic:
 		return pubsub.DiscoverTopic, nil
 	case pubsub.StateTopic:
 		return pubsub.StateTopic, nil
+	case pubsub.StaleTopic:
+		return pubsub.StaleTopic, nil
 	// case pubsub.ErrorTopic:
 	// 	return pubsub.ErrorTopic, nil
 	default:

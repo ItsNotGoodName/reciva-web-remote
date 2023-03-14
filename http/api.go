@@ -172,6 +172,27 @@ func (a API) GetRadio(c echo.Context) error {
 	return c.JSON(http.StatusOK, model.NewRadio(cc.Radio))
 }
 
+//	@Summary	Delete radio
+//	@Tags		radios
+//	@Param		uuid	path	string	true	"Radio UUID"
+//	@Produce	json
+//	@Success	200
+//	@Failure	404	{object}	HTTPError
+//	@Failure	500	{object}	HTTPError
+//	@Router		/radios/{uuid} [delete]
+func (a API) DeleteRadio(c echo.Context) error {
+	cc := c.(*RadioContext)
+
+	if err := radio.DeleteRadio(a.Hub, cc.Radio); err != nil {
+		if err == internal.ErrRadioNotFound {
+			return echo.ErrNotFound.WithInternal(err)
+		}
+		return err
+	}
+
+	return nil
+}
+
 //	@Summary	Refresh radio volume
 //	@Tags		radios
 //	@Param		uuid	path	string	true	"Radio UUID"
@@ -279,8 +300,9 @@ func (a API) PatchState(c echo.Context) error {
 
 //	@Summary	WebSocket
 //	@Tags		websocket
-//	@Param		Command	body	ws.Command	false	"Command"
-//	@Param		Event	body	ws.Event	false	"Event"
+//	@Param		Command	body		ws.Command	false	"Command"
+//	@Param		Event	body		ws.Event	false	"Event"
+//	@Success	200		{object}	model.Stale
 func (a API) WS(upgrader *websocket.Upgrader) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)

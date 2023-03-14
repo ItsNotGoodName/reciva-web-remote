@@ -56,6 +56,7 @@ func Start(a API, port int, fs fs.FS) {
 		apiRadios := api.Group("/radios/:uuid")
 		apiRadios.Use(a.RadioMiddleware)
 		apiRadios.GET("", a.GetRadio)
+		apiRadios.DELETE("", a.DeleteRadio)
 		apiRadios.POST("/volume", a.RefreshRadioVolume)
 		apiRadios.POST("/subscription", a.RefreshRadioSubscription)
 

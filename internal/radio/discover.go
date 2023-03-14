@@ -9,6 +9,7 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/upnp"
@@ -77,9 +78,11 @@ func (d *Discoverer) Discover(ctx context.Context) error {
 	if !d.mu.TryLock() {
 		return internal.ErrHubDiscovering
 	}
+	defer d.mu.Unlock()
+
 	pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: true})
 	defer pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: false})
-	defer d.mu.Unlock()
+	defer pubsub.DefaultPub.Publish(pubsub.StaleTopic, model.StaleRadios)
 
 	radioContext := <-d.ctxC
 	return discover(ctx, d.hub, func(ctx context.Context, reciva upnp.Reciva) error {

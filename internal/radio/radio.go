@@ -30,7 +30,7 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 		pubsub.DefaultPub.Publish(pubsub.StateTopic, pubsub.StateMessage{State: s, Changed: c})
 	}
 
-	sub, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.ForceStateChangedTopic})
+	sub, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.StateHookStaleTopic})
 	defer unsub()
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
@@ -46,7 +46,7 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 				}
 			}()
 		case msg := <-sub:
-			data := msg.Data.(pubsub.ForceStateChangedMessage)
+			data := msg.Data.(pubsub.StateHookStaleMessage)
 			handle(data.Changed)
 		case stateC <- s:
 		case fn := <-updateFnC:

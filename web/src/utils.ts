@@ -11,6 +11,22 @@ export function createStaleSignal<T>(value: T): Signal<T> {
   return createSignal(value, { equals: false });
 }
 
+export function invalidWhen<T, R>(
+  deps: Accessor<unknown>,
+  query: ResourceReturn<T, R>
+): ResourceReturn<T, R> {
+  createEffect(
+    on(
+      deps,
+      () => {
+        void query[1].refetch();
+      },
+      { defer: true }
+    )
+  );
+  return query;
+}
+
 export function staleWhen<T, R>(
   query: ResourceReturn<T, R>,
   fn: Accessor<boolean>,

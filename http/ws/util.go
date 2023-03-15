@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
@@ -31,31 +30,53 @@ type StaleEvent struct {
 	Data  pubsub.StaleMessage `json:"data" validate:"required"`
 }
 
-func validateTopic(topic pubsub.Topic) (pubsub.Topic, error) {
-	switch pubsub.Topic(topic) {
-	case pubsub.DiscoverTopic:
-		return pubsub.DiscoverTopic, nil
-	case pubsub.StateTopic:
-		return pubsub.StateTopic, nil
-	case pubsub.StaleTopic:
-		return pubsub.StaleTopic, nil
-	// case pubsub.ErrorTopic:
-	// 	return pubsub.ErrorTopic, nil
-	default:
-		return "", fmt.Errorf("invalid topic")
-	}
-}
-
-func filterValidTopics(topics []pubsub.Topic) []pubsub.Topic {
+func uniqueTopics(topics []pubsub.Topic) []pubsub.Topic {
 	pubsubTopics := []pubsub.Topic{}
 	for _, topic := range topics {
-		pubsubTopic, err := validateTopic(topic)
-		if err != nil {
-			log.Println("http.wsParseTopics: invalid topic:", topic)
-			continue
+		found := false
+		for _, t := range pubsubTopics {
+			if t == topic {
+				found = true
+				log.Println("ws.uniqueTopics: received duplicate topic:", t)
+				break
+			}
+		}
+		if !found {
+			pubsubTopics = append(pubsubTopics, topic)
+		}
+	}
+	return pubsubTopics
+}
+
+func filterTopics(topics []pubsub.Topic) []pubsub.Topic {
+	if length := len(topics); length > 16 {
+		log.Println("ws.filterTopics: received invalid topic length:", length)
+		return []pubsub.Topic{}
+	}
+
+	pubsubTopics := []pubsub.Topic{}
+	for _, topic := range topics {
+
+		if topic == pubsub.StaleTopic {
+			pubsubTopics = append(pubsubTopics, pubsub.StaleTopic, pubsub.StateHookStaleTopic)
+		} else {
+			switch pubsub.Topic(topic) {
+			case pubsub.DiscoverTopic:
+				break
+			case pubsub.StateTopic:
+				break
+			case pubsub.StaleTopic:
+				break
+			// case pubsub.ErrorTopic:
+			// 	return pubsub.ErrorTopic, nil
+			default:
+				log.Println("ws.filterTopics: invalid topic:", topic)
+				continue
+			}
+
+			pubsubTopics = append(pubsubTopics, topic)
 		}
 
-		pubsubTopics = append(pubsubTopics, pubsubTopic)
 	}
 
 	return pubsubTopics

@@ -1,8 +1,21 @@
+import { FaSolidCircleXmark } from "solid-icons/fa";
 import { type JSX, type ParentComponent, Show, splitProps } from "solid-js";
+import { ICON_SIZE } from "./constants";
 import { type ClassProps, mergeClass, useDropdown } from "./utils";
 
+export const DaisyErrorAlert: ParentComponent<ClassProps> = (props) => {
+  return (
+    <div class="alert alert-error shadow-lg">
+      <div>
+        <FaSolidCircleXmark size={ICON_SIZE} />
+        {props.children}
+      </div>
+    </div>
+  );
+};
+
 export const DaisyButton: ParentComponent<
-  { loading?: boolean } & JSX.HTMLAttributes<HTMLButtonElement>
+  { loading?: boolean } & JSX.ButtonHTMLAttributes<HTMLButtonElement>
 > = (props) => {
   const [, other] = splitProps(props, [
     "class",

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
@@ -78,6 +79,30 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 
 	stateCommand := CommandState{}
 
+	parse := func(msg *pubsub.Message) (pubsub.Topic, any) {
+		if msg.Topic == pubsub.DiscoverTopic {
+			return msg.Topic, msg.Data.(pubsub.DiscoverMessage).Discovering
+		}
+		if msg.Topic == pubsub.StateTopic {
+			data := msg.Data.(pubsub.StateMessage)
+			if stateCommand.UUID != data.State.UUID {
+				return "", nil
+			}
+
+			if stateCommand.Partial && !data.Changed.Is(state.ChangedAll) {
+				return msg.Topic, state.GetPartial(&data.State, data.Changed)
+			}
+			return msg.Topic, data.State
+		}
+		if msg.Topic == pubsub.StaleTopic {
+			return msg.Topic, msg.Data
+		}
+		if msg.Topic == pubsub.StateHookStaleTopic {
+			return pubsub.StaleTopic, model.StalePresets
+		}
+		return "", nil
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -94,7 +119,7 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			}
 
 			if command.Subscribe != nil {
-				topics := filterValidTopics(command.Subscribe.Topics)
+				topics := uniqueTopics(filterTopics(command.Subscribe.Topics))
 				unsub()
 				// Subscribe
 				sub, unsub = pubsub.DefaultPub.Subscribe(topics)
@@ -136,28 +161,13 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			}
 		case msg := <-sub:
 			// Parse data from pubsub message
-			data := func() any {
-				if msg.Topic == pubsub.DiscoverTopic {
-					return msg.Data.(pubsub.DiscoverMessage).Discovering
-				}
-				if msg.Topic == pubsub.StateTopic {
-					data := msg.Data.(pubsub.StateMessage)
-					if stateCommand.Partial && !data.Changed.Is(state.ChangedAll) {
-						return state.GetPartial(&data.State, data.Changed)
-					}
-					return data.State
-				}
-				if msg.Topic == pubsub.StaleTopic {
-					return msg.Data
-				}
-				return nil
-			}()
+			topic, data := parse(&msg)
 			if data == nil {
 				continue
 			}
 
 			// Send event
-			if !write(msg.Topic, data) {
+			if !write(topic, data) {
 				return
 			}
 		case <-ticker.C:

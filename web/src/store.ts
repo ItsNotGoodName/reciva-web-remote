@@ -6,23 +6,24 @@ import {
   type Accessor,
   on,
   type AccessorArray,
+  batch,
 } from "solid-js";
 import {
   Api,
   type ModelPreset,
   type HttpPatchState,
-  type StateState,
   type RequestParams,
 } from "./api";
 import { type ModelRadio } from "./api";
 import { API_URL } from "./constants";
-import { once, staleWhen, createStaleSignal } from "./utils";
+import { staleWhen, createStaleSignal, invalidWhen } from "./utils";
 
 const api = new Api({ baseUrl: API_URL });
 
-export type MutationReturn<T = void, R = unknown> = {
+export type MutationReturn<T = void, R = unknown, E = unknown> = {
   mutate: (data: T) => R | Promise<R>;
   loading: Accessor<boolean>;
+  error: Accessor<E>;
   cancel: () => void;
 };
 
@@ -34,10 +35,14 @@ function createMutation<T, R>(
   invalidateQueries: ResourceReturn<any, any>[] = []
 ): MutationReturn<T, R> {
   const [loading, setloading] = createSignal(false);
+  const [error, setError] = createSignal();
   let token = -1;
 
   function mutate(data: T): Promise<R> | R {
-    setloading(true);
+    batch(() => {
+      setloading(true);
+      setError();
+    });
 
     token = lastToken++;
     const thisToken = token;
@@ -50,7 +55,15 @@ function createMutation<T, R>(
           invalidateQueries.map((query) => void query[1].refetch())
         )
       )
-      .finally(() => {
+      .catch((e) => {
+        if (token == thisToken) {
+          batch(() => {
+            setloading(false);
+            setError(e);
+          });
+        }
+      })
+      .then(() => {
         if (token == thisToken) setloading(false);
       });
 
@@ -62,7 +75,7 @@ function createMutation<T, R>(
     setloading(false);
   }
 
-  return { loading, mutate, cancel };
+  return { loading, mutate, cancel, error };
 }
 
 export const cancelWhen = <T, R, U>(
@@ -84,41 +97,46 @@ export const cancelWhen = <T, R, U>(
 ////////////// Queries
 
 // Build get
-export const useBuildGetQuery = once(() =>
-  createResource(() => api.build.buildList())
-);
+export const useBuildGetQuery = () =>
+  createResource(() => api.build.buildList());
 
 // Radios list
 export const useRadiosListQuery = () =>
   createResource<ModelRadio[], string>(() => api.radios.radiosList());
 
 // Presets list
-export const usePresetListQuery = once(() =>
-  createResource(() => api.presets.presetsList())
-);
+export const [invalidPresetListQuery, invalidatePresetListQuery] =
+  createStaleSignal(undefined);
+export const usePresetListQuery = () =>
+  invalidWhen(
+    invalidPresetListQuery,
+    createResource(() => api.presets.presetsList())
+  );
 
 // Preset get
-const [stalePresets, setStalePresets] = createStaleSignal(undefined);
+export const [stalePresetQuery, setStalePresetQuery] = createStaleSignal<
+  string | undefined
+>(undefined);
 export const usePresetQuery = (url: Accessor<string | undefined>) =>
   staleWhen(
     createResource<ModelPreset, string>(
       () => url() || undefined,
       (url: string) => api.presets.presetsDetail(url)
     ),
-    () => !!stalePresets()
+    () => stalePresetQuery() === undefined || stalePresetQuery() == url()
   );
 
-// State get
-const [staleStateUUID, setStaleStateUUID] = createStaleSignal("");
-export const useStateQuery = (uuid: Accessor<string | undefined>) =>
-  staleWhen(
-    createResource<StateState, string>(
-      () => uuid() || undefined,
-      (uuid: string) => api.states.statesDetail(uuid)
-    ),
-    () => staleStateUUID() == uuid(),
-    staleStateUUID
-  );
+// // State get
+// const [staleStateUUID, setStaleStateUUID] = createStaleSignal("");
+// export const useStateQuery = (uuid: Accessor<string | undefined>) =>
+//   staleWhen(
+//     createResource<StateState, string>(
+//       () => uuid() || undefined,
+//       (uuid: string) => api.states.statesDetail(uuid)
+//     ),
+//     () => staleStateUUID() == uuid(),
+//     staleStateUUID
+//   );
 
 ////////////// Mutation
 
@@ -136,11 +154,7 @@ export const useDeleteRadio = (uuid: Accessor<string>) =>
 export const useRefreshRadioVolume = (uuid: Accessor<string>) =>
   cancelWhen(
     uuid,
-    createMutation((params) =>
-      api.radios
-        .volumeCreate(uuid(), params)
-        .then(() => setStaleStateUUID(uuid))
-    )
+    createMutation((params) => api.radios.volumeCreate(uuid(), params))
   );
 
 // Radio subscription refresh
@@ -162,5 +176,7 @@ export const usePatchState = (uuid: Accessor<string>) =>
 // Preset update
 export const useUpdatePreset = () =>
   createMutation((params, preset: ModelPreset) =>
-    api.presets.presetsCreate(preset, params)
+    api.presets
+      .presetsCreate(preset, params)
+      .then(() => setStalePresetQuery(preset.url))
   );

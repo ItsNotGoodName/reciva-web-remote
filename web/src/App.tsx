@@ -11,7 +11,6 @@ import {
   FaSolidVolumeOff,
   FaSolidArrowsRotate,
   FaSolidMagnifyingGlass,
-  FaSolidCircleXmark,
   FaSolidBars,
   FaBrandsGithub,
   FaSolidSpinner,
@@ -29,16 +28,15 @@ import {
   on,
   Show,
   type JSX,
-  splitProps,
   batch,
   type Accessor,
   type Resource,
   onCleanup,
   Index,
+  createReaction,
 } from "solid-js";
 import { type Component } from "solid-js";
 import {
-  type StatePreset,
   StateStatus,
   type StateState,
   type ModelRadio,
@@ -53,11 +51,19 @@ import {
   useRadiosListQuery,
   useBuildGetQuery,
   useDeleteRadio,
+  invalidatePresetListQuery,
 } from "./store";
 import { type ClassProps, mergeClass, IOS } from "./utils";
 import { useWS } from "./ws";
-import { DaisyButton, DaisyTooltip, DaisyDropdown } from "./Daisy";
+import {
+  DaisyButton,
+  DaisyTooltip,
+  DaisyDropdown,
+  DaisyErrorAlert,
+} from "./Daisy";
 import { GITHUB_URL, ICON_SIZE, PAGE_EDIT, PAGE_HOME } from "./constants";
+import { EditPage } from "./pages/Edit";
+import { HomePage } from "./pages/Home";
 
 type TableRowData = { key: string; value: JSX.Element };
 
@@ -272,79 +278,6 @@ const RadioTypeDropdown: Component<
         </div>
       </div>
     </DaisyDropdown>
-  );
-};
-
-const RadioPresetButton: Component<
-  {
-    selected: boolean;
-    preset: StatePreset;
-    loading?: boolean;
-  } & JSX.HTMLAttributes<HTMLButtonElement>
-> = (props) => {
-  const [, other] = splitProps(props, [
-    "selected",
-    "preset",
-    "loading",
-    "class",
-  ]);
-
-  return (
-    <DaisyButton
-      class={mergeClass("flex gap-2", props.class)}
-      classList={{ "btn-primary": props.selected }}
-      loading={props.loading}
-      {...other}
-    >
-      <Show when={!props.loading}>
-        <span class="badge-info badge badge-lg rounded-md">
-          {props.preset.number}
-        </span>
-        <span class="w-0 flex-grow truncate">
-          {props.preset.title_new ? props.preset.title_new : props.preset.title}{" "}
-        </span>
-      </Show>
-    </DaisyButton>
-  );
-};
-
-const RadioPresetsList: Component<
-  {
-    radioUUID: Accessor<string>;
-    state: StateState;
-  } & ClassProps
-> = (props) => {
-  const statePatch = usePatchState(props.radioUUID);
-  const [lastLoadingNumber, setLoadingNumber] = createSignal(-1);
-  const loadingNumber = (): number =>
-    statePatch.loading() ? lastLoadingNumber() : -1;
-
-  const setPreset = (preset: number) => {
-    batch(() => {
-      statePatch.cancel();
-      void statePatch.mutate({ preset: preset });
-      setLoadingNumber(preset);
-    });
-  };
-
-  return (
-    <div
-      class={mergeClass(
-        "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3",
-        props.class
-      )}
-    >
-      <For each={props.state.presets}>
-        {(preset) => (
-          <RadioPresetButton
-            selected={props.state.preset_number == preset.number}
-            loading={loadingNumber() == preset.number}
-            onclick={[setPreset, preset.number]}
-            preset={preset}
-          />
-        )}
-      </For>
-    </div>
   );
 };
 
@@ -611,19 +544,35 @@ const App: Component = () => {
   const [{ state, discovering, stale }, ws] = useWS(radioUUID);
   const wsReconnecting = () => ws.connecting() && ws.disconnected();
 
-  const radioLoading = () =>
-    (state.uuid != radioUUID() && radioUUID() != "") || ws.connecting();
-  const radioLoaded = () =>
-    radioUUID() == state.uuid && radioUUID() != "" && ws.connected();
-
   // Queries
   const buildGetQuery = useBuildGetQuery();
   const radiosListQuery = useRadiosListQuery();
 
-  // Invalidate radios list based on WebSocket
-  createEffect(() => {
-    stale() == ModelStale.StaleRadios && void radiosListQuery[1].refetch();
+  // invalidations
+  createEffect(
+    on(
+      stale,
+      () => {
+        stale() == ModelStale.StaleRadios && void radiosListQuery[1].refetch();
+        stale() == ModelStale.StalePresets && invalidatePresetListQuery();
+      },
+      { defer: true }
+    )
+  );
+  const track = createReaction(() => {
+    if (ws.connected()) {
+      void radiosListQuery[1].refetch();
+      invalidatePresetListQuery();
+    }
   });
+  createEffect(() => {
+    ws.disconnected() && track(ws.connected);
+  });
+  createEffect(
+    on(ws.connected, () => {
+      buildGetQuery[0].error && buildGetQuery[1].refetch();
+    })
+  );
 
   // Reconnect websocket when document is visible
   const onVisibilityChange = () => {
@@ -638,7 +587,11 @@ const App: Component = () => {
     window.removeEventListener("focus", onVisibilityChange);
   });
 
-  const [page, setPage] = createSignal(PAGE_HOME);
+  const [page, setPage] = createSignal(PAGE_EDIT);
+  const radioLoading = () =>
+    (state.uuid != radioUUID() && radioUUID() != "") || ws.connecting();
+  const radioLoaded = () =>
+    radioUUID() == state.uuid && radioUUID() != "" && ws.connected();
 
   return (
     <div class="h-screen">
@@ -657,22 +610,17 @@ const App: Component = () => {
       <div class="container mx-auto px-4 pt-20 pb-36">
         <Switch>
           <Match when={page() == PAGE_HOME}>
-            <RadioPresetsList radioUUID={radioUUID} state={state} />
+            <HomePage radioUUID={radioUUID} state={state} />
           </Match>
           <Match when={page() == PAGE_EDIT}>
-            <h1>Edit Presets</h1>
+            <EditPage />
           </Match>
         </Switch>
       </div>
       <div class="fixed bottom-0 z-50 w-full space-y-2 ">
         <div class="ml-auto max-w-screen-sm space-y-2 px-2">
           <Show when={!!radiosListQuery[0].error}>
-            <div class="alert alert-error shadow-lg">
-              <div>
-                <FaSolidCircleXmark size={ICON_SIZE} />
-                <span>Failed to list radios.</span>
-              </div>
-            </div>
+            <DaisyErrorAlert>Failed to list radios.</DaisyErrorAlert>
           </Show>
           <Show when={ws.connecting() && !wsReconnecting()}>
             <div class="alert shadow-lg">

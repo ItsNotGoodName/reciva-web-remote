@@ -30,6 +30,6 @@ func (s Store) UpdatePreset(ctx context.Context, p *model.Preset) error {
 		return err
 	}
 
-	pubsub.DefaultPub.Publish(pubsub.StateHookStaleTopic, pubsub.StateHookStaleMessage{Changed: state.ChangedAll})
+	pubsub.DefaultPub.Publish(pubsub.StateHookStaleTopic, pubsub.StateHookStaleMessage{Changed: state.ChangedURL.Merge(state.ChangedPresets)})
 	return nil
 }

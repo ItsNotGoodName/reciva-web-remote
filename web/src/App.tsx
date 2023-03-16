@@ -637,10 +637,11 @@ const App: Component = () => {
   });
 
   const [page, setPage] = createSignal(PAGE_HOME);
+  const radioSelected = () => radioUUID() != "";
   const radioLoading = () =>
-    (state.uuid != radioUUID() && radioUUID() != "") || ws.connecting();
+    (state.uuid != radioUUID() && radioSelected()) || ws.connecting();
   const radioLoaded = () =>
-    radioUUID() == state.uuid && radioUUID() != "" && ws.connected();
+    radioUUID() == state.uuid && radioSelected() && ws.connected();
 
   return (
     <div class="h-screen">
@@ -659,19 +660,19 @@ const App: Component = () => {
       <div class="container mx-auto px-4 pt-20 pb-36">
         <Switch>
           <Match when={page() == PAGE_HOME}>
-            <Show
-              when={radioUUID() != ""}
-              fallback={
+            <Switch>
+              <Match when={!radioSelected()}>
                 <RadioListCard
                   class="mx-auto"
                   radioUUID={radioUUID}
                   setRadioUUID={setRadioUUID}
                   radios={radiosListQuery[0]}
                 />
-              }
-            >
-              <HomePage radioUUID={radioUUID} state={state} />
-            </Show>
+              </Match>
+              <Match when={radioLoaded()}>
+                <HomePage radioUUID={radioUUID} state={state} />
+              </Match>
+            </Switch>
           </Match>
           <Match when={page() == PAGE_EDIT}>
             <EditPage />

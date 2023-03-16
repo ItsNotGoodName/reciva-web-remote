@@ -8,35 +8,73 @@ var DefaultPub *Pub = NewPub()
 
 type Topic string
 
+func (t Topic) In(topics []Topic) bool {
+	for _, topic := range topics {
+		if topic == t {
+			return true
+		}
+	}
+	return false
+}
+
 type Message struct {
 	Topic Topic
 	Data  interface{}
 }
 
-type Sub struct {
+type subscriber struct {
 	messageC chan Message
-	next     *Sub
+	next     *subscriber
 }
 
 type Pub struct {
 	subsMapMu sync.Mutex
-	subsMap   map[Topic]*Sub
+	subsMap   map[Topic]*subscriber
 }
 
 func NewPub() *Pub {
 	return &Pub{
 		subsMapMu: sync.Mutex{},
-		subsMap:   make(map[Topic]*Sub),
+		subsMap:   make(map[Topic]*subscriber),
 	}
 }
 
-func (p *Pub) Subscribe(topics []Topic) (<-chan Message, func()) {
-	messageC := make(chan Message, 100)
-	subs := []*Sub{}
+func (p *Pub) Subscribe(topics []Topic) (chan Message, func()) {
+	return p.SubscribeWithBuffer(topics, 100)
+}
+
+func (p *Pub) SubscribeWithBuffer(topics []Topic, buffer int) (chan Message, func()) {
+	messageC := make(chan Message, buffer)
 
 	p.subsMapMu.Lock()
+	subs := p.subscribe(topics, messageC)
+	p.subsMapMu.Unlock()
+
+	return messageC, p.unsubscribeFunc(topics, subs)
+}
+
+func (p *Pub) Resubscribe(topics []Topic, messageC chan Message, unsub func()) func() {
+	unsub()
+Loop:
+	for {
+		select {
+		case <-messageC:
+		default:
+			break Loop
+		}
+	}
+
+	p.subsMapMu.Lock()
+	subs := p.subscribe(topics, messageC)
+	p.subsMapMu.Unlock()
+
+	return p.unsubscribeFunc(topics, subs)
+}
+
+func (p *Pub) subscribe(topics []Topic, messageC chan Message) []*subscriber {
+	subs := []*subscriber{}
 	for _, topic := range topics {
-		sub := &Sub{messageC: messageC}
+		sub := &subscriber{messageC: messageC}
 		subs = append(subs, sub)
 		if next, ok := p.subsMap[topic]; ok {
 			sub.next = next
@@ -44,12 +82,10 @@ func (p *Pub) Subscribe(topics []Topic) (<-chan Message, func()) {
 
 		p.subsMap[topic] = sub
 	}
-	p.subsMapMu.Unlock()
-
-	return messageC, p.unsubscribeFunc(topics, subs)
+	return subs
 }
 
-func (p *Pub) unsubscribeFunc(topics []Topic, sub []*Sub) func() {
+func (p *Pub) unsubscribeFunc(topics []Topic, sub []*subscriber) func() {
 	return func() {
 		p.subsMapMu.Lock()
 		for i, sub := range sub {

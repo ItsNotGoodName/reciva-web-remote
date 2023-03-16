@@ -30,7 +30,7 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 		pubsub.DefaultPub.Publish(pubsub.StateTopic, pubsub.StateMessage{State: s, Changed: c})
 	}
 
-	sub, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.StateHookStaleTopic})
+	msgC, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.StateHookStaleTopic})
 	defer unsub()
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
@@ -45,7 +45,7 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 					log.Println("radio.run: failed to refresh volume:", err)
 				}
 			}()
-		case msg := <-sub:
+		case msg := <-msgC:
 			data := msg.Data.(pubsub.StateHookStaleMessage)
 			handle(data.Changed)
 		case stateC <- s:

@@ -10,19 +10,25 @@ import {
 } from "./api";
 import { WS_URL } from "./constants";
 
-const subscribe = (ws: WebSocket, radioUUID: string) => {
+const sendCommand = (ws: WebSocket, radioUUID: string) => {
   const topics: Array<PubsubTopic> = [
     PubsubTopic.DiscoverTopic,
     PubsubTopic.StaleTopic,
+    PubsubTopic.StateTopic,
   ];
-  if (radioUUID != "") {
-    topics.push(PubsubTopic.StateTopic);
-  }
 
   ws.send(
     JSON.stringify({
       state: { partial: true, uuid: radioUUID },
       subscribe: { topics: topics },
+    } as WsCommand)
+  );
+};
+
+const sendStateCommand = (ws: WebSocket, radioUUID: string) => {
+  ws.send(
+    JSON.stringify({
+      state: { partial: true, uuid: radioUUID },
     } as WsCommand)
   );
 };
@@ -88,7 +94,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setConnected(true);
         setDisconnected(false);
       });
-      subscribe(ws, radioUUID());
+      sendCommand(ws, radioUUID());
     });
 
     ws.addEventListener("message", (event) => {
@@ -134,17 +140,21 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
   };
 
   createEffect(
-    on(radioUUID, () => {
-      if (!connected()) {
-        reconnect();
-        return;
-      }
-      if (connecting()) {
-        return;
-      }
+    on(
+      radioUUID,
+      () => {
+        if (!connected()) {
+          reconnect();
+          return;
+        }
+        if (connecting()) {
+          return;
+        }
 
-      subscribe(ws, radioUUID());
-    })
+        sendStateCommand(ws, radioUUID());
+      },
+      { defer: true }
+    )
   );
 
   return [

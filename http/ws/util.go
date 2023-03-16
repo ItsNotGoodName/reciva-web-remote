@@ -33,15 +33,9 @@ type StaleEvent struct {
 func uniqueTopics(topics []pubsub.Topic) []pubsub.Topic {
 	pubsubTopics := []pubsub.Topic{}
 	for _, topic := range topics {
-		found := false
-		for _, t := range pubsubTopics {
-			if t == topic {
-				found = true
-				log.Println("ws.uniqueTopics: received duplicate topic:", t)
-				break
-			}
-		}
-		if !found {
+		if topic.In(pubsubTopics) {
+			log.Println("ws.uniqueTopics: received duplicate topic:", topic)
+		} else {
 			pubsubTopics = append(pubsubTopics, topic)
 		}
 	}

@@ -56,15 +56,16 @@ func handleRead(ctx context.Context, cancel context.CancelFunc, conn *websocket.
 
 func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Discoverer) {
 	ctx, cancel := context.WithCancel(ctx)
-	read := make(chan Command)
-	go handleRead(ctx, cancel, conn, read)
+	defer cancel()
+
+	readC := make(chan Command)
+	go handleRead(ctx, cancel, conn, readC)
 	ticker := time.NewTicker(wsPingPeriod)
-	sub, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{})
-	defer func() {
-		cancel()
-		ticker.Stop()
-		unsub()
-	}()
+	defer ticker.Stop()
+
+	lastTopics := []pubsub.Topic{}
+	msgC, unsub := pubsub.DefaultPub.SubscribeWithBuffer(lastTopics, 10)
+	defer func() { unsub() }()
 
 	write := func(topic pubsub.Topic, data any) bool {
 		conn.SetWriteDeadline(time.Now().Add(wsWriteWait))
@@ -85,10 +86,9 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 		}
 		if msg.Topic == pubsub.StateTopic {
 			data := msg.Data.(pubsub.StateMessage)
-			if stateCommand.UUID != data.State.UUID {
+			if stateCommand.UUID == "" || !(stateCommand.UUID == "*" || stateCommand.UUID == data.State.UUID) {
 				return "", nil
 			}
-
 			if stateCommand.Partial && !data.Changed.Is(state.ChangedAll) {
 				return msg.Topic, state.GetPartial(&data.State, data.Changed)
 			}
@@ -109,57 +109,65 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			// Send close message and end
 			conn.WriteMessage(websocket.CloseMessage, []byte{})
 			return
-		case command, ok := <-read:
+		case command, ok := <-readC:
 			if !ok {
 				return
 			}
 
-			if command.State != nil {
-				stateCommand = *command.State
-			}
-
+			// Subscribe command
 			if command.Subscribe != nil {
+				// Resubscribe
 				topics := uniqueTopics(filterTopics(command.Subscribe.Topics))
-				unsub()
-				// Subscribe
-				sub, unsub = pubsub.DefaultPub.Subscribe(topics)
+				unsub = pubsub.DefaultPub.Resubscribe(topics, msgC, unsub)
 
 				// Sync
 				for _, t := range topics {
-					if t == pubsub.StateTopic {
-						if stateCommand.UUID == "" {
-							for _, r := range h.List() {
-								if s, err := radio.GetState(ctx, r); err != nil {
-									log.Println("ws.Handle:", err)
-								} else {
-									if !write(pubsub.StateTopic, s) {
-										return
-									}
-								}
-
-							}
-						} else {
-							if r, err := h.Get(stateCommand.UUID); err != nil {
-								log.Println("ws.Handle:", err)
-							} else {
-								if s, err := radio.GetState(ctx, r); err != nil {
-									log.Println("ws.Handle:", err)
-								} else {
-									if !write(pubsub.StateTopic, s) {
-										return
-									}
-								}
-							}
-
+					switch t {
+					case pubsub.DiscoverTopic:
+						if pubsub.DiscoverTopic.In(lastTopics) {
+							continue
 						}
-					} else if t == pubsub.DiscoverTopic {
+
 						if !write(pubsub.DiscoverTopic, d.Discovering()) {
 							return
 						}
 					}
 				}
+
+				lastTopics = topics
 			}
-		case msg := <-sub:
+
+			// State Command
+			if command.State != nil {
+				stateCommand = *command.State
+
+				// Sync
+				if stateCommand.UUID == "*" {
+					for _, r := range h.List() {
+						if s, err := radio.GetState(ctx, r); err != nil {
+							log.Println("ws.Handle:", err)
+						} else {
+							if !write(pubsub.StateTopic, s) {
+								return
+							}
+						}
+
+					}
+				} else if stateCommand.UUID != "" {
+					if r, err := h.Get(stateCommand.UUID); err != nil {
+						log.Println("ws.Handle:", err)
+					} else {
+						if s, err := radio.GetState(ctx, r); err != nil {
+							log.Println("ws.Handle:", err)
+						} else {
+							if !write(pubsub.StateTopic, s) {
+								return
+							}
+						}
+					}
+				}
+			}
+		case msg := <-msgC:
 			// Parse data from pubsub message
 			topic, data := parse(&msg)
 			if data == nil {

@@ -602,6 +602,7 @@ const App: Component = () => {
     on(
       stale,
       () => {
+        // Refetch stale queries
         stale() == ModelStale.StaleRadios && void radiosListQuery[1].refetch();
         stale() == ModelStale.StalePresets && invalidatePresetListQuery();
       },
@@ -609,31 +610,33 @@ const App: Component = () => {
     )
   );
   const track = createReaction(() => {
-    if (ws.connected()) {
-      void radiosListQuery[1].refetch();
-      invalidatePresetListQuery();
-    }
+    // Refetch queries
+    void radiosListQuery[1].refetch();
+    invalidatePresetListQuery();
   });
   createEffect(() => {
     ws.disconnected() && track(ws.connected);
   });
   createEffect(
     on(ws.connected, () => {
+      // Refetch failed queries
       buildGetQuery[0].error && buildGetQuery[1].refetch();
     })
   );
 
   // Reconnect websocket when document is visible
-  const onVisibilityChange = () => {
+  const onFocus = () => {
     if (!document.hidden) {
       ws.reconnect();
     }
   };
-  document.addEventListener("visibilitychange", onVisibilityChange);
-  window.addEventListener("focus", onVisibilityChange);
+  document.addEventListener("visibilitychange", onFocus);
+  window.addEventListener("focus", onFocus);
+  window.addEventListener("online", onFocus);
   onCleanup(() => {
-    document.removeEventListener("visibilitychange", onVisibilityChange);
-    window.removeEventListener("focus", onVisibilityChange);
+    document.removeEventListener("visibilitychange", onFocus);
+    window.removeEventListener("focus", onFocus);
+    window.removeEventListener("online", onFocus);
   });
 
   const [page, setPage] = createSignal(PAGE_HOME);

@@ -20,6 +20,15 @@ func SetVolume(ctx context.Context, r hub.Radio, volume int) error {
 	})
 }
 
+func ChangeVolume(ctx context.Context, r hub.Radio, delta int) error {
+	s, err := GetState(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	return SetVolume(ctx, r, delta+s.Volume)
+}
+
 func PlayPreset(ctx context.Context, r hub.Radio, preset int) error {
 	s, err := GetState(ctx, r)
 	if err != nil {

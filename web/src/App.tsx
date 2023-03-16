@@ -47,7 +47,7 @@ import {
 } from "./api";
 import {
   useDiscoverRadios,
-  usePatchState,
+  useUpdateState,
   useRefreshRadioVolume,
   useRefreshRadioSubscription,
   useRadiosListQuery,
@@ -289,11 +289,11 @@ const RadioVolumeButtonGroup: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  const statePatch = usePatchState(props.radioUUID);
+  const updateState = useUpdateState(props.radioUUID);
   const refreshRadioVolume = useRefreshRadioVolume(props.radioUUID);
 
   const changeVolume = (volumeChange: number) => {
-    void statePatch.mutate({ volume: props.state.volume + volumeChange });
+    void updateState.mutate({ volume_delta: volumeChange });
   };
 
   const refreshVolume = () => {
@@ -306,7 +306,7 @@ const RadioVolumeButtonGroup: Component<
       fallback={
         <DaisyButton
           class={mergeClass("btn-error", props.class)}
-          loading={statePatch.loading()}
+          loading={updateState.loading()}
           aria-label="Volume Muted"
         >
           <FaSolidVolumeOff size={ICON_SIZE} />
@@ -316,7 +316,7 @@ const RadioVolumeButtonGroup: Component<
       <div class={mergeClass("btn-group flex-nowrap", props.class)}>
         <DaisyButton
           class="btn-info w-14"
-          loading={statePatch.loading()}
+          loading={updateState.loading()}
           aria-label="Lower Volume"
           onClick={[changeVolume, -5]}
         >
@@ -332,7 +332,7 @@ const RadioVolumeButtonGroup: Component<
         </DaisyButton>
         <DaisyButton
           class="btn-info w-14"
-          loading={statePatch.loading()}
+          loading={updateState.loading()}
           aria-label="Raise Volume"
           onClick={[changeVolume, 5]}
         >
@@ -349,10 +349,10 @@ const RadioPowerButton: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  const patchState = usePatchState(props.radioUUID);
+  const updateState = useUpdateState(props.radioUUID);
 
   const togglePower = () => {
-    void patchState.mutate({
+    void updateState.mutate({
       power: !props.state.power,
     });
   };
@@ -364,7 +364,7 @@ const RadioPowerButton: Component<
         "btn-success": props.state.power,
         "btn-error": !props.state.power,
       }}
-      loading={patchState.loading()}
+      loading={updateState.loading()}
       onClick={togglePower}
       aria-label={"Power " + (props.state.power ? "On" : "Off")}
     >
@@ -386,15 +386,15 @@ const RadioAudioSourceDropdown: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  const statePatch = usePatchState(props.radioUUID);
+  const updateState = useUpdateState(props.radioUUID);
   const [lastLoadingAudioSource, setLastLoadingAudioSource] = createSignal("");
   const loadingAudioSource = (): string =>
-    statePatch.loading() ? lastLoadingAudioSource() : "";
+    updateState.loading() ? lastLoadingAudioSource() : "";
 
   const setAudioSource = (audioSource: string) => {
     batch(() => {
-      statePatch.cancel();
-      void statePatch.mutate({ audio_source: audioSource });
+      updateState.cancel();
+      void updateState.mutate({ audio_source: audioSource });
       setLastLoadingAudioSource(audioSource);
     });
   };

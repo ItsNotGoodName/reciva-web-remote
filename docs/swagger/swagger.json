@@ -396,11 +396,11 @@
                     }
                 }
             },
-            "patch": {
+            "post": {
                 "tags": [
                     "states"
                 ],
-                "summary": "Patch state",
+                "summary": "Update state",
                 "parameters": [
                     {
                         "type": "string",
@@ -415,7 +415,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/http.PatchState"
+                            "$ref": "#/definitions/http.PostState"
                         }
                     }
                 ],
@@ -451,7 +451,7 @@
                 }
             }
         },
-        "http.PatchState": {
+        "http.PostState": {
             "type": "object",
             "properties": {
                 "audio_source": {
@@ -464,6 +464,9 @@
                     "type": "integer"
                 },
                 "volume": {
+                    "type": "integer"
+                },
+                "volume_delta": {
                     "type": "integer"
                 }
             }

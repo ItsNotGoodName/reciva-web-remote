@@ -403,11 +403,11 @@ const docTemplate = `{
                     }
                 }
             },
-            "patch": {
+            "post": {
                 "tags": [
                     "states"
                 ],
-                "summary": "Patch state",
+                "summary": "Update state",
                 "parameters": [
                     {
                         "type": "string",
@@ -422,7 +422,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/http.PatchState"
+                            "$ref": "#/definitions/http.PostState"
                         }
                     }
                 ],
@@ -458,7 +458,7 @@ const docTemplate = `{
                 }
             }
         },
-        "http.PatchState": {
+        "http.PostState": {
             "type": "object",
             "properties": {
                 "audio_source": {
@@ -471,6 +471,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "volume": {
+                    "type": "integer"
+                },
+                "volume_delta": {
                     "type": "integer"
                 }
             }

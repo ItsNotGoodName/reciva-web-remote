@@ -65,7 +65,7 @@ func Router(a API, fs fs.FS) *echo.Echo {
 		apiStates := api.Group("/states/:uuid")
 		apiStates.Use(a.RadioMiddleware)
 		apiStates.GET("", a.GetState)
-		apiStates.PATCH("", a.PatchState)
+		apiStates.POST("", a.PostState)
 
 		api.GET("/ws", a.WS(upgrader()))
 	}

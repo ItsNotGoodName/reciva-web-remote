@@ -10,8 +10,8 @@ import {
 } from "solid-js";
 import {
   Api,
+  type HttpPostState,
   type ModelPreset,
-  type HttpPatchState,
   type RequestParams,
 } from "./api";
 import { type ModelRadio } from "./api";
@@ -165,11 +165,11 @@ export const useRefreshRadioSubscription = (uuid: Accessor<string>) =>
   );
 
 // State update
-export const usePatchState = (uuid: Accessor<string>) =>
+export const useUpdateState = (uuid: Accessor<string>) =>
   cancelWhen(
     uuid,
-    createMutation((params, req: HttpPatchState) =>
-      api.states.statesPartialUpdate(uuid(), req, params)
+    createMutation((params, req: HttpPostState) =>
+      api.states.statesCreate(uuid(), req, params)
     )
   );
 

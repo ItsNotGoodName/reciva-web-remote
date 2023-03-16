@@ -246,23 +246,24 @@ func (a API) GetState(c echo.Context) error {
 	return c.JSON(http.StatusOK, state)
 }
 
-type PatchState struct {
+type PostState struct {
 	Power       *bool   `json:"power,omitempty" validate:"optional"`
 	AudioSource *string `json:"audio_source,omitempty" validate:"optional"`
 	Preset      *int    `json:"preset,omitempty" validate:"optional"`
 	Volume      *int    `json:"volume,omitempty" validate:"optional"`
+	VolumeDelta *int    `json:"volume_delta,omitempty" validate:"optional"`
 }
 
-//	@Summary	Patch state
+//	@Summary	Update state
 //	@Tags		states
 //	@Param		uuid	path	string		true	"Radio UUID"
-//	@Param		state	body	PatchState	true	"Patch state"
+//	@Param		state	body	PostState	true	"Patch state"
 //	@Success	200
 //	@Failure	404	{object}	HTTPError
 //	@Failure	500	{object}	HTTPError
-//	@Router		/states/{uuid} [patch]
-func (a API) PatchState(c echo.Context) error {
-	var req PatchState
+//	@Router		/states/{uuid} [post]
+func (a API) PostState(c echo.Context) error {
+	var req PostState
 	if err := c.Bind(&req); err != nil {
 		return echo.ErrBadRequest.WithInternal(err)
 	}
@@ -289,9 +290,15 @@ func (a API) PatchState(c echo.Context) error {
 		}
 	}
 
-	if req.Volume != nil {
-		if err := radio.SetVolume(ctx, rd, *req.Volume); err != nil {
-			return err
+	if req.Volume != nil || req.VolumeDelta != nil {
+		if req.Volume != nil {
+			if err := radio.SetVolume(ctx, rd, *req.Volume); err != nil {
+				return err
+			}
+		} else if req.VolumeDelta != nil {
+			if err := radio.ChangeVolume(ctx, rd, *req.VolumeDelta); err != nil {
+				return err
+			}
 		}
 	}
 

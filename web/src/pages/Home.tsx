@@ -10,7 +10,7 @@ import {
 } from "solid-js";
 import { type StatePreset, type StateState } from "../api";
 import { DaisyButton } from "../Daisy";
-import { usePatchState } from "../store";
+import { useUpdateState } from "../store";
 import { type ClassProps, mergeClass } from "../utils";
 
 export const HomePage: Component<
@@ -19,7 +19,7 @@ export const HomePage: Component<
     state: StateState;
   } & ClassProps
 > = (props) => {
-  const statePatch = usePatchState(props.radioUUID);
+  const statePatch = useUpdateState(props.radioUUID);
   const [lastLoadingNumber, setLoadingNumber] = createSignal(-1);
   const loadingNumber = (): number =>
     statePatch.loading() ? lastLoadingNumber() : -1;

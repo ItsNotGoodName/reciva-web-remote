@@ -13,11 +13,12 @@ export interface HttpHTTPError {
   message: string;
 }
 
-export interface HttpPatchState {
+export interface HttpPostState {
   audio_source?: string;
   power?: boolean;
   preset?: number;
   volume?: number;
+  volume_delta?: number;
 }
 
 export interface ModelBuild {
@@ -548,14 +549,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags states
-     * @name StatesPartialUpdate
-     * @summary Patch state
-     * @request PATCH:/states/{uuid}
+     * @name StatesCreate
+     * @summary Update state
+     * @request POST:/states/{uuid}
      */
-    statesPartialUpdate: (uuid: string, state: HttpPatchState, params: RequestParams = {}) =>
+    statesCreate: (uuid: string, state: HttpPostState, params: RequestParams = {}) =>
       this.request<void, HttpHTTPError>({
         path: `/states/${uuid}`,
-        method: "PATCH",
+        method: "POST",
         body: state,
         type: ContentType.Json,
         ...params,

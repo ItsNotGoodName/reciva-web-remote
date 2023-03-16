@@ -428,6 +428,7 @@ const RadioListCard: Component<
     radioUUID: Accessor<string>;
     setRadioUUID: Setter<string>;
     radios: Resource<ModelRadio[]>;
+    discovering: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   return (
@@ -439,16 +440,18 @@ const RadioListCard: Component<
     >
       <div class="card-body">
         <h2 class="card-title">
-          <Show
-            when={
-              !props.radios.error &&
-              !props.radios.loading &&
-              props.radios()?.length == 0
-            }
-            fallback={<>Select Radio</>}
-          >
-            No Radios Discoverd
-          </Show>
+          <Switch fallback={<>Select Radio</>}>
+            <Match when={props.discovering()}>Discovering...</Match>
+            <Match
+              when={
+                !props.radios.error &&
+                !props.radios.loading &&
+                props.radios()?.length == 0
+              }
+            >
+              No Radios Discoverd
+            </Match>
+          </Switch>
         </h2>
         <Suspense fallback={<>Loading...</>}>
           <Show when={!props.radios.error}>
@@ -670,6 +673,7 @@ const App: Component = () => {
                   radioUUID={radioUUID}
                   setRadioUUID={setRadioUUID}
                   radios={radiosListQuery[0]}
+                  discovering={discovering}
                 />
               </Match>
               <Match when={radioLoaded()}>

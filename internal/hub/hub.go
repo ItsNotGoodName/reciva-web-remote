@@ -140,6 +140,13 @@ func (h *Hub) Get(uuid string) (Radio, error) {
 	return r, nil
 }
 
+func (h *Hub) Exists(uuid string) bool {
+	h.radiosMapMu.RLock()
+	_, ok := h.radiosMap[uuid]
+	h.radiosMapMu.RUnlock()
+	return ok
+}
+
 func (h *Hub) List() []Radio {
 	h.radiosMapMu.RLock()
 	var radios []Radio

@@ -17,8 +17,8 @@ import (
 
 const recivaRadioServiceType = "urn:reciva-com:service:RecivaRadio:0.0"
 
-func Discover() ([]Reciva, error) {
-	recivaRadios, _, err := goupnp.NewServiceClients(recivaRadioServiceType)
+func Discover(ctx context.Context) ([]Reciva, error) {
+	recivaRadios, _, err := goupnp.NewServiceClientsCtx(ctx, recivaRadioServiceType)
 	if err != nil {
 		return nil, fmt.Errorf("could not discover Reciva radios: %w", err)
 	}

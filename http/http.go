@@ -28,7 +28,7 @@ type RadioContext struct {
 	Radio hub.Radio
 }
 
-func Start(a API, port int, fs fs.FS) {
+func Router(a API, fs fs.FS) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -73,6 +73,10 @@ func Start(a API, port int, fs fs.FS) {
 	mountFS(e, fs)
 	mountPresets(e, a.Store)
 
+	return e
+}
+
+func Start(e *echo.Echo, port int) {
 	printAddresses(strconv.Itoa(port))
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
 }

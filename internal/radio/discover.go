@@ -56,13 +56,29 @@ func (d *Discoverer) Background(ctx context.Context, doneC chan<- struct{}) {
 	}()
 
 	// Wait for context
-	<-ctx.Done()
+	autoDiscover(ctx, d, 5*time.Minute)
 	// Stop further discoveries
 	d.mu.Lock()
 	// Stop ctx provider
 	close(ctxDoneC)
 	// Done
 	doneC <- struct{}{}
+}
+
+func autoDiscover(ctx context.Context, d *Discoverer, duration time.Duration) {
+	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := d.Discover(ctx, false); err != nil {
+				log.Println("radio.autoDiscover:", err)
+			}
+		}
+	}
 }
 
 func (d *Discoverer) Discovering() bool {
@@ -74,7 +90,7 @@ func (d *Discoverer) Discovering() bool {
 	return true
 }
 
-func (d *Discoverer) Discover(ctx context.Context) error {
+func (d *Discoverer) Discover(ctx context.Context, force bool) error {
 	if !d.mu.TryLock() {
 		return internal.ErrDiscovering
 	}
@@ -82,20 +98,49 @@ func (d *Discoverer) Discover(ctx context.Context) error {
 
 	pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: true})
 	defer pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: false})
-	defer pubsub.DefaultPub.Publish(pubsub.StaleTopic, model.StaleRadios)
 
-	radioContext := <-d.ctxC
-	return discover(ctx, d.hub, func(ctx context.Context, reciva upnp.Reciva) error {
-		return create(ctx, radioContext, reciva, d.hub, d.controlPoint, d.stateHook)
-	})
-}
+	hubContext := <-d.ctxC
 
-func discover(ctx context.Context, h *hub.Hub, create func(createContext context.Context, reciva upnp.Reciva) error) error {
-	recivas, err := upnp.Discover()
+	recivas, err := upnp.Discover(hubContext)
 	if err != nil {
 		return err
 	}
 
+	if !force {
+		recivas = uniqueRecivas(d.hub, recivas)
+	}
+
+	if len(recivas) == 0 {
+		return nil
+	}
+
+	defer pubsub.DefaultPub.Publish(pubsub.StaleTopic, model.StaleRadios)
+
+	return concurrentCreate(ctx, d.hub, recivas, func(ctx context.Context, reciva upnp.Reciva) error {
+		return create(ctx, hubContext, reciva, d.hub, d.controlPoint, d.stateHook)
+	})
+}
+
+// uniqueRecivas filters out duplicates UPnP clients that already exists in hub.
+func uniqueRecivas(h *hub.Hub, recivas []upnp.Reciva) []upnp.Reciva {
+	newRecivas := []upnp.Reciva{}
+	for _, r := range recivas {
+		uuid, err := r.GetUUID()
+		if err != nil {
+			log.Println("radio.uniqueRecivas:", err)
+			continue
+		}
+
+		if !h.Exists(uuid) {
+			newRecivas = append(newRecivas, r)
+		}
+	}
+
+	return newRecivas
+}
+
+// concurrentCreate creates multiple radios from multiple UPnP clients simultaneously.
+func concurrentCreate(ctx context.Context, h *hub.Hub, recivas []upnp.Reciva, create func(createContext context.Context, reciva upnp.Reciva) error) error {
 	// Create radios concurrently
 	var wg sync.WaitGroup
 	createContext, cancel := context.WithTimeout(ctx, 25*time.Second)
@@ -105,7 +150,7 @@ func discover(ctx context.Context, h *hub.Hub, create func(createContext context
 		go (func(idx int) {
 			// Create radio
 			if err := create(createContext, recivas[idx]); err != nil {
-				log.Println("radio.Discover:", err)
+				log.Println("radio.concurrentCreate:", err)
 			}
 
 			wg.Done()
@@ -116,6 +161,7 @@ func discover(ctx context.Context, h *hub.Hub, create func(createContext context
 	return nil
 }
 
+// create and seed a single radio from a UPnP client.
 func create(ctx context.Context, radioContext context.Context, reciva upnp.Reciva, h *hub.Hub, cp upnpsub.ControlPoint, stateHook StateHook) error {
 	// Get UUID
 	uuid, err := reciva.GetUUID()

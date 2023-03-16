@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"log"
 
 	"github.com/ItsNotGoodName/go-upnpsub"
@@ -26,13 +27,19 @@ func Server(cfg *config.Config) {
 	stateHook := middleware.NewStateHook(store)
 	discoverer := radio.NewDiscoverer(hub, controlPoint, stateHook)
 	api := http.NewAPI(hub, discoverer, store)
+	router := http.Router(api, web.FS())
 
-	go func() {
-		if err := discoverer.Discover(ctx); err != nil {
-			log.Println("cmd.Server:", err)
-		}
-	}()
-	go http.Start(api, cfg.Port, web.FS())
-
-	<-background.Run(ctx, []background.Background{hub, upnp.NewBackgroundControlPoint(controlPoint), discoverer})
+	<-background.Run(ctx, []background.Background{
+		hub,
+		upnp.NewBackgroundControlPoint(controlPoint),
+		discoverer,
+		background.NewFunction(func(ctx context.Context) {
+			if err := discoverer.Discover(ctx, true); err != nil {
+				log.Println("cmd.Server", err)
+			}
+		}),
+		background.NewFunction(func(ctx context.Context) {
+			http.Start(router, cfg.Port)
+		}),
+	})
 }

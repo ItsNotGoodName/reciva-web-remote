@@ -32,3 +32,18 @@ func Run(ctx context.Context, backgrounds []Background) <-chan struct{} {
 
 	return done
 }
+
+type BackgroundFunction func(ctx context.Context)
+
+type Function struct {
+	fn BackgroundFunction
+}
+
+func NewFunction(fn BackgroundFunction) Function {
+	return Function{fn: fn}
+}
+
+func (bf Function) Background(ctx context.Context, doneC chan<- struct{}) {
+	doneC <- struct{}{}
+	bf.fn(ctx)
+}

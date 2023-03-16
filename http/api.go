@@ -140,7 +140,7 @@ func (a API) UpdatePreset(c echo.Context) error {
 //	@Failure	500	{object}	HTTPError
 //	@Router		/radios [post]
 func (a API) DiscoverRadios(c echo.Context) error {
-	if err := a.Discoverer.Discover(c.Request().Context()); err != nil {
+	if err := a.Discoverer.Discover(c.Request().Context(), true); err != nil {
 		if err == internal.ErrDiscovering {
 			return echo.ErrConflict.WithInternal(err)
 		}

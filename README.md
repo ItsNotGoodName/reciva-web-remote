@@ -132,5 +132,4 @@ make dev-backend
 
 - Readd toasts in web interface
 - Add volume slider in web interface
-- Discover radios on a timer
 - Document WebSocket API

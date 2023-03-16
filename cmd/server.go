@@ -6,12 +6,12 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/config"
 	"github.com/ItsNotGoodName/reciva-web-remote/http"
-	"github.com/ItsNotGoodName/reciva-web-remote/internal/background"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/middleware"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/store"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/upnp"
+	"github.com/ItsNotGoodName/reciva-web-remote/pkg/background"
 	"github.com/ItsNotGoodName/reciva-web-remote/pkg/interrupt"
 	"github.com/ItsNotGoodName/reciva-web-remote/web"
 )

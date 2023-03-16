@@ -6,10 +6,9 @@ var (
 	ErrPresetNotFound = fmt.Errorf("preset not found")
 )
 
-var (
-	ErrHubDiscovering   = fmt.Errorf("hub is discovering")
-	ErrHubServiceClosed = fmt.Errorf("hub service closed")
-)
+var ErrDiscovering = fmt.Errorf("discovery in progress")
+
+var ErrHubClosed = fmt.Errorf("hub closed")
 
 var (
 	ErrRadioClosed   = fmt.Errorf("radio closed")

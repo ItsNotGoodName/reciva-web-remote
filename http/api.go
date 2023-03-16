@@ -141,7 +141,7 @@ func (a API) UpdatePreset(c echo.Context) error {
 //	@Router		/radios [post]
 func (a API) DiscoverRadios(c echo.Context) error {
 	if err := a.Discoverer.Discover(c.Request().Context()); err != nil {
-		if err == internal.ErrHubDiscovering {
+		if err == internal.ErrDiscovering {
 			return echo.ErrConflict.WithInternal(err)
 		}
 		return err

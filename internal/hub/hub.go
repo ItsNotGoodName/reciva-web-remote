@@ -88,7 +88,7 @@ func (h *Hub) Create(uuid, name string, reciva upnp.Reciva, subscription upnpsub
 	select {
 	case <-h.doneC:
 		h.radiosMapMu.Unlock()
-		return Radio{}, internal.ErrHubServiceClosed
+		return Radio{}, internal.ErrHubClosed
 	default:
 	}
 	h.delete(uuid)

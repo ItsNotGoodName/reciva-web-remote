@@ -76,7 +76,7 @@ func (d *Discoverer) Discovering() bool {
 
 func (d *Discoverer) Discover(ctx context.Context) error {
 	if !d.mu.TryLock() {
-		return internal.ErrHubDiscovering
+		return internal.ErrDiscovering
 	}
 	defer d.mu.Unlock()
 

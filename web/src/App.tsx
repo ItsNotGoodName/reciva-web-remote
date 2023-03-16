@@ -34,6 +34,8 @@ import {
   onCleanup,
   Index,
   createReaction,
+  Suspense,
+  ErrorBoundary,
 } from "solid-js";
 import { type Component } from "solid-js";
 import {
@@ -182,7 +184,7 @@ const RadioPlayerTitleDropdown: Component<
 
   return (
     <DaisyDropdown
-      class={mergeClass("no-animation", props.class)}
+      class={props.class}
       buttonClass="btn-primary w-full justify-start truncate"
       buttonChildren={
         <div class="w-0">
@@ -421,7 +423,54 @@ const RadioAudioSourceDropdown: Component<
   );
 };
 
-const RadioSelect: Component<
+const RadioListCard: Component<
+  {
+    radioUUID: Accessor<string>;
+    setRadioUUID: Setter<string>;
+    radios: Resource<ModelRadio[]>;
+  } & ClassProps
+> = (props) => {
+  return (
+    <div
+      class={mergeClass(
+        "card w-full bg-base-100 shadow-xl sm:w-96",
+        props.class
+      )}
+    >
+      <div class="card-body">
+        <h2 class="card-title">
+          <Show
+            when={
+              !props.radios.error &&
+              !props.radios.loading &&
+              props.radios()?.length == 0
+            }
+            fallback={<>Select Radio</>}
+          >
+            No Radios Discoverd
+          </Show>
+        </h2>
+        <Suspense fallback={<>Loading...</>}>
+          <Show when={!props.radios.error}>
+            <For each={props.radios()}>
+              {(radio) => (
+                <DaisyButton
+                  class="btn-primary"
+                  onClick={[props.setRadioUUID, radio.uuid]}
+                  value={radio.uuid}
+                >
+                  {radio.name}
+                </DaisyButton>
+              )}
+            </For>
+          </Show>
+        </Suspense>
+      </div>
+    </div>
+  );
+};
+
+const RadioListSelect: Component<
   {
     radioUUID: Accessor<string>;
     setRadioUUID: Setter<string>;
@@ -587,7 +636,7 @@ const App: Component = () => {
     window.removeEventListener("focus", onVisibilityChange);
   });
 
-  const [page, setPage] = createSignal(PAGE_EDIT);
+  const [page, setPage] = createSignal(PAGE_HOME);
   const radioLoading = () =>
     (state.uuid != radioUUID() && radioUUID() != "") || ws.connecting();
   const radioLoaded = () =>
@@ -610,7 +659,19 @@ const App: Component = () => {
       <div class="container mx-auto px-4 pt-20 pb-36">
         <Switch>
           <Match when={page() == PAGE_HOME}>
-            <HomePage radioUUID={radioUUID} state={state} />
+            <Show
+              when={radioUUID() != ""}
+              fallback={
+                <RadioListCard
+                  class="mx-auto"
+                  radioUUID={radioUUID}
+                  setRadioUUID={setRadioUUID}
+                  radios={radiosListQuery[0]}
+                />
+              }
+            >
+              <HomePage radioUUID={radioUUID} state={state} />
+            </Show>
           </Match>
           <Match when={page() == PAGE_EDIT}>
             <EditPage />
@@ -664,7 +725,7 @@ const App: Component = () => {
                 classButton="rounded-r-none"
                 discovering={discovering()}
               />
-              <RadioSelect
+              <RadioListSelect
                 class="w-full flex-1 rounded-l-none"
                 radioUUID={radioUUID}
                 setRadioUUID={setRadioUUID}
@@ -700,4 +761,14 @@ const App: Component = () => {
   );
 };
 
-export default App;
+export default () => (
+  <ErrorBoundary
+    fallback={(err) => (
+      <div class="m-4">
+        <DaisyErrorAlert>{err || "Something went wrong."}</DaisyErrorAlert>
+      </div>
+    )}
+  >
+    <App />
+  </ErrorBoundary>
+);

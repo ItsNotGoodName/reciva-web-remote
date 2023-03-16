@@ -3,7 +3,7 @@ import { type JSX, type ParentComponent, Show, splitProps } from "solid-js";
 import { ICON_SIZE } from "./constants";
 import { type ClassProps, mergeClass, useDropdown } from "./utils";
 
-export const DaisyErrorAlert: ParentComponent<ClassProps> = (props) => {
+export const DaisyErrorAlert: ParentComponent = (props) => {
   return (
     <div class="alert alert-error shadow-lg">
       <div>
@@ -60,7 +60,7 @@ export const DaisyDropdown: ParentComponent<
 
   return (
     <div
-      class={mergeClass("dropdown", props.class)}
+      class={mergeClass("dropdown no-animation", props.class)}
       classList={{ "dropdown-open": showDropdown() }}
       onFocusOut={toggleDropdown}
     >

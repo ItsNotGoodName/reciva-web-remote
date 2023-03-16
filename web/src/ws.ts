@@ -27,7 +27,7 @@ const subscribe = (ws: WebSocket, radioUUID: string) => {
   );
 };
 
-const defaultState: StateState = {
+const DefaultState: StateState = {
   audio_source: "",
   audio_sources: [],
   is_muted: false,
@@ -71,13 +71,13 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
     equals: false,
   });
   const [discovering, setDiscovering] = createSignal(false);
-  const [state, setState] = createStore({ ...defaultState });
+  const [state, setState] = createStore({ ...DefaultState });
 
   const connect = () => {
     const ws = new WebSocket(WS_URL);
     batch(() => {
       setConnecting(true);
-      setState(defaultState);
+      setState(DefaultState);
     });
     console.log("WS: Connecting");
 
@@ -116,7 +116,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setConnecting(false);
         setConnected(false);
         setDisconnected(true);
-        setState(defaultState);
+        setState(DefaultState);
       });
     });
 
@@ -143,7 +143,6 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         return;
       }
 
-      setState(defaultState);
       subscribe(ws, radioUUID());
     })
   );

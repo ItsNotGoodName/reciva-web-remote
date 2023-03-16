@@ -95,13 +95,6 @@ const PresetsTable: Component<
                 )}
               </For>
             </tbody>
-            <tfoot>
-              <tr>
-                <th></th>
-                <th>URL</th>
-                <th>New Title</th>
-              </tr>
-            </tfoot>
           </table>
         </Match>
         <Match when={props.presets.loading}>Loading...</Match>
@@ -110,34 +103,45 @@ const PresetsTable: Component<
   );
 };
 
+const DefaultPresetForm = {
+  title_new: "",
+  title_new_change: false,
+  url: "",
+  url_new: "",
+  url_new_change: false,
+};
+
 const PresetForm: Component<
   { presetURL: Accessor<string>; onClose: () => void } & ClassProps
 > = (props) => {
   const [preset, presetQuery] = usePresetQuery(props.presetURL);
-  const [presetForm, setPresetForm] = createStore<ModelPreset>({
-    title_new: "",
-    url: "",
-    url_new: "",
-  });
+  const [presetForm, setPresetForm] = createStore({ ...DefaultPresetForm });
   createEffect(
-    on(preset, () => {
-      if (preset.loading) {
-        return;
-      } else if (preset.error) {
-        return;
-      }
+    on(
+      () => !preset.error && preset(),
+      () => {
+        if (preset.loading) {
+          return;
+        } else if (preset.error) {
+          return;
+        }
 
-      const p = preset();
-      if (p) {
-        setPresetForm(p);
+        const p = preset();
+        if (p) {
+          setPresetForm({ ...DefaultPresetForm, ...p });
+        }
       }
-    })
+    )
   );
 
   const updatePreset = useUpdatePreset();
   const submit = (e: Event) => {
     e.preventDefault();
-    void updatePreset.mutate(presetForm);
+    void updatePreset.mutate({
+      title_new: presetForm.title_new,
+      url: presetForm.url,
+      url_new: presetForm.url_new,
+    });
   };
   const reset = () => {
     void presetQuery.refetch();
@@ -169,12 +173,16 @@ const PresetForm: Component<
           <span class="label-text">New Title</span>
         </label>
         <input
+          classList={{ "input-warning": presetForm.title_new_change }}
           type="text"
           placeholder="New Title"
           class="input-bordered input"
           value={presetForm.title_new}
           onInput={(e) => {
-            setPresetForm({ title_new: e.currentTarget.value });
+            setPresetForm({
+              title_new: e.currentTarget.value,
+              title_new_change: true,
+            });
           }}
           disabled={loading()}
         />
@@ -186,9 +194,13 @@ const PresetForm: Component<
         <textarea
           placeholder="New URL"
           class="textarea-bordered textarea h-24"
+          classList={{ "textarea-warning": presetForm.url_new_change }}
           value={presetForm.url_new}
           onInput={(e) => {
-            setPresetForm({ url_new: e.currentTarget.value });
+            setPresetForm({
+              url_new: e.currentTarget.value,
+              url_new_change: true,
+            });
           }}
           disabled={loading()}
         />

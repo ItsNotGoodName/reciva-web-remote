@@ -43,6 +43,25 @@ func PlayPreset(ctx context.Context, r hub.Radio, preset int) error {
 	return r.Reciva.PlayPreset(ctx, preset)
 }
 
+func SetAudioSource(ctx context.Context, r hub.Radio, audioSource string) error {
+	s, err := GetState(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	if err := state.ValidAudioSource(s, audioSource); err != nil {
+		return err
+	}
+
+	if !s.Power {
+		if err := r.Reciva.SetPowerState(ctx, true); err != nil {
+			return err
+		}
+	}
+
+	return r.Reciva.SetAudioSource(ctx, audioSource)
+}
+
 func SetPower(ctx context.Context, r hub.Radio, power bool) error {
 	return r.Reciva.SetPowerState(ctx, power)
 }
@@ -65,17 +84,4 @@ func RefreshSubscription(ctx context.Context, r hub.Radio) error {
 
 func GetState(ctx context.Context, r hub.Radio) (*state.State, error) {
 	return r.State(ctx)
-}
-
-func SetAudioSource(ctx context.Context, r hub.Radio, audioSource string) error {
-	s, err := GetState(ctx, r)
-	if err != nil {
-		return err
-	}
-
-	if err := state.ValidAudioSource(s, audioSource); err != nil {
-		return err
-	}
-
-	return r.Reciva.SetAudioSource(ctx, audioSource)
 }

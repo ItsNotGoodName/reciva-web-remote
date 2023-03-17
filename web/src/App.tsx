@@ -54,6 +54,7 @@ import {
   useBuildGetQuery,
   useDeleteRadio,
   invalidatePresetListQuery,
+  invalidateRadioListQuery,
 } from "./store";
 import { type ClassProps, mergeClass, IOS } from "./utils";
 import { useWS } from "./ws";
@@ -606,16 +607,18 @@ const App: Component = () => {
       stale,
       () => {
         // Refetch stale queries
-        stale() == ModelStale.StaleRadios && void radiosListQuery[1].refetch();
-        stale() == ModelStale.StalePresets && invalidatePresetListQuery();
+        stale() == ModelStale.StaleRadios &&
+          invalidateRadioListQuery(new Date());
+        stale() == ModelStale.StalePresets &&
+          invalidatePresetListQuery(new Date());
       },
       { defer: true }
     )
   );
   const track = createReaction(() => {
     // Refetch queries
-    void radiosListQuery[1].refetch();
-    invalidatePresetListQuery();
+    invalidateRadioListQuery(new Date());
+    invalidatePresetListQuery(new Date());
   });
   createEffect(() => {
     ws.disconnected() && track(ws.connected);

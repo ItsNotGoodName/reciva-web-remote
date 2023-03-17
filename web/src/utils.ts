@@ -7,36 +7,19 @@ import {
   type Signal,
 } from "solid-js";
 
-export function createStaleSignal<T>(value: T): Signal<T> {
+export function createInvalidateSignal<T>(value: T): Signal<T> {
   return createSignal(value, { equals: false });
 }
 
-export function invalidWhen<T, R>(
-  deps: Accessor<unknown>,
+export function invalidateWhen<T, R>(
+  dep: Accessor<boolean>,
   query: ResourceReturn<T, R>
 ): ResourceReturn<T, R> {
   createEffect(
     on(
-      deps,
+      dep,
       () => {
-        void query[1].refetch();
-      },
-      { defer: true }
-    )
-  );
-  return query;
-}
-
-export function staleWhen<T, R>(
-  query: ResourceReturn<T, R>,
-  fn: Accessor<boolean>,
-  deps: Accessor<unknown> = fn
-): ResourceReturn<T, R> {
-  createEffect(
-    on(
-      deps,
-      () => {
-        if (fn()) {
+        if (dep()) {
           void query[1].refetch();
         }
       },
@@ -44,15 +27,6 @@ export function staleWhen<T, R>(
     )
   );
   return query;
-}
-
-export function once<T>(fn: () => T): () => T {
-  let data: T | undefined;
-  return function () {
-    if (data === undefined) data = fn();
-
-    return data;
-  };
 }
 
 export type ClassProps = { class?: string };

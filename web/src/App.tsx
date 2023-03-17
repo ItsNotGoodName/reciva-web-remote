@@ -97,7 +97,7 @@ const DiscoverButton: Component<
 const RadioPlayerStatusButton: Component<
   {
     status: StateStatus;
-    loading?: boolean;
+    loading: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   const data = (): { class: string; status: string; element: JSX.Element } => {
@@ -133,7 +133,7 @@ const RadioPlayerStatusButton: Component<
     <DaisyTooltip class={props.class} tooltip={data().status}>
       <DaisyButton
         class={data().class}
-        loading={props.loading}
+        loading={props.loading()}
         aria-label={data().status}
       >
         {data().element}
@@ -145,7 +145,7 @@ const RadioPlayerStatusButton: Component<
 const RadioPlayerTitleDropdown: Component<
   {
     state: StateState;
-    loading?: boolean;
+    loading: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   const data = (): TableRowData[] => [
@@ -196,21 +196,21 @@ const RadioPlayerTitleDropdown: Component<
         </div>
       }
       dropdownClass="card-compact card w-full bg-primary p-2 text-primary-content shadow my-2"
-      loading={props.loading}
+      loading={props.loading()}
     >
       <div class="card-body">
         <h2 class="card-title">Stream Information</h2>
         <table class="table-fixed">
           <tbody>
             <Index each={data()}>
-              {(data) => (
+              {(d) => (
                 <tr>
                   <td class="pb-1 pr-1">
                     <span class="text badge-info badge w-full whitespace-nowrap">
-                      {data().key}
+                      {d().key}
                     </span>
                   </td>
-                  <td class="w-full break-all">{data().value}</td>
+                  <td class="w-full break-all">{d().value}</td>
                 </tr>
               )}
             </Index>
@@ -225,6 +225,8 @@ const RadioTypeDropdown: Component<
   {
     radioUUID: Accessor<string>;
     state: StateState;
+    loading: Accessor<boolean>;
+    onClose: () => void;
   } & ClassProps
 > = (props) => {
   const data = (): TableRowData[] => [
@@ -239,9 +241,10 @@ const RadioTypeDropdown: Component<
   return (
     <DaisyDropdown
       class={props.class}
-      buttonClass="btn-primary"
+      buttonClass="btn-primary w-14"
       buttonChildren={<FaSolidRadio size={ICON_SIZE} />}
-      dropdownClass="card-compact card bg-primary p-2 text-primary-content shadow my-2"
+      dropdownClass="card-compact card w-72 bg-primary p-2 text-primary-content shadow my-2"
+      loading={props.loading()}
     >
       <div class="card-body">
         <h2 class="card-title">Radio Information</h2>
@@ -255,28 +258,31 @@ const RadioTypeDropdown: Component<
                       {d().key}
                     </span>
                   </td>
-                  <td>
-                    <div class="whitespace-nowrap">{d().value}</div>
-                  </td>
+                  <td class="w-full break-all">{d().value}</td>
                 </tr>
               )}
             </Index>
           </tbody>
         </table>
-        <div class="card-actions">
-          <DaisyButton
-            class="btn-info btn-sm ml-auto flex-1"
-            loading={refreshRadioSubscription.loading()}
-            onClick={() => void refreshRadioSubscription.mutate(null)}
-          >
-            Refresh
-          </DaisyButton>
-          <DaisyButton
-            class="btn-error btn-sm ml-auto flex-1"
-            loading={deleteRadio.loading()}
-            onClick={() => void deleteRadio.mutate(null)}
-          >
-            Remove
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <DaisyButton
+              class="btn-info btn-sm flex-1"
+              loading={refreshRadioSubscription.loading()}
+              onClick={() => void refreshRadioSubscription.mutate(null)}
+            >
+              Refresh
+            </DaisyButton>
+            <DaisyButton
+              class="btn-error btn-sm flex-1"
+              loading={deleteRadio.loading()}
+              onClick={() => void deleteRadio.mutate(null)}
+            >
+              Remove
+            </DaisyButton>
+          </div>
+          <DaisyButton class="btn-sm flex-1" onClick={props.onClose}>
+            Close
           </DaisyButton>
         </div>
       </div>
@@ -288,6 +294,7 @@ const RadioVolumeButtonGroup: Component<
   {
     radioUUID: Accessor<string>;
     state: StateState;
+    loading: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   const updateState = useUpdateState(props.radioUUID);
@@ -307,7 +314,7 @@ const RadioVolumeButtonGroup: Component<
       fallback={
         <DaisyButton
           class={mergeClass("btn-error", props.class)}
-          loading={updateState.loading()}
+          loading={updateState.loading() || props.loading()}
           aria-label="Volume Muted"
         >
           <FaSolidVolumeOff size={ICON_SIZE} />
@@ -317,7 +324,7 @@ const RadioVolumeButtonGroup: Component<
       <div class={mergeClass("btn-group flex-nowrap", props.class)}>
         <DaisyButton
           class="btn-info w-14"
-          loading={updateState.loading()}
+          loading={updateState.loading() || props.loading()}
           aria-label="Lower Volume"
           onClick={[changeVolume, -5]}
         >
@@ -325,7 +332,7 @@ const RadioVolumeButtonGroup: Component<
         </DaisyButton>
         <DaisyButton
           class="btn-info w-12 px-0"
-          loading={refreshRadioVolume.loading()}
+          loading={refreshRadioVolume.loading() || props.loading()}
           aria-label={`Volume ${props.state.volume}%`}
           onClick={refreshVolume}
         >
@@ -333,7 +340,7 @@ const RadioVolumeButtonGroup: Component<
         </DaisyButton>
         <DaisyButton
           class="btn-info w-14"
-          loading={updateState.loading()}
+          loading={updateState.loading() || props.loading()}
           aria-label="Raise Volume"
           onClick={[changeVolume, 5]}
         >
@@ -348,6 +355,7 @@ const RadioPowerButton: Component<
   {
     radioUUID: Accessor<string>;
     state: StateState;
+    loading: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   const updateState = useUpdateState(props.radioUUID);
@@ -365,7 +373,7 @@ const RadioPowerButton: Component<
         "btn-success": props.state.power,
         "btn-error": !props.state.power,
       }}
-      loading={updateState.loading()}
+      loading={updateState.loading() || props.loading()}
       onClick={togglePower}
       aria-label={"Power " + (props.state.power ? "On" : "Off")}
     >
@@ -385,6 +393,7 @@ const RadioAudioSourceDropdown: Component<
   {
     radioUUID: Accessor<string>;
     state: StateState;
+    loading: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   const updateState = useUpdateState(props.radioUUID);
@@ -404,9 +413,11 @@ const RadioAudioSourceDropdown: Component<
     <DaisyDropdown
       class={props.class}
       aria-label="Audio Source"
+      buttonClass="w-14"
       buttonClassList={{ "btn-secondary": !!props.state.audio_source }}
       buttonChildren={<FaBrandsItunesNote size={ICON_SIZE} />}
       dropdownClass="menu rounded-box menu-compact w-52 space-y-2 bg-base-200 p-2 shadow my-2"
+      loading={props.loading()}
     >
       <span class="mx-auto">Audio Source</span>
       <For each={props.state.audio_sources}>
@@ -483,21 +494,12 @@ const RadioListSelect: Component<
 > = (props) => {
   let select: HTMLSelectElement | undefined;
 
-  // Prevent select.value from defaulting to the first option when props.radios() changes
+  // Prevent select.value from defaulting to the first option
   createEffect(
     on(
       () => !props.radios.error && props.radios(),
       () => {
         select && (select.value = props.radioUUID());
-
-        if (!props.radios.error) {
-          for (const r of props.radios() || []) {
-            if (r.uuid == props.radioUUID()) {
-              return;
-            }
-          }
-          props.setRadioUUID("");
-        }
       },
       { defer: true }
     )
@@ -589,17 +591,46 @@ const App: Component = () => {
   const [radioUUID, setRadioUUID] = createSignal(
     localStorage.getItem("lastRadioUUID") || ""
   );
-  createEffect(() => {
-    localStorage.setItem("lastRadioUUID", radioUUID());
-  });
+  createEffect(
+    on(
+      radioUUID,
+      () => {
+        localStorage.setItem("lastRadioUUID", radioUUID());
+      },
+      { defer: true }
+    )
+  );
 
   // WebSocket
   const [{ state, discovering, stale }, ws] = useWS(radioUUID);
-  const wsReconnecting = () => ws.connecting() && ws.disconnected();
 
   // Queries
   const buildGetQuery = useBuildGetQuery();
   const radiosListQuery = useRadiosListQuery();
+
+  // radioUUID
+  const radioSelected = () => radioUUID() != "";
+  const radioLoading = () =>
+    (state.uuid != radioUUID() && radioSelected()) || ws.connecting();
+  createEffect(
+    on(
+      () => !radiosListQuery[0].error && radiosListQuery[0](),
+      () => {
+        if (!radiosListQuery[0].error) {
+          for (const r of radiosListQuery[0]() || []) {
+            if (r.uuid == radioUUID()) {
+              return;
+            }
+          }
+          setRadioUUID("");
+        }
+      },
+      { defer: true }
+    )
+  );
+  const unselectRadio = () => {
+    setRadioUUID("");
+  };
 
   // invalidations
   createEffect(
@@ -646,11 +677,6 @@ const App: Component = () => {
   });
 
   const [page, setPage] = createSignal(PAGE_HOME);
-  const radioSelected = () => radioUUID() != "";
-  const radioLoading = () =>
-    (state.uuid != radioUUID() && radioSelected()) || ws.connecting();
-  const radioLoaded = () =>
-    radioUUID() == state.uuid && radioSelected() && ws.connected();
 
   return (
     <div class="h-screen">
@@ -658,31 +684,35 @@ const App: Component = () => {
         <RadioPlayerStatusButton
           class="tooltip-bottom flex"
           status={state.status}
-          loading={radioLoading()}
+          loading={radioLoading}
         />
         <RadioPlayerTitleDropdown
           class="dropdown-end flex-1"
           state={state}
-          loading={radioLoading()}
+          loading={radioLoading}
         />
       </div>
       <div class="container mx-auto px-4 pt-20 pb-36">
         <Switch>
           <Match when={page() == PAGE_HOME}>
-            <Switch>
-              <Match when={!radioSelected()}>
-                <RadioListCard
-                  class="mx-auto"
+            <Show
+              when={!radioSelected()}
+              fallback={
+                <HomePage
                   radioUUID={radioUUID}
-                  setRadioUUID={setRadioUUID}
-                  radios={radiosListQuery[0]}
-                  discovering={discovering}
+                  state={state}
+                  loading={radioLoading}
                 />
-              </Match>
-              <Match when={radioLoaded()}>
-                <HomePage radioUUID={radioUUID} state={state} />
-              </Match>
-            </Switch>
+              }
+            >
+              <RadioListCard
+                class="mx-auto"
+                radioUUID={radioUUID}
+                setRadioUUID={setRadioUUID}
+                radios={radiosListQuery[0]}
+                discovering={discovering}
+              />
+            </Show>
           </Match>
           <Match when={page() == PAGE_EDIT}>
             <EditPage />
@@ -694,31 +724,33 @@ const App: Component = () => {
           <Show when={!!radiosListQuery[0].error}>
             <DaisyErrorAlert>Failed to list radios.</DaisyErrorAlert>
           </Show>
-          <Show when={ws.connecting() && !wsReconnecting()}>
-            <div class="alert shadow-lg">
-              <div>
-                <FaSolidCircleInfo class="fill-info" size={ICON_SIZE} />
-                <span>Connecting to server...</span>
+          <Switch>
+            <Match when={ws.disconnected()}>
+              <div class="alert shadow-lg">
+                <div>
+                  <FaSolidCircleInfo class="fill-info" size={ICON_SIZE} />
+                  <span>Disconnected from server.</span>
+                </div>
+                <div class="flex-none">
+                  <DaisyButton
+                    class="btn-primary btn-sm"
+                    loading={ws.connecting()}
+                    onClick={ws.reconnect}
+                  >
+                    Reconnect
+                  </DaisyButton>
+                </div>
               </div>
-            </div>
-          </Show>
-          <Show when={ws.disconnected()}>
-            <div class="alert shadow-lg">
-              <div>
-                <FaSolidCircleInfo class="fill-info" size={ICON_SIZE} />
-                <span>Disconnected from server.</span>
+            </Match>
+            <Match when={ws.connecting()}>
+              <div class="alert shadow-lg">
+                <div>
+                  <FaSolidCircleInfo class="fill-info" size={ICON_SIZE} />
+                  <span>Connecting to server...</span>
+                </div>
               </div>
-              <div class="flex-none">
-                <DaisyButton
-                  class="btn-primary btn-sm"
-                  loading={ws.connecting()}
-                  onClick={ws.reconnect}
-                >
-                  Reconnect
-                </DaisyButton>
-              </div>
-            </div>
-          </Show>
+            </Match>
+          </Switch>
         </div>
         <div
           class="flex flex-wrap-reverse gap-2 border-t-2 border-accent border-t-base-300 bg-base-200 p-2"
@@ -743,26 +775,34 @@ const App: Component = () => {
                 radios={radiosListQuery[0]}
               />
             </div>
-            <Show when={radioLoaded()}>
+            <Show when={radioSelected()}>
               <RadioTypeDropdown
                 class="dropdown-top dropdown-end"
                 radioUUID={radioUUID}
+                onClose={unselectRadio}
                 state={state}
+                loading={radioLoading}
               />
             </Show>
           </div>
-          <Show when={radioLoaded()}>
+          <Show when={radioSelected()}>
             <div class="flex flex-auto gap-2">
               <RadioPowerButton
                 class="flex-auto"
                 radioUUID={radioUUID}
                 state={state}
+                loading={radioLoading}
               />
-              <RadioVolumeButtonGroup radioUUID={radioUUID} state={state} />
+              <RadioVolumeButtonGroup
+                radioUUID={radioUUID}
+                state={state}
+                loading={radioLoading}
+              />
               <RadioAudioSourceDropdown
                 class="dropdown-top dropdown-end"
                 radioUUID={radioUUID}
                 state={state}
+                loading={radioLoading}
               />
             </div>
           </Show>
@@ -774,9 +814,9 @@ const App: Component = () => {
 
 export default () => (
   <ErrorBoundary
-    fallback={(err) => (
+    fallback={() => (
       <div class="m-4">
-        <DaisyErrorAlert>{err || "Something went wrong."}</DaisyErrorAlert>
+        <DaisyErrorAlert>Something went wrong.</DaisyErrorAlert>
       </div>
     )}
   >

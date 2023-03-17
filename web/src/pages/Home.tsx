@@ -17,6 +17,7 @@ export const HomePage: Component<
   {
     radioUUID: Accessor<string>;
     state: StateState;
+    loading: Accessor<boolean>;
   } & ClassProps
 > = (props) => {
   const statePatch = useUpdateState(props.radioUUID);
@@ -43,7 +44,7 @@ export const HomePage: Component<
         {(preset) => (
           <RadioPresetButton
             selected={props.state.preset_number == preset.number}
-            loading={loadingNumber() == preset.number}
+            loading={loadingNumber() == preset.number || props.loading()}
             onclick={[setPreset, preset.number]}
             preset={preset}
           />
@@ -58,7 +59,7 @@ const RadioPresetButton: Component<
     selected: boolean;
     preset: StatePreset;
     loading?: boolean;
-  } & JSX.HTMLAttributes<HTMLButtonElement>
+  } & JSX.ButtonHTMLAttributes<HTMLButtonElement>
 > = (props) => {
   const [, other] = splitProps(props, [
     "selected",

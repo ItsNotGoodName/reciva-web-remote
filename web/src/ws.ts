@@ -151,6 +151,8 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
           return;
         }
 
+        setState(radioUUID() == "" ? DefaultState : { uuid: "" });
+
         sendStateCommand(ws, radioUUID());
       },
       { defer: true }

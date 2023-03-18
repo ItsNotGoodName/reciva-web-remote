@@ -72,6 +72,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
   const [connecting, setConnecting] = createSignal(true);
   const [connected, setConnected] = createSignal(false);
   const [disconnected, setDisconnected] = createSignal(false);
+  const [shouldReconnect, setShouldReconnect] = createSignal(false);
 
   const [stale, setStale] = createSignal<ModelStale | undefined>(undefined, {
     equals: false,
@@ -93,6 +94,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setConnecting(false);
         setConnected(true);
         setDisconnected(false);
+        setShouldReconnect(false);
       });
       sendCommand(ws, radioUUID());
     });
@@ -123,6 +125,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setConnected(false);
         setDisconnected(true);
         setState(DefaultState);
+        setShouldReconnect(true);
       });
     });
 
@@ -154,6 +157,16 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
         setState(radioUUID() == "" ? DefaultState : { uuid: "" });
 
         sendStateCommand(ws, radioUUID());
+      },
+      { defer: true }
+    )
+  );
+
+  createEffect(
+    on(
+      shouldReconnect,
+      () => {
+        if (shouldReconnect()) reconnect();
       },
       { defer: true }
     )

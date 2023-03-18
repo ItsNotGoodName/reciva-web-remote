@@ -76,9 +76,9 @@ func Router(a API, fs fs.FS) *echo.Echo {
 	return e
 }
 
-func Start(e *echo.Echo, port int) {
+func Start(e *echo.Echo, port int) error {
 	printAddresses(strconv.Itoa(port))
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
+	return e.Start(fmt.Sprintf(":%d", port))
 }
 
 func upgrader() *websocket.Upgrader {

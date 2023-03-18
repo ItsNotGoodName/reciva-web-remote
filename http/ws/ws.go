@@ -141,27 +141,29 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			if command.State != nil {
 				stateCommand = *command.State
 
-				// Sync
-				if stateCommand.UUID == "*" {
-					for _, r := range h.List() {
-						if s, err := radio.GetState(ctx, r); err != nil {
-							log.Println("ws.Handle:", err)
-						} else {
-							if !write(pubsub.StateTopic, s) {
-								return
+				if pubsub.StateTopic.In(lastTopics) {
+					// Sync
+					if stateCommand.UUID == "*" {
+						for _, r := range h.List() {
+							if s, err := radio.GetState(ctx, r); err != nil {
+								log.Println("ws.Handle:", err)
+							} else {
+								if !write(pubsub.StateTopic, s) {
+									return
+								}
 							}
-						}
 
-					}
-				} else if stateCommand.UUID != "" {
-					if r, err := h.Get(stateCommand.UUID); err != nil {
-						log.Println("ws.Handle:", err)
-					} else {
-						if s, err := radio.GetState(ctx, r); err != nil {
+						}
+					} else if stateCommand.UUID != "" {
+						if r, err := h.Get(stateCommand.UUID); err != nil {
 							log.Println("ws.Handle:", err)
 						} else {
-							if !write(pubsub.StateTopic, s) {
-								return
+							if s, err := radio.GetState(ctx, r); err != nil {
+								log.Println("ws.Handle:", err)
+							} else {
+								if !write(pubsub.StateTopic, s) {
+									return
+								}
 							}
 						}
 					}

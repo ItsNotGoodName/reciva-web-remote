@@ -18,7 +18,8 @@ import (
 )
 
 func Server(cfg *config.Config) {
-	ctx := interrupt.Context()
+	ctx, cancel := context.WithCancel(interrupt.Context())
+	defer cancel()
 
 	store := middleware.NewStore(store.Must(store.NewFile(cfg.ConfigFile)))
 
@@ -35,11 +36,12 @@ func Server(cfg *config.Config) {
 		discoverer,
 		background.NewFunction(func(ctx context.Context) {
 			if err := discoverer.Discover(ctx, true); err != nil {
-				log.Println("cmd.Server", err)
+				log.Println("cmd.Server:", err)
 			}
 		}),
 		background.NewFunction(func(ctx context.Context) {
-			http.Start(router, cfg.Port)
+			log.Println("cmd.Server:", http.Start(router, cfg.Port))
+			cancel()
 		}),
 	})
 }

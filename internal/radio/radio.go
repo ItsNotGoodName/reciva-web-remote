@@ -23,14 +23,14 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 	handle := func(c state.Changed) {
 		c = stateHook.OnChanged(ctx, &s, c)
 		if c != state.ChangedNone {
-			pubsub.DefaultPub.Publish(pubsub.StateTopic, pubsub.StateMessage{State: s, Changed: c})
+			pubsub.PublishState(pubsub.DefaultPub, pubsub.MessageState{State: s, Changed: c})
 		}
 	}
 	if c := stateHook.OnStart(ctx, &s, state.ChangedAll); c != state.ChangedNone {
-		pubsub.DefaultPub.Publish(pubsub.StateTopic, pubsub.StateMessage{State: s, Changed: c})
+		pubsub.PublishState(pubsub.DefaultPub, pubsub.MessageState{State: s, Changed: c})
 	}
 
-	msgC, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.StateHookStaleTopic})
+	msgC, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.TopicStaleStateHook})
 	defer unsub()
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
@@ -46,8 +46,11 @@ func run(ctx context.Context, radio hub.Radio, s state.State, stateC hub.RadioSt
 				}
 			}()
 		case msg := <-msgC:
-			data := msg.Data.(pubsub.StateHookStaleMessage)
-			handle(data.Changed)
+			if data, ok := pubsub.ParseStaleStateHook(&msg); ok {
+				handle(data.Changed)
+			} else {
+				log.Println("radio.run: received invalid topic from pubsub:", msg.Topic)
+			}
 		case stateC <- s:
 		case fn := <-updateFnC:
 			handle(fn(&s))

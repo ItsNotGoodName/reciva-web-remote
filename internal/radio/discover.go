@@ -9,7 +9,6 @@ import (
 	"github.com/ItsNotGoodName/go-upnpsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
-	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/upnp"
@@ -96,8 +95,8 @@ func (d *Discoverer) Discover(ctx context.Context, force bool) error {
 	}
 	defer d.mu.Unlock()
 
-	pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: true})
-	defer pubsub.DefaultPub.Publish(pubsub.DiscoverTopic, pubsub.DiscoverMessage{Discovering: false})
+	pubsub.PublishDiscover(pubsub.DefaultPub, true)
+	defer pubsub.PublishDiscover(pubsub.DefaultPub, false)
 
 	hubContext := <-d.ctxC
 
@@ -114,7 +113,7 @@ func (d *Discoverer) Discover(ctx context.Context, force bool) error {
 		return nil
 	}
 
-	defer pubsub.DefaultPub.Publish(pubsub.StaleTopic, model.StaleRadios)
+	defer pubsub.PublishStaleRadios(pubsub.DefaultPub)
 
 	return concurrentCreate(ctx, d.hub, recivas, func(ctx context.Context, reciva upnp.Reciva) error {
 		return create(ctx, hubContext, reciva, d.hub, d.controlPoint, d.stateHook)

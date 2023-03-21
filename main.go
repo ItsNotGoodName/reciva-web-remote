@@ -18,7 +18,7 @@ var (
 	version    = "dev"
 )
 
-//go:generate swag fmt -d http,internal/model,internal/state
+//go:generate swag fmt -d http,internal/state
 //go:generate swag init -g api.go -d http,internal/model,internal/state,internal/pubsub --outputTypes go,json --output ./docs/swagger
 //go:generate npm run swag --prefix web
 func main() {

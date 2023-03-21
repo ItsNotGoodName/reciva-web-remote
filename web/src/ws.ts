@@ -6,15 +6,15 @@ import {
   type StateState,
   StateStatus,
   type WsEvent,
-  type ModelStale,
+  type PubsubStale,
 } from "./api";
 import { WS_URL } from "./constants";
 
 const sendCommand = (ws: WebSocket, radioUUID: string) => {
   const topics: Array<PubsubTopic> = [
-    PubsubTopic.DiscoverTopic,
-    PubsubTopic.StaleTopic,
-    PubsubTopic.StateTopic,
+    PubsubTopic.TopicDiscover,
+    PubsubTopic.TopicStale,
+    PubsubTopic.TopicState,
   ];
 
   ws.send(
@@ -56,7 +56,7 @@ const DefaultState: StateState = {
 export type WSDataReturn = {
   state: Store<StateState>;
   discovering: Accessor<boolean>;
-  stale: Accessor<ModelStale | undefined>;
+  stale: Accessor<PubsubStale | undefined>;
 };
 
 export type WSStatusReturn = {
@@ -74,7 +74,7 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
   const [disconnected, setDisconnected] = createSignal(false);
   const [shouldReconnect, setShouldReconnect] = createSignal(false);
 
-  const [stale, setStale] = createSignal<ModelStale | undefined>(undefined, {
+  const [stale, setStale] = createSignal<PubsubStale | undefined>(undefined, {
     equals: false,
   });
   const [discovering, setDiscovering] = createSignal(false);
@@ -103,17 +103,17 @@ export function useWS(radioUUID: Accessor<string>): WSReturn {
       console.log("WS: Message");
       const msg = JSON.parse(event.data as string) as WsEvent;
       switch (msg.topic) {
-        case PubsubTopic.StateTopic:
+        case PubsubTopic.TopicState:
           const data = msg.data as StateState;
           if (data.uuid == radioUUID()) {
             setState(data);
           }
           break;
-        case PubsubTopic.DiscoverTopic:
+        case PubsubTopic.TopicDiscover:
           setDiscovering(msg.data as boolean);
           break;
-        case PubsubTopic.StaleTopic:
-          setStale(msg.data as ModelStale);
+        case PubsubTopic.TopicStale:
+          setStale(msg.data as PubsubStale);
           break;
       }
     });

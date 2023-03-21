@@ -41,7 +41,7 @@ func DeleteRadio(h *hub.Hub, r hub.Radio) error {
 		return err
 	}
 
-	pubsub.DefaultPub.Publish(pubsub.StaleTopic, model.StaleRadios)
+	pubsub.PublishStaleRadios(pubsub.DefaultPub)
 
 	return nil
 }

@@ -44,17 +44,18 @@ export interface ModelRadio {
   uuid: string;
 }
 
-export enum ModelStale {
+export enum PubsubStale {
   StaleRadios = "radios",
   StalePresets = "presets",
 }
 
 export enum PubsubTopic {
-  ErrorTopic = "error",
-  StateTopic = "state",
-  StateHookStaleTopic = "state.hook.stale",
-  DiscoverTopic = "discover",
-  StaleTopic = "stale",
+  TopicState = "state",
+  TopicStaleStateHook = "stale.state.hook",
+  TopicDiscover = "discover",
+  TopicStaleRadios = "stale.radios",
+  TopicError = "error",
+  TopicStale = "stale",
 }
 
 export interface StatePreset {

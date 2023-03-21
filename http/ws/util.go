@@ -25,44 +25,38 @@ type Event struct {
 	Data  any          `json:"data" validate:"required"`
 }
 
-type StaleEvent struct {
-	Topic pubsub.Topic        `json:"topic" validate:"required"`
-	Data  pubsub.StaleMessage `json:"data" validate:"required"`
-}
-
 func uniqueTopics(topics []pubsub.Topic) []pubsub.Topic {
 	pubsubTopics := []pubsub.Topic{}
-	for _, topic := range topics {
-		if topic.In(pubsubTopics) {
-			log.Println("ws.uniqueTopics: received duplicate topic:", topic)
+	for _, top := range topics {
+		if top.In(pubsubTopics) {
+			log.Println("ws.uniqueTopics: received duplicate topic:", top)
 		} else {
-			pubsubTopics = append(pubsubTopics, topic)
+			pubsubTopics = append(pubsubTopics, top)
 		}
 	}
+
 	return pubsubTopics
 }
 
 func filterTopics(topics []pubsub.Topic) []pubsub.Topic {
 	if length := len(topics); length > 16 {
-		log.Println("ws.filterTopics: received invalid topic length:", length)
+		log.Println("ws.filterTopics: received invalid topics length:", length)
 		return []pubsub.Topic{}
 	}
 
 	pubsubTopics := []pubsub.Topic{}
 	for _, topic := range topics {
 
-		if topic == pubsub.StaleTopic {
-			pubsubTopics = append(pubsubTopics, pubsub.StaleTopic, pubsub.StateHookStaleTopic)
+		if topic == pubsub.TopicStale {
+			pubsubTopics = append(pubsubTopics, pubsub.TopicStaleRadios, pubsub.TopicStaleStateHook)
 		} else {
 			switch pubsub.Topic(topic) {
-			case pubsub.DiscoverTopic:
+			case pubsub.TopicDiscover:
 				break
-			case pubsub.StateTopic:
+			case pubsub.TopicState:
 				break
-			case pubsub.StaleTopic:
+			case pubsub.TopicError:
 				break
-			// case pubsub.ErrorTopic:
-			// 	return pubsub.ErrorTopic, nil
 			default:
 				log.Println("ws.filterTopics: invalid topic:", topic)
 				continue
@@ -70,7 +64,6 @@ func filterTopics(topics []pubsub.Topic) []pubsub.Topic {
 
 			pubsubTopics = append(pubsubTopics, topic)
 		}
-
 	}
 
 	return pubsubTopics

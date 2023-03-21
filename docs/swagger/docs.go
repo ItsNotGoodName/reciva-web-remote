@@ -546,7 +546,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Stale": {
+        "pubsub.Stale": {
             "type": "string",
             "enum": [
                 "radios",
@@ -560,18 +560,20 @@ const docTemplate = `{
         "pubsub.Topic": {
             "type": "string",
             "enum": [
-                "error",
                 "state",
-                "state.hook.stale",
+                "stale.state.hook",
                 "discover",
+                "stale.radios",
+                "error",
                 "stale"
             ],
             "x-enum-varnames": [
-                "ErrorTopic",
-                "StateTopic",
-                "StateHookStaleTopic",
-                "DiscoverTopic",
-                "StaleTopic"
+                "TopicState",
+                "TopicStaleStateHook",
+                "TopicDiscover",
+                "TopicStaleRadios",
+                "TopicError",
+                "TopicStale"
             ]
         },
         "state.Preset": {

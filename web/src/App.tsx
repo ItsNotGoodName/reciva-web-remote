@@ -43,7 +43,7 @@ import {
   type StateState,
   type ModelRadio,
   type ModelBuild,
-  ModelStale,
+  PubsubStale,
 } from "./api";
 import {
   useDiscoverRadios,
@@ -638,9 +638,9 @@ const App: Component = () => {
       stale,
       () => {
         // Refetch stale queries
-        stale() == ModelStale.StaleRadios &&
+        stale() == PubsubStale.StaleRadios &&
           invalidateRadioListQuery(new Date());
-        stale() == ModelStale.StalePresets &&
+        stale() == PubsubStale.StalePresets &&
           invalidatePresetListQuery(new Date());
       },
       { defer: true }

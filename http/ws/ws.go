@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
-	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/state"
@@ -81,11 +80,10 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 	stateCommand := CommandState{}
 
 	parse := func(msg *pubsub.Message) (pubsub.Topic, any) {
-		if msg.Topic == pubsub.DiscoverTopic {
-			return msg.Topic, msg.Data.(pubsub.DiscoverMessage).Discovering
+		if data, ok := pubsub.ParseDiscover(msg); ok {
+			return msg.Topic, data
 		}
-		if msg.Topic == pubsub.StateTopic {
-			data := msg.Data.(pubsub.StateMessage)
+		if data, ok := pubsub.ParseState(msg); ok {
 			if stateCommand.UUID == "" || !(stateCommand.UUID == "*" || stateCommand.UUID == data.State.UUID) {
 				return "", nil
 			}
@@ -94,11 +92,11 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			}
 			return msg.Topic, data.State
 		}
-		if msg.Topic == pubsub.StaleTopic {
-			return msg.Topic, msg.Data
+		if ok := pubsub.ParseStaleRadios(msg); ok {
+			return pubsub.TopicStale, pubsub.StaleRadios
 		}
-		if msg.Topic == pubsub.StateHookStaleTopic {
-			return pubsub.StaleTopic, model.StalePresets
+		if _, ok := pubsub.ParseStaleStateHook(msg); ok {
+			return pubsub.TopicStale, pubsub.StalePresets
 		}
 		return "", nil
 	}
@@ -123,12 +121,12 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 				// Sync
 				for _, t := range topics {
 					switch t {
-					case pubsub.DiscoverTopic:
-						if pubsub.DiscoverTopic.In(lastTopics) {
+					case pubsub.TopicDiscover:
+						if pubsub.TopicDiscover.In(lastTopics) {
 							continue
 						}
 
-						if !write(pubsub.DiscoverTopic, d.Discovering()) {
+						if !write(pubsub.TopicDiscover, d.Discovering()) {
 							return
 						}
 					}
@@ -141,14 +139,14 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			if command.State != nil {
 				stateCommand = *command.State
 
-				if pubsub.StateTopic.In(lastTopics) {
+				if pubsub.TopicState.In(lastTopics) {
 					// Sync
 					if stateCommand.UUID == "*" {
 						for _, r := range h.List() {
 							if s, err := radio.GetState(ctx, r); err != nil {
 								log.Println("ws.Handle:", err)
 							} else {
-								if !write(pubsub.StateTopic, s) {
+								if !write(pubsub.TopicState, s) {
 									return
 								}
 							}
@@ -161,7 +159,7 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 							if s, err := radio.GetState(ctx, r); err != nil {
 								log.Println("ws.Handle:", err)
 							} else {
-								if !write(pubsub.StateTopic, s) {
+								if !write(pubsub.TopicState, s) {
 									return
 								}
 							}

@@ -309,7 +309,7 @@ func (a API) PostState(c echo.Context) error {
 //	@Tags		websocket
 //	@Param		Command	body		ws.Command	false	"Command"
 //	@Param		Event	body		ws.Event	false	"Event"
-//	@Success	200		{object}	model.Stale
+//	@Success	200		{object}	pubsub.Stale
 func (a API) WS(upgrader *websocket.Upgrader) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)

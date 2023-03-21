@@ -66,6 +66,7 @@ func Router(a API, fs fs.FS) *echo.Echo {
 		apiStates.Use(a.RadioMiddleware)
 		apiStates.GET("", a.GetState)
 		apiStates.POST("", a.PostState)
+		apiStates.GET("/stream", a.GetStateStream)
 
 		api.GET("/ws", a.WS(upgrader()))
 	}

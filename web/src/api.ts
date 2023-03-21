@@ -562,5 +562,21 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         type: ContentType.Json,
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags states
+     * @name StreamDetail
+     * @summary Get state stream
+     * @request GET:/states/{uuid}/stream
+     */
+    streamDetail: (uuid: string, params: RequestParams = {}) =>
+      this.request<StateState, HttpHTTPError>({
+        path: `/states/${uuid}/stream`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
   };
 }

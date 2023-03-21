@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/build"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/hub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/model"
+	"github.com/ItsNotGoodName/reciva-web-remote/internal/pubsub"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/radio"
 	"github.com/ItsNotGoodName/reciva-web-remote/internal/store"
 )
@@ -244,6 +246,59 @@ func (a API) GetState(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, state)
+}
+
+//	@Summary	Get state stream
+//	@Tags		states
+//	@Param		uuid	path	string	true	"Radio UUID"
+//	@Produce	json
+//	@Success	200	{object}	state.State
+//	@Failure	404	{object}	HTTPError
+//	@Failure	500	{object}	HTTPError
+//	@Router		/states/{uuid}/stream [get]
+func (a API) GetStateStream(c echo.Context) error {
+	// Context
+	ctx, cancel := context.WithCancel(c.Request().Context())
+	defer cancel()
+
+	// Subscribe
+	msgC, unsub := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.TopicState})
+
+	// Cancel subscription and close channel when context done
+	go func() {
+		<-ctx.Done()
+		unsub()
+		close(msgC)
+	}()
+
+	// Get initial state
+	cc := c.(*RadioContext)
+	state, err := cc.Radio.State(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Setup
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	c.Response().WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(c.Response())
+
+	// Send initial state
+	if err := enc.Encode(state); err != nil {
+		return err
+	}
+	c.Response().Flush()
+
+	for msg := range msgC {
+		if data, ok := pubsub.ParseState(&msg); ok && data.State.UUID == cc.Radio.UUID {
+			if err := enc.Encode(data.State); err != nil {
+				return err
+			}
+			c.Response().Flush()
+		}
+	}
+
+	return nil
 }
 
 type PostState struct {

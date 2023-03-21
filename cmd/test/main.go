@@ -35,7 +35,7 @@ func main() {
 
 	// Discover radios
 	go func() {
-		if err := discoverer.Discover(ctx, true); err != nil {
+		if err := discoverer.Discover(true); err != nil {
 			log.Fatalln("failed to discover radios:", err)
 		}
 	}()

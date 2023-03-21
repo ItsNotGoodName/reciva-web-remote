@@ -35,7 +35,7 @@ func Server(cfg *config.Config) {
 		upnp.NewBackgroundControlPoint(controlPoint),
 		discoverer,
 		background.NewFunction(func(ctx context.Context) {
-			if err := discoverer.Discover(ctx, true); err != nil {
+			if err := discoverer.Discover(true); err != nil {
 				log.Println("cmd.Server:", err)
 			}
 		}),

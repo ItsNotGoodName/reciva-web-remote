@@ -73,7 +73,7 @@ func autoDiscover(ctx context.Context, d *Discoverer, duration time.Duration) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := d.Discover(ctx, false); err != nil {
+			if err := d.Discover(false); err != nil {
 				log.Println("radio.autoDiscover:", err)
 			}
 		}
@@ -89,7 +89,7 @@ func (d *Discoverer) Discovering() bool {
 	return true
 }
 
-func (d *Discoverer) Discover(ctx context.Context, force bool) error {
+func (d *Discoverer) Discover(force bool) error {
 	if !d.mu.TryLock() {
 		return internal.ErrDiscovering
 	}
@@ -99,6 +99,8 @@ func (d *Discoverer) Discover(ctx context.Context, force bool) error {
 	defer pubsub.PublishDiscover(pubsub.DefaultPub, false)
 
 	hubContext := <-d.ctxC
+	ctx, cancel := context.WithTimeout(hubContext, 60*time.Second)
+	defer cancel()
 
 	recivas, err := upnp.Discover(hubContext)
 	if err != nil {

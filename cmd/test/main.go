@@ -24,11 +24,11 @@ func main() {
 	stateHook := middleware.NewStateHook(store)
 	discoverer := radio.NewDiscoverer(hub, controlPoint, stateHook)
 	done := background.Run(ctx, []background.Background{hub, upnp.NewBackgroundControlPoint(controlPoint), discoverer})
-	msgC, _ := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.TopicState})
+	sub, _ := pubsub.DefaultPub.Subscribe([]pubsub.Topic{pubsub.TopicState})
 
 	// Subscription
 	go func() {
-		for msg := range msgC {
+		for msg := range sub.Message {
 			fmt.Println(msg.Data)
 		}
 	}()

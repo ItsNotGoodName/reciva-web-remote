@@ -63,7 +63,7 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 	defer ticker.Stop()
 
 	lastTopics := []pubsub.Topic{}
-	msgC, unsub := pubsub.DefaultPub.SubscribeWithBuffer(lastTopics, 10)
+	sub, unsub := pubsub.DefaultPub.SubscribeWithBuffer(lastTopics, 25)
 	defer func() { unsub() }()
 
 	write := func(topic pubsub.Topic, data any) bool {
@@ -116,7 +116,7 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 			if command.Subscribe != nil {
 				// Resubscribe
 				topics := uniqueTopics(filterTopics(command.Subscribe.Topics))
-				unsub = pubsub.DefaultPub.Resubscribe(topics, msgC, unsub)
+				unsub = pubsub.DefaultPub.Resubscribe(topics, sub, unsub)
 
 				// Sync
 				for _, t := range topics {
@@ -167,7 +167,10 @@ func Handle(ctx context.Context, conn *websocket.Conn, h *hub.Hub, d *radio.Disc
 					}
 				}
 			}
-		case msg := <-msgC:
+		case <-sub.Overflow:
+			conn.WriteMessage(websocket.CloseTryAgainLater, []byte{})
+			return
+		case msg := <-sub.Message:
 			// Parse data from pubsub message
 			topic, data := parse(&msg)
 			if data == nil {

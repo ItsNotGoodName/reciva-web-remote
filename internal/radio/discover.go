@@ -99,8 +99,6 @@ func (d *Discoverer) Discover(force bool) error {
 	defer pubsub.PublishDiscover(pubsub.DefaultPub, false)
 
 	hubContext := <-d.ctxC
-	ctx, cancel := context.WithTimeout(hubContext, 60*time.Second)
-	defer cancel()
 
 	recivas, err := upnp.Discover(hubContext)
 	if err != nil {
@@ -116,6 +114,9 @@ func (d *Discoverer) Discover(force bool) error {
 	}
 
 	defer pubsub.PublishStaleRadios(pubsub.DefaultPub)
+
+	ctx, cancel := context.WithTimeout(hubContext, 60*time.Second)
+	defer cancel()
 
 	return concurrentCreate(ctx, d.hub, recivas, func(ctx context.Context, reciva upnp.Reciva) error {
 		return create(ctx, hubContext, reciva, d.hub, d.controlPoint, d.stateHook)

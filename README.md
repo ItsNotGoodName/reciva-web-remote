@@ -6,7 +6,7 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/itsnotgoodname/reciva-web-remote)](./go.mod)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ItsNotGoodName/reciva-web-remote)](https://goreportcard.com/report/github.com/ItsNotGoodName/reciva-web-remote)
 
-Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.
+Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or HTTP API.
 
 ![Desktop Demo](/assets/desktop-demo.png)
 

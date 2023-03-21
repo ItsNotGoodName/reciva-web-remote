@@ -118,7 +118,7 @@ func (a API) UpdatePreset(c echo.Context) error {
 		return echo.ErrBadRequest.WithInternal(err)
 	}
 
-	if err := preset.Validate(); err != nil {
+	if err := preset.ParseAndValidate(); err != nil {
 		return echo.ErrBadRequest.WithInternal(err)
 	}
 
@@ -314,7 +314,7 @@ func (a API) WS(upgrader *websocket.Upgrader) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.ErrInternalServerError
 		}
 
 		go ws.Handle(context.Background(), conn, a.Hub, a.Discoverer)

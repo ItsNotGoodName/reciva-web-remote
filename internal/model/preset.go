@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 type Preset struct {
@@ -11,7 +12,9 @@ type Preset struct {
 	URLNew   string `json:"url_new" validate:"required"`   // URLNew is the overridden URL.
 }
 
-func (p Preset) Validate() error {
+func (p *Preset) ParseAndValidate() error {
+	p.TitleNew = strings.TrimSpace(p.TitleNew)
+
 	urlObj, err := url.ParseRequestURI(p.URL)
 	if err != nil {
 		return err
@@ -31,7 +34,7 @@ func NewPreset(urL, titleNew, urlNew string) (*Preset, error) {
 		URLNew:   urlNew,
 	}
 
-	if err := p.Validate(); err != nil {
+	if err := p.ParseAndValidate(); err != nil {
 		return nil, err
 	}
 

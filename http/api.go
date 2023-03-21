@@ -19,7 +19,7 @@ import (
 
 //	@title			Reciva Web Remote
 //	@version		1.0
-//	@description	Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.
+//	@description	Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or HTTP API.
 //	@BasePath		/api
 
 type HTTPError struct {

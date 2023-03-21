@@ -88,7 +88,7 @@ The contents of the playlists can be changed in the web interface.
 
 # API
 
-REST API is documented using [Swagger](https://swagger.io/).
+HTTP API is documented using [Swagger](https://swagger.io/).
 Swagger file is stored in [swagger.json](./docs/swagger/swagger.json) and can be viewed using
 [Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/ItsNotGoodName/reciva-web-remote/master/docs/swagger/swagger.json).
 

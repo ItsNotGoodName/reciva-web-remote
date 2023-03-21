@@ -7,7 +7,7 @@
   "background_color": "#ffffff",
   "lang": "en",
   "scope": "/",
-  "description": "Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.",
+  "description": "Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or HTTP API.",
   "theme_color": "#ffffff",
   "icons": [
     {

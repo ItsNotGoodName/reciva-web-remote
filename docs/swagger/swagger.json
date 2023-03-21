@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.",
+        "description": "Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or HTTP API.",
         "title": "Reciva Web Remote",
         "contact": {},
         "version": "1.0"

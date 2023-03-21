@@ -788,7 +788,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "Reciva Web Remote",
-	Description:      "Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.",
+	Description:      "Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or HTTP API.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

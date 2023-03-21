@@ -350,7 +350,7 @@ export class HttpClient<SecurityDataType = unknown> {
  * @baseUrl /api
  * @contact
  *
- * Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or REST API.
+ * Control your legacy Reciva based internet radios (Crane, Grace Digital, Tangent, etc.) via web browser or HTTP API.
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   build = {
